@@ -1,9 +1,19 @@
 <script setup lang="ts">
-import TheWelcome from '../components/TheWelcome.vue'
+
+import Header from '@/components/HeaderComponent.vue'
+import Banner from '@/components/BannerComponent.vue'
+import Categories from '@/components/CategoriesComponent.vue'
+import ProductList from '@/components/ProductList.vue'
+import BottomNav from '@/components/BottomNav.vue'
+
 </script>
 
 <template>
-  <main>
-    <TheWelcome />
-  </main>
+  <div class="home">
+    <Header />
+    <Banner />
+    <Categories />
+    <ProductList />
+    <BottomNav />
+  </div>
 </template>

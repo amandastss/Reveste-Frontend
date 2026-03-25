@@ -11,11 +11,11 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        id: 'com.tarefas-pwa',
-        name: 'Gerenciador de Tarefas',
-        short_name: 'Tarefas',
-        description: 'Aplicativo PWA para gerenciar tarefas diárias',
-        theme_color: '#4a90d9',
+        id: 'com.reveste-pwa',
+        name: 'ReVeste',
+        short_name: 'ReVeste',
+        description: 'Brechó Digital',
+        theme_color: '#000000',
         background_color: '#ffffff',
         display: 'standalone',
         scope: '/',
