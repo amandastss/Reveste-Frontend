@@ -69,7 +69,7 @@ function remover(item) {
 <style scoped>
 .search-page {
   padding: 12px;
-  background: #f5f5f5;
+  background: #white;
   min-height: 100vh;
 }
 
