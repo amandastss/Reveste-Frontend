@@ -1,16 +1,22 @@
 import { createRouter, createWebHistory } from "vue-router"
 
 const SearchView = () => import("@/views/SearchView.vue")
+const CameraSearchView = () => import("@/views/CameraSearchView.vue")
 
 const routes = [
   {
     path: "/",
-    redirect: "/search" // abre direto na busca (melhor UX)
+    redirect: "/search"
   },
   {
     path: "/search",
     name: "Search",
     component: SearchView
+  },
+  {
+    path: "/camera-search",
+    name: "CameraSearch",
+    component: CameraSearchView
   }
 ]
 
