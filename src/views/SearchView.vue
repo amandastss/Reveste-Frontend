@@ -117,7 +117,7 @@ function abrirProduto(id: number) {
     router.push(`/produto/${id}`)
 }
 
-// abrir camera 
+// abrir camera
 const mostrarModalCamera = ref(false)
 
 function abrirCameraModal() {
