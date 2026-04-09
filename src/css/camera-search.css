@@ -1,0 +1,133 @@
+/* ===== BASE ===== */
+.camera-page {
+  min-height: 100vh;
+  background: #f6f6f6;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ===== HEADER ===== */
+.top-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+}
+
+.top-bar span {
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.top-bar p {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* ===== BOTÕES INICIAIS ===== */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+}
+
+.actions button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  transition: 0.2s;
+}
+
+.actions button:active {
+  transform: scale(0.98);
+}
+
+/* ===== PREVIEWS ===== */
+.preview-list {
+  display: flex;
+  gap: 10px;
+  padding: 12px 12px 0;
+  overflow-x: auto;
+}
+
+.preview-list img {
+  width: 65px;
+  height: 65px;
+  object-fit: cover;
+  border-radius: 10px;
+  flex-shrink: 0;
+  border: 2px solid #fff;
+}
+
+/* ===== GRID ===== */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 12px;
+}
+
+/* ===== CARD ===== */
+.item {
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  transition: 0.2s;
+}
+
+.item:active {
+  transform: scale(0.97);
+}
+
+.item img {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+/* ===== TEXTO ===== */
+.nome {
+  font-size: 13px;
+  margin-top: 6px;
+  font-weight: 500;
+  color: #222;
+}
+
+.preco {
+  font-size: 12px;
+  color: #777;
+  margin-top: 2px;
+}
+
+/* ===== SCROLL BONITO ===== */
+.preview-list::-webkit-scrollbar {
+  height: 6px;
+}
+
+.preview-list::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 10px;
+}
+
+/* ===== RESPONSIVO ===== */
+@media (max-width: 400px) {
+  .item img {
+    height: 150px;
+  }
+
+  .top-bar p {
+    font-size: 13px;
+  }
+}
