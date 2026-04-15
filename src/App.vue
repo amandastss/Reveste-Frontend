@@ -5,16 +5,16 @@ import FooterMobile from './components/FooterMobileComponent.vue';
 </script>
 
 <template>
-  <HeaderMobile />
+  <div class="app-container">
+    <HeaderMobile />
+    <HeaderDesktop />
 
+    <main class="content">
+      <router-view />
+    </main>
 
-  <HeaderDesktop />
-
-
-  <router-view />
-
-
-  <FooterMobile />
+    <FooterMobile />
+  </div>
 </template>
 
 <style scoped>
@@ -35,5 +35,21 @@ import FooterMobile from './components/FooterMobileComponent.vue';
   :deep(.app-footer) {
     display: none;
   }
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.content {
+  flex: 1;
+}
+
+.content > * {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
 }
 </style>

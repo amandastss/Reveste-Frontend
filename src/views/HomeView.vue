@@ -68,8 +68,8 @@ const categorias = [
 }
 /* Categorias */
 .categories {
-  display: flex;
-  overflow-x: auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 4 por linha */
   gap: 12px;
   padding: 12px;
 }
@@ -124,5 +124,67 @@ const categorias = [
 .price {
   font-size: 13px;
   font-weight: bold;
+}
+@media (min-width: 768px) {
+  .home {
+    max-width: 1200px;
+    padding: 20px;
+    padding-bottom: 20px;
+  }
+
+  /* banner maior */
+  .banner {
+    padding: 0;
+  }
+
+  /* categorias mais espaçosas */
+  .categories {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 20px;
+    padding: 20px 0;
+  }
+
+  .circle {
+    width: 60px;
+    height: 60px;
+  }
+
+  .item {
+    font-size: 13px;
+  }
+
+  /* produtos */
+  .products {
+    padding: 0;
+  }
+
+  .products h3 {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  /* grid de produtos maior */
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+
+  .card {
+    padding: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  }
+
+  .name {
+    font-size: 14px;
+  }
+
+  .price {
+    font-size: 15px;
+  }
 }
 </style>

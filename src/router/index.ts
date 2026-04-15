@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import SearchView from '@/views/SearchView.vue'
+import SellView from '../views/SellView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -10,16 +11,20 @@ const router = createRouter({
       name: 'home',
       component: HomeView,
     },
-     {
-      path: '/search',
-      name: 'search',
-      component: SearchView,
-    },
     {
-      path: '/search',
-      name: 'search',
-      component: SearchView,
-    }
+    path: "/",
+    redirect: "/search"
+  },
+  {
+    path: "/search",
+    name: "Search",
+    component: SearchView,
+  },
+  {
+  path: '/sell',
+  name: 'sell',
+  component: SellView,
+  }
   ],
 })
 
