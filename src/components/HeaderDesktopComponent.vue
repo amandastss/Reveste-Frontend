@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/block-lang -->
 <script setup>
 import { useRouter } from 'vue-router';
 import { ref } from 'vue';

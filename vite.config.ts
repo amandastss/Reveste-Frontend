@@ -1,25 +1,31 @@
-import { fileURLToPath, URL } from 'node:url';
+import { fileURLToPath, URL } from 'node:url'
 
-import { defineConfig } from 'vite';
-import vue from '@vitejs/plugin-vue';
-import vueDevTools from 'vite-plugin-vue-devtools';
-import { VitePWA } from 'vite-plugin-pwa';
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import vueDevTools from 'vite-plugin-vue-devtools'
+import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   plugins: [
     vue(),
+    vueDevTools(),
+
     VitePWA({
       registerType: 'autoUpdate',
+
       manifest: {
-        id: 'com.tarefas-pwa',
-        name: 'Gerenciador de Tarefas',
-        short_name: 'Tarefas',
-        description: 'Aplicativo PWA para gerenciar tarefas diárias',
-        theme_color: '#4a90d9',
-        background_color: '#ffffff',
+        id: 'com.brecho.app',
+        name: 'Brechó Online',
+        short_name: 'Brechó',
+        description: 'Compre e venda roupas e acessórios de segunda mão',
+
+        theme_color: '#111111',          // preto elegante
+        background_color: '#f6f6f6',     // mesmo fundo do teu layout
+
         display: 'standalone',
         scope: '/',
-        start_url: '/',
+        start_url: '/auth/email',
+
         icons: [
           {
             src: '/icons/icon-192x192.png',
@@ -36,18 +42,19 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
-          },
-        ],
+          }
+        ]
       },
+
       devOptions: {
-        enabled: true,
-      },
-    }),
-    vueDevTools(),
+        enabled: true
+      }
+    })
   ],
+
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-    },
-  },
-});
+      '@': fileURLToPath(new URL('./src', import.meta.url))
+    }
+  }
+})

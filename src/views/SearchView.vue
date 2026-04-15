@@ -1,31 +1,41 @@
-<script setup>
-import { ref } from 'vue';
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
-const search = ref('');
+const router = useRouter()
+
+const search = ref('')
 
 const categorias = [
   { nome: 'Feminino' },
   { nome: 'Masculino' },
   { nome: 'Infantil' },
-];
+]
 
 const recentes = ref([
   'Jeans',
-  'sapatos',
+  'Sapatos',
   'Cropped',
   'Jaqueta'
-]);
+])
 
-function remover(item) {
-  recentes.value = recentes.value.filter(i => i !== item);
+function remover(item: string) {
+  recentes.value = recentes.value.filter(i => i !== item)
+}
+
+function voltar() {
+  router.back()
 }
 </script>
 
 <template>
   <div class="search-page">
 
+    <!-- HEADER -->
     <div class="search-header">
-      <span class="material-symbols-outlined back">arrow_back</span>
+      <span class="material-symbols-outlined back" @click="voltar">
+        arrow_back
+      </span>
 
       <input
         v-model="search"
@@ -33,9 +43,12 @@ function remover(item) {
         class="search-input"
       />
 
-      <span class="material-symbols-outlined camera">photo_camera</span>
+      <span class="material-symbols-outlined camera">
+        photo_camera
+      </span>
     </div>
 
+    <!-- CATEGORIAS -->
     <div class="categorias">
       <div v-for="cat in categorias" :key="cat.nome" class="categoria">
         <div class="icon-circle">
@@ -45,6 +58,7 @@ function remover(item) {
       </div>
     </div>
 
+    <!-- RECENTES -->
     <div class="recentes">
       <h3>Pesquisas recentes</h3>
 
@@ -68,19 +82,21 @@ function remover(item) {
 
 <style scoped>
 .search-page {
-  padding: 12px;
-  background: #white;
+  padding: 20px;
+  max-width: 400px;
+  margin: 0 auto;
+  background: #f6f6f6;
   min-height: 100vh;
 }
 
-
+/* HEADER */
 .search-header {
   display: flex;
   align-items: center;
   gap: 10px;
   background: #eaeaea;
-  padding: 8px 12px;
-  border-radius: 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
 }
 
 .search-input {
@@ -91,16 +107,18 @@ function remover(item) {
   font-size: 14px;
 }
 
-.back, .camera {
+.back,
+.camera {
   font-size: 22px;
   color: #555;
+  cursor: pointer;
 }
 
-
+/* CATEGORIAS */
 .categorias {
   display: flex;
-  justify-content: space-around;
-  margin-top: 20px;
+  justify-content: space-between;
+  margin-top: 24px;
 }
 
 .categoria {
@@ -111,8 +129,8 @@ function remover(item) {
 }
 
 .icon-circle {
-  width: 50px;
-  height: 50px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background: #eaeaea;
   display: flex;
@@ -124,20 +142,21 @@ function remover(item) {
   font-size: 12px;
 }
 
-
+/* RECENTES */
 .recentes {
-  margin-top: 25px;
+  margin-top: 28px;
 }
 
 .recentes h3 {
   font-size: 14px;
   margin-bottom: 10px;
+  font-weight: 600;
 }
 
 .recente-item {
   display: flex;
   justify-content: space-between;
-  padding: 10px 0;
+  padding: 12px 0;
   border-bottom: 1px solid #ddd;
 }
 
