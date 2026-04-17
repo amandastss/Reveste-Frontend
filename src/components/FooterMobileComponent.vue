@@ -15,7 +15,7 @@ const showMenu = ref(false);
 const items: FooterItem[] = [
   { aria: 'Home', icon: 'home', route: '/' },
   { aria: 'Mais', icon: 'add', route: '' },
-  { aria: 'Perfil', icon: 'person', route: '/perfil' },
+  { aria: 'Perfil', icon: 'person', route: '/profile' },
 ];
 
 function handleClick(item: FooterItem) {
@@ -100,7 +100,7 @@ function goToSell() {
 }
 
 .material-symbols-outlined {
-  font-size: 26px;
+  font-size: 22px;
   color: #000;
 }
 
