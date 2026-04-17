@@ -1,3 +1,4 @@
+<!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <!-- eslint-disable vue/block-lang -->
 <script setup>
 import { ref } from 'vue'
@@ -8,17 +9,33 @@ const password = ref('')
 const showPassword = ref(false)
 const router = useRouter()
 
-const email = localStorage.getItem('email')
+if (!email) {
+  router.push('/auth/email')
+}
 
 async function login() {
   if (!password.value) return
 
   try {
-    await authApi.login(email, password.value)
+    // tenta logar
+    const res = await authApi.login(email, password.value)
+
+    localStorage.setItem('user', JSON.stringify(res))
+
     router.push('/home')
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   } catch (e) {
-    alert('Senha inválida')
+    try {
+      // se falhar, cria conta
+      const res = await authApi.register(email, password.value)
+
+      localStorage.setItem('user', JSON.stringify(res))
+
+      router.push('/home')
+
+    } catch (err) {
+      alert('Erro ao autenticar')
+    }
   }
 }
 
