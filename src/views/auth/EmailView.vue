@@ -16,9 +16,19 @@ const isValid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value))
 async function next() {
   if (!isValid.value) return
 
-  await authApi.sendEmail(email.value)
+  try {
+    // Verifica se email existe
+    const response = await authApi.checkEmail(email.value)
+    const emailExists = response.data.exists
 
-  localStorage.setItem('email', email.value)
+    localStorage.setItem('email', email.value)
+    localStorage.setItem('isLogin', emailExists ? 'true' : 'false')
+  } catch (err) {
+    console.log('Erro ao verificar email:', err)
+    // Se falhar a verificação, assume que é novo usuário
+    localStorage.setItem('email', email.value)
+    localStorage.setItem('isLogin', 'false')
+  }
 
   router.push('/auth/password')
 }

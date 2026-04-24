@@ -8,10 +8,12 @@ import authApi from '../../api/authApi'
 const password = ref('')
 const showPassword = ref(false)
 const email = ref('')
+const isLogin = ref(false)
 const router = useRouter()
 
 onMounted(() => {
   email.value = localStorage.getItem('email')
+  isLogin.value = localStorage.getItem('isLogin') === 'true'
   if (!email.value) {
     router.push('/auth/email')
   }
@@ -21,27 +23,22 @@ async function login() {
   if (!password.value) return
 
   try {
-    // tenta logar
-    const res = await authApi.login(email.value, password.value)
-
-    localStorage.setItem('user', JSON.stringify(res.data))
-    localStorage.setItem('token', res.data.token)
+    if (isLogin.value) {
+      // Login - email já existe
+      const res = await authApi.login(email.value, password.value)
+      localStorage.setItem('user', JSON.stringify(res.data))
+      localStorage.setItem('token', res.data.token)
+    } else {
+      // Registro - email novo
+      const res = await authApi.register(email.value, password.value)
+      localStorage.setItem('user', JSON.stringify(res.data))
+      localStorage.setItem('token', res.data.token)
+    }
 
     router.push('/home')
 
-  } catch (e) {
-    try {
-      // se falhar, cria conta
-      const res = await authApi.register(email.value, password.value)
-
-      localStorage.setItem('user', JSON.stringify(res.data))
-      localStorage.setItem('token', res.data.token)
-
-      router.push('/home')
-
-    } catch (err) {
-      alert('Erro ao autenticar')
-    }
+  } catch (err) {
+    alert('Erro ao autenticar: ' + (err.response?.data?.message || 'Tente novamente'))
   }
 }
 
@@ -58,7 +55,7 @@ function togglePassword() {
       <div class="back" @click="router.back()">←</div>
 
       <!-- TÍTULO -->
-      <h1 class="title">Insira a sua senha!</h1>
+      <h1 class="title">{{ isLogin ? 'Insira a sua senha!' : 'Crie uma senha!' }}</h1>
       <p class="email">{{ email }}</p>
 
       <!-- INPUT -->
@@ -83,11 +80,11 @@ function togglePassword() {
         :disabled="!password"
         @click="login"
       >
-        ENTRAR
+        {{ isLogin ? 'ENTRAR' : 'REGISTRAR' }}
       </button>
 
       <!-- ESQUECI -->
-      <p class="forgot" @click="router.push('/auth/forgot')">
+      <p v-if="isLogin" class="forgot" @click="router.push('/auth/forgot')">
         ESQUECEU DA SUA SENHA?
       </p>
     </div>

@@ -1,5 +1,10 @@
 import api from './config'
 
+// verificar se email existe
+const checkEmail = (email) => {
+  return api.post('/check-email/', { email })
+}
+
 // enviar email para verificação
 const sendEmail = (email) => {
   return api.post('/send-email/', { email })
@@ -31,6 +36,7 @@ const resetPassword = (email, code, newPassword) => {
 }
 
 export default {
+  checkEmail,
   sendEmail,
   login,
   register,
