@@ -42,7 +42,6 @@ function handleClick(item) {
         </span>
       </button>
     </div>
-
   </header>
 </template>
 
@@ -57,11 +56,9 @@ function handleClick(item) {
   position: relative;
 }
 
-
 .left {
   display: flex;
 }
-
 
 .right {
   display: flex;

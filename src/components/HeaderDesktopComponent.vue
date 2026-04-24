@@ -1,13 +1,11 @@
 <script setup>
 import { useRouter } from 'vue-router';
-import { ref } from 'vue';
 
 const router = useRouter();
-const searchQuery = ref('');
 
 const navItems = [
   { aria: 'Home', icon: 'home', route: '/' },
-  { aria: 'Vender', icon: 'add', route: '/vender' },
+  { aria: 'Vender', icon: 'add', route: '/sell' },
 ];
 
 const rightItems = [

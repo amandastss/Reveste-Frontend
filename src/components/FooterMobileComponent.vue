@@ -1,15 +1,15 @@
-<script setup>
+<script setup lang="ts">
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
 const items = [
   { aria: 'Home', icon: 'home', route: '/' },
-  { aria: 'Vender', icon: 'add', route: '/vender' },
-  { aria: 'Perfil', icon: 'person', route: '/perfil' },
+  { aria: 'Sell', icon: 'add', route: '/sell' },
+  { aria: 'Profile', icon: 'person', route: '/profile' },
 ];
 
-function handleClick(item) {
+function handleClick(item: { route: string }) {
   router.push(item.route);
 }
 </script>
