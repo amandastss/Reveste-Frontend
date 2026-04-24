@@ -1,0 +1,157 @@
+html,
+body,
+#app {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.sell-page {
+  width: 100%;
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding: 24px 20px 32px;
+  box-sizing: border-box;
+  font-family: 'Manrope', sans-serif;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  gap: 85px;
+  margin-bottom: 40px;
+}
+
+.top-bar h1 {
+  font-size: 2rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.back-btn {
+  border: none;
+  background: transparent;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.sell-form {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-group label {
+  font-size: 0.8rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.field-group input,
+.field-group textarea {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #777;
+  background: transparent;
+  padding: 10px 0;
+  font-size: 1rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.field-group textarea {
+  min-height: 80px;
+  resize: none;
+}
+
+.photos .icon-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 14px;
+  border: none;
+  background: #ddd;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.photo-tips {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 14px;
+  margin-top: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.photo-tips p {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.photo-tips ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.photo-tips li {
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 6px;
+}
+
+.hidden-input {
+  display: none;
+}
+
+.preview-box {
+  margin-top: 16px;
+  border-radius: 16px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.preview-box img {
+  width: 100%;
+  max-height: 250px;
+  object-fit: cover;
+  display: block;
+}
+
+.publish-btn {
+  width: 100%;
+  margin-top: 24px;
+  padding: 16px;
+  border: none;
+  border-radius: 14px;
+  background: #111;
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .sell-page {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 40px;
+  }
+
+  .top-bar h1 {
+    font-size: 2.2rem;
+  }
+
+  .publish-btn {
+    max-width: 300px;
+    align-self: center;
+  }
+}
