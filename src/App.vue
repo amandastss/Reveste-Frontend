@@ -15,6 +15,7 @@ import FooterMobile from './components/FooterMobileComponent.vue';
 
     <FooterMobile />
   </div>
+
 </template>
 
 <style scoped>

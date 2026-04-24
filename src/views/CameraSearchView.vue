@@ -16,6 +16,7 @@ const resultados = ref<{
 }[]>([])
 
 const fileInput = ref<HTMLInputElement | null>(null)
+// 🔥 abre automaticamente baseado na escolha
 
 onMounted(() => {
   const tipo = route.query.tipo

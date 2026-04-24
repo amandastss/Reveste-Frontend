@@ -216,5 +216,4 @@ function irParaCamera(tipo: "camera" | "gallery") {
         </div>
     </div>
 </template>
-
 <style scoped src="../css/search.css"></style>

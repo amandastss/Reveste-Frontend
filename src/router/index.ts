@@ -1,3 +1,4 @@
+
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import SearchView from '@/views/SearchView.vue'
@@ -38,6 +39,7 @@ const router = createRouter({
   component: MenuComponent,
   },
   ],
+
 })
 
 export default router
