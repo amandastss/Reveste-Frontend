@@ -20,11 +20,6 @@ function handleNavClick(item) {
   router.push(item.route);
 }
 
-function handleSearch() {
-  if (searchQuery.value.trim()) {
-    router.push({ path: '/search', query: { q: searchQuery.value } });
-  }
-}
 </script>
 
 <template>
@@ -43,19 +38,6 @@ function handleSearch() {
           <span class="nav-text">{{ item.aria }}</span>
         </button>
       </nav>
-
-      <div class="search-container">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Pesquisar..."
-          class="search-input"
-          @keyup.enter="handleSearch"
-        />
-        <button class="search-button" @click="handleSearch">
-          <span class="material-symbols-outlined">search</span>
-        </button>
-      </div>
     </div>
 
     <div class="right">
@@ -123,44 +105,6 @@ function handleSearch() {
   font-size: 14px;
   color: #000;
   font-weight: 500;
-}
-
-.search-container {
-  flex: 0 1 300px;
-  display: flex;
-  align-items: center;
-  border: 1px solid #e5e5e5;
-  border-radius: 24px;
-  padding: 8px 16px;
-  background: #f5f5f5;
-}
-
-.search-input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  outline: none;
-  font-size: 14px;
-  color: #000;
-}
-
-.search-input::placeholder {
-  color: #999;
-}
-
-.search-button {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 8px;
-}
-
-.search-button .material-symbols-outlined {
-  font-size: 20px;
-  color: #666;
 }
 
 .right {

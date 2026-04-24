@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import HeaderMobile from './components/HeaderMobileComponent.vue';
 import HeaderDesktop from './components/HeaderDesktopComponent.vue';
 import FooterMobile from './components/FooterMobileComponent.vue';
