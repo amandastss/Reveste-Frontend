@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 const produtos = [
   { id: 1, nome: 'Camiseta preta', preco: 49.9, img: '/shirt1.png' },
