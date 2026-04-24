@@ -1,37 +1,45 @@
-import { createRouter, createWebHistory } from "vue-router"
 
-const SearchView = () => import("@/views/SearchView.vue")
-const CameraSearchView = () => import("@/views/CameraSearchView.vue")
-const SellView = () => import("@/views/SellView.vue")
+import { createRouter, createWebHistory } from 'vue-router'
+import HomeView from '../views/HomeView.vue'
+import SearchView from '@/views/SearchView.vue'
+import SellView from '../views/SellView.vue'
+import ProfleView from '../views/ProfileView.vue' 
+import MenuComponent from '@/components/MenuComponent.vue'
 
-const routes = [
-  {
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes: [
+    {
+      path: '/',
+      name: 'home',
+      component: HomeView,
+    },
+    {
     path: "/",
     redirect: "/search"
   },
   {
     path: "/search",
     name: "Search",
-    component: SearchView
-  },
-  {
-    path: "/camera-search",
-    name: "CameraSearch",
-    component: CameraSearchView
+    component: SearchView,
   },
   {
   path: '/sell',
   name: 'sell',
-  component: SellView
-  }
-]
+  component: SellView,
+  } ,
+  {
+  path: '/profile',
+  name: 'profile',
+  component: ProfleView,
+  },
+  {
+  path: '/menu',
+  name: 'menu',
+  component: MenuComponent,
+  },
+  ],
 
-const router = createRouter({
-  history: createWebHistory(),
-  routes,
-  scrollBehavior() {
-    return { top: 0 }
-  }
 })
 
 export default router
