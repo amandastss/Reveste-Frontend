@@ -14,9 +14,14 @@ function update(index, event) {
 }
 
 async function verify() {
-  const finalCode = code.value.join('');
-  await authApi.verifyCode(email, finalCode);
-  router.push('/auth/reset');
+  try {
+    const finalCode = code.value.join('');
+    await authApi.verifyCode(email, finalCode);
+    localStorage.setItem('code', finalCode);
+    router.push('/auth/reset');
+  } catch {
+    alert('Código inválido');
+  }
 }
 </script>
 

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -9,7 +9,7 @@ const items = [
   { aria: 'Carrinho', icon: 'shopping_cart', route: '/carrinho' },
 ];
 
-function handleClick(item) {
+function handleClick(item: typeof items[number]) {
   router.push(item.route);
 }
 </script>
@@ -20,10 +20,10 @@ function handleClick(item) {
     <div class="left">
       <button
         class="headermobile-button"
-        @click="handleClick(items[0])"
+        @click="handleClick(items[0]!)"
       >
         <span class="material-symbols-outlined">
-          {{ items[0].icon }}
+          {{ items[0]?.icon }}
         </span>
       </button>
     </div>

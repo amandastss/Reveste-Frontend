@@ -7,8 +7,12 @@ const router = useRouter();
 const email = localStorage.getItem('email');
 
 async function send() {
-  await authApi.forgotPassword(email);
-  router.push('/auth/verify');
+  try {
+    await authApi.requestPasswordReset(email);
+    router.push('/auth/verify');
+  } catch {
+    alert('Erro ao enviar código');
+  }
 }
 </script>
 

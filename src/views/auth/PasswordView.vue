@@ -1,35 +1,41 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <!-- eslint-disable vue/block-lang -->
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import authApi from '../../api/authApi'
 
 const password = ref('')
 const showPassword = ref(false)
+const email = ref('')
 const router = useRouter()
 
-if (!email) {
-  router.push('/auth/email')
-}
+onMounted(() => {
+  email.value = localStorage.getItem('email')
+  if (!email.value) {
+    router.push('/auth/email')
+  }
+})
 
 async function login() {
   if (!password.value) return
 
   try {
     // tenta logar
-    const res = await authApi.login(email, password.value)
+    const res = await authApi.login(email.value, password.value)
 
-    localStorage.setItem('user', JSON.stringify(res))
+    localStorage.setItem('user', JSON.stringify(res.data))
+    localStorage.setItem('token', res.data.token)
 
     router.push('/home')
 
   } catch (e) {
     try {
       // se falhar, cria conta
-      const res = await authApi.register(email, password.value)
+      const res = await authApi.register(email.value, password.value)
 
-      localStorage.setItem('user', JSON.stringify(res))
+      localStorage.setItem('user', JSON.stringify(res.data))
+      localStorage.setItem('token', res.data.token)
 
       router.push('/home')
 

@@ -1,5 +1,5 @@
 <!-- eslint-disable vue/block-lang -->
-<script setup>
+<script setup lang="ts">
 import { useRouter } from 'vue-router';
 import { ref } from 'vue';
 
@@ -17,7 +17,7 @@ const rightItems = [
   { aria: 'Perfil', icon: 'person', route: '/perfil' },
 ];
 
-function handleNavClick(item) {
+function handleNavClick(item: typeof navItems[number]) {
   router.push(item.route);
 }
 
