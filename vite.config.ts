@@ -11,8 +11,11 @@ export default defineConfig({
       registerType: 'autoUpdate',
 
       manifest: {
+        id: 'com.reveste-pwa',
         name: 'ReVeste',
         short_name: 'ReVeste',
+        description: 'Brechó Digital',
+
         theme_color: '#000000',
         background_color: '#ffffff',
         display: 'standalone',
