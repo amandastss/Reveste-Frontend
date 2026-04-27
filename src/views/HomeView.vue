@@ -1,10 +1,20 @@
-
 <script setup lang="ts">
-const produtos = [
-  { id: 1, nome: 'Camiseta preta', preco: 49.9, img: '/shirt1.png' },
-  { id: 2, nome: 'Camiseta branca', preco: 39.9, img: '/shirt2.png' },
-  { id: 3, nome: 'Moletom oversized', preco: 89.9, img: '/hoodie1.png' },
-]
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
+
+interface Produto {
+  id: number
+  nome: string
+  preco: number
+  descricao?: string
+  marca?: string
+  condicao?: string
+  imagem?: {
+    url: string
+  }
+}
+
+const produtos = ref<Produto[]>([])
 
 const categorias = [
   'Casual',
@@ -18,6 +28,17 @@ const categorias = [
   'Verão',
   'Inverno',
 ]
+
+const fetchProdutos = async () => {
+  try {
+    const response = await axios.get('http://127.0.0.1:8000/api/produtos/')
+    produtos.value = response.data.results // 💥 AQUI
+  } catch (error) {
+    console.error('Erro ao buscar produtos:', error)
+  }
+}
+
+onMounted(fetchProdutos)
 </script>
 
 <template>
@@ -41,7 +62,8 @@ const categorias = [
 
       <div class="grid">
         <div class="card" v-for="p in produtos" :key="p.id">
-          <img :src="p.img" alt="" />
+          <img :src="p.imagem?.url || ''" />
+
           <p class="name">{{ p.nome }}</p>
           <p class="price">R$ {{ p.preco }}</p>
         </div>
@@ -56,7 +78,7 @@ const categorias = [
   margin: 0 auto;
   padding-bottom: 70px; /* espaço pro footer */
   background: #fff;
-  font-family: "Montserrat", sans-serif;
+  font-family: 'Montserrat', sans-serif;
 }
 /* Banner */
 .banner {
@@ -172,12 +194,14 @@ const categorias = [
 
   .card {
     padding: 12px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
   }
 
   .card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
   }
 
   .name {
