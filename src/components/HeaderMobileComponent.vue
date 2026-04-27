@@ -46,7 +46,7 @@ function goHome() {
         class="headermobile-button"
         @click="openMenu"
       >
-        <span class="material-symbols-outlined1">
+        <span class="material-symbols-outlined">
           menu
         </span>
       </button>
