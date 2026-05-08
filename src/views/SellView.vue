@@ -2,166 +2,167 @@
 import { ref } from 'vue'
 import '../css/sell.css'
 
-type FormPeca = {
-    titulo: string
-    descricao: string
-    preco: string
-    condicao: string
-    foto: File | null
-}
-
-type ResultadoScanner = {
-    aprovado: boolean
-    condicao: string
-    score: number
-    detalhes: string
-}
-
 const fileInput = ref<HTMLInputElement | null>(null)
-const preview = ref<string>('')
-const analisando = ref(false)
-const podePublicar = ref(false)
-const erroScanner = ref('')
-const resultadoIA = ref<ResultadoScanner | null>(null)
+const preview = ref('')
 
-const form = ref<FormPeca>({
-    titulo: '',
-    descricao: '',
-    preco: '',
-    condicao: '',
-    foto: null
+const form = ref({
+  titulo: '',
+  descricao: '',
+  preco: '',
+  condicao: '',
+  marca: '',
+  foto: null as File | null,
 })
 
 const abrirGaleria = () => {
-    fileInput.value?.click()
+  fileInput.value?.click()
 }
 
-const previewImagem = async (event: Event) => {
-    const target = event.target as HTMLInputElement
-    const file = target.files?.[0]
+const previewImagem = (event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
 
-    if (!file) return
-
-    erroScanner.value = ''
-    resultadoIA.value = null
-    podePublicar.value = false
-
-    form.value.foto = file
-    preview.value = URL.createObjectURL(file)
-
-    await analisarRoupaIA(file)
+  form.value.foto = file
+  preview.value = URL.createObjectURL(file)
 }
 
-const analisarRoupaIA = async (foto: File) => {
-    try {
-        analisando.value = true
+const publicarPeca = async () => {
+  if (!form.value.titulo || !form.value.preco || !form.value.condicao) {
+    alert('Preencha os campos obrigatórios')
+    return
+  }
 
-        const formData = new FormData()
-        formData.append('foto', foto)
+  try {
+    let imagemUrl = ''
 
-        const response = await fetch('http://localhost:8000/api/scanner/', {
-            method: 'POST',
-            body: formData
-        })
-
-        if (!response.ok) {
-            throw new Error('Erro ao analisar a imagem')
-        }
-
-        const data: ResultadoScanner = await response.json()
-
-        resultadoIA.value = data
-        form.value.condicao = data.condicao
-        podePublicar.value = data.aprovado
-    } catch (error) {
-        erroScanner.value = 'Não foi possível analisar a imagem.'
-        podePublicar.value = false
-        console.error(error)
-    } finally {
-        analisando.value = false
+    // 1️⃣ Upload da imagem
+    if (form.value.foto) {
+      imagemUrl = await uploadImagem(form.value.foto)
     }
+
+    // 2️⃣ Criar produto
+    const formData = new FormData()
+
+    formData.append('nome', form.value.titulo)
+    formData.append('descricao', form.value.descricao)
+    formData.append('preco', form.value.preco)
+    formData.append('condicao', form.value.condicao)
+    formData.append('marca', form.value.marca)
+
+    if (imagemUrl) {
+      formData.append('imagem_url', imagemUrl)
+    }
+
+    const res = await fetch('http://localhost:8000/api/produtos/', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!res.ok) {
+      const err = await res.json()
+      console.error('ERRO PRODUTO:', err)
+      throw new Error()
+    }
+
+    alert('Produto publicado com sucesso!')
+
+    // reset
+    form.value = {
+      titulo: '',
+      descricao: '',
+      preco: '',
+      condicao: '',
+      marca: '',
+      foto: null,
+    }
+
+    preview.value = ''
+  } catch (e) {
+    console.error(e)
+    alert('Erro ao publicar o produto.')
+  }
 }
 
-const publicarPeca = () => {
-    if (!podePublicar.value) return
+const uploadImagem = async (file: File) => {
+  const formData = new FormData()
+  formData.append('file', file)
 
-    console.log('Peça aprovada para venda:', form.value)
+  const res = await fetch('http://localhost:8000/api/media/images/', {
+    method: 'POST',
+    body: formData,
+  })
+
+  if (!res.ok) {
+    const err = await res.json()
+    console.error('ERRO UPLOAD:', err)
+    throw new Error('Erro no upload da imagem')
+  }
+
+  const data = await res.json()
+
+  console.log('UPLOAD OK:', data)
+
+  return data.file
 }
 </script>
 
 <template>
-    <div class="sell-page">
-        <header class="top-bar">
-            <button class="back-btn" @click="$router.back()">←</button>
-            <h1>VENDER</h1>
-        </header>
+  <div class="sell-page">
+    <header class="top-bar">
+      <button class="back-btn" @click="$router.back()">←</button>
+      <h1>VENDER</h1>
+    </header>
 
-        <form class="sell-form" @submit.prevent="publicarPeca">
-            <div class="field-group">
-                <label>NOME DO PRODUTO</label>
-                <input v-model="form.titulo" type="text" />
-            </div>
+    <form class="sell-form" @submit.prevent="publicarPeca">
+      <div class="field-group">
+        <label>NOME DO PRODUTO</label>
+        <input v-model="form.titulo" type="text" />
+      </div>
 
-            <div class="field-group">
-                <label>DESCRIÇÃO</label>
-                <textarea v-model="form.descricao"></textarea>
-            </div>
+      <div class="field-group">
+        <label>MARCA</label>
+        <input v-model="form.marca" type="text" />
+      </div>
 
-            <div class="field-group">
-                <label>PREÇO</label>
-                <input v-model="form.preco" type="text" />
-            </div>
+      <div class="field-group">
+        <label>DESCRIÇÃO</label>
+        <textarea v-model="form.descricao"></textarea>
+      </div>
 
-            <div class="field-group">
-                <label>CONDIÇÃO</label>
-                <input v-model="form.condicao" type="text" readonly />
-            </div>
+      <div class="field-group">
+        <label>PREÇO</label>
+        <input v-model="form.preco" type="number" step="0.01" />
+      </div>
 
-            <div class="field-group photos">
-                <label>FOTOS</label>
+      <div class="field-group">
+        <label>CONDIÇÃO</label>
+        <select v-model="form.condicao">
+          <option value="">Selecione</option>
+          <option value="novo">Novo</option>
+          <option value="seminovo">Seminovo</option>
+          <option value="usado">Usado</option>
+        </select>
+      </div>
 
-                <div class="photo-tips">
-                    <p>Dicas para melhor avaliação da IA:</p>
-                    <ul>
-                        <li>Prefira a roupa vestida em alguém</li>
-                        <li>Use fundo branco ou neutro</li>
-                        <li>Boa iluminação</li>
-                        <li>Mostre frente, costas e detalhes</li>
-                        <li>Evite fotos tremidas</li>
-                    </ul>
-                </div>
+      <div class="field-group photos">
+        <label>FOTOS</label>
 
-                <button type="button" class="icon-btn" @click="abrirGaleria">
-                    Escolher foto
-                </button>
+        <button type="button" class="icon-btn" @click="abrirGaleria">Escolher foto</button>
 
-                <input ref="fileInput" type="file" accept="image/*" capture="environment" class="hidden-input"
-                    @change="previewImagem" />
+        <input
+          ref="fileInput"
+          type="file"
+          accept="image/*"
+          class="hidden-input"
+          @change="previewImagem"
+        />
 
-                <div v-if="preview" class="preview-box">
-                    <img :src="preview" alt="Preview" />
-                </div>
+        <div v-if="preview" class="preview-box">
+          <img :src="preview" alt="Preview" />
+        </div>
+      </div>
 
-                <div v-if="analisando" class="scanner-status">
-                    🔍 Analisando imagem...
-                </div>
-
-                <div v-if="resultadoIA" class="scanner-result">
-                    <p><strong>Condição:</strong> {{ resultadoIA.condicao }}</p>
-                    <p><strong>Score:</strong> ⭐ {{ resultadoIA.score }}%</p>
-                    <p>{{ resultadoIA.detalhes }}</p>
-                </div>
-
-                <div v-if="erroScanner" class="scanner-error">
-                    {{ erroScanner }}
-                </div>
-            </div>
-            <p v-if="resultadoIA && !podePublicar" class="scanner-error">
-                A peça não atingiu a qualidade mínima para venda.
-            </p>
-            <button class="publish-btn" type="submit" :disabled="!podePublicar || analisando">
-                Publicar
-            </button>
-        </form>
-    </div>
+      <button class="publish-btn" type="submit">Publicar</button>
+    </form>
+  </div>
 </template>
