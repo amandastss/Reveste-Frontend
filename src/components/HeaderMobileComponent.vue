@@ -3,6 +3,7 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
+/* emit para abrir o menu lateral */
 const emit = defineEmits(['open-menu'])
 
 interface MenuItem {
@@ -16,14 +17,17 @@ const items: MenuItem[] = [
   { aria: 'Carrinho', icon: 'shopping_cart', route: '/carrinho' },
 ]
 
+/* abrir sidebar */
 function openMenu() {
   emit('open-menu')
 }
 
+/* navegação normal */
 function handleClick(item: MenuItem) {
   router.push(item.route)
 }
 
+/* voltar para home */
 function goHome() {
   router.push('/')
 }
@@ -37,7 +41,7 @@ function goHome() {
         class="headermobile-button"
         @click="openMenu"
       >
-        <span class="material-symbols-outlined1">
+        <span class="material-symbols-outlined">
           menu
         </span>
       </button>
@@ -83,7 +87,7 @@ function goHome() {
   position: relative;
 }
 
-/*LADOS */
+/*LADOS*/
 .left {
   display: flex;
 }
@@ -93,7 +97,7 @@ function goHome() {
   gap: 10px;
 }
 
-/*LOGO / TÍTULO */
+/*LOGO / TÍTULO*/
 .title-button {
   all: unset;
   cursor: pointer;
@@ -116,7 +120,7 @@ function goHome() {
   letter-spacing: 1px;
 }
 
-/*BOTÕES */
+/*BOTÕES*/
 .headermobile-button {
   background: transparent;
   border: none;
@@ -125,7 +129,7 @@ function goHome() {
   padding: 4px 0 0 15px;
 }
 
-/*ÍCONES */
+/*ÍCONES*/
 .material-symbols-outlined {
   font-size: 20px;
   color: black;
@@ -136,7 +140,7 @@ function goHome() {
   color: black;
 }
 
-/*DESKTOP */
+/*DESKTOP*/
 @media (min-width: 768px) {
   .header-mobile {
     display: none;
