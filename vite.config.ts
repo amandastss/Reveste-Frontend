@@ -1,60 +1,44 @@
-import { fileURLToPath, URL } from 'node:url'
-
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
 import { VitePWA } from 'vite-plugin-pwa'
+import path from 'path'
 
 export default defineConfig({
   plugins: [
     vue(),
-    vueDevTools(),
 
     VitePWA({
       registerType: 'autoUpdate',
 
       manifest: {
-        id: 'com.brecho.app',
-        name: 'Brechó Online',
-        short_name: 'Brechó',
-        description: 'Compre e venda roupas e acessórios de segunda mão',
+        id: 'com.reveste-pwa',
+        name: 'ReVeste',
+        short_name: 'ReVeste',
+        description: 'Brechó Digital',
 
-        theme_color: '#111111',          // preto elegante
-        background_color: '#f6f6f6',     // mesmo fundo do teu layout
-
+        theme_color: '#000000',
+        background_color: '#ffffff',
         display: 'standalone',
-        scope: '/',
-        start_url: '/auth/email',
 
         icons: [
           {
-            src: '/icons/icon-192x192.png',
+            src: '/icon-192.png',
             sizes: '192x192',
-            type: 'image/png',
+            type: 'image/png'
           },
           {
-            src: '/icons/icon-512x512.png',
+            src: '/icon-512.png',
             sizes: '512x512',
-            type: 'image/png',
-          },
-          {
-            src: '/icons/icon-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable',
+            type: 'image/png'
           }
         ]
-      },
-
-      devOptions: {
-        enabled: true
       }
     })
   ],
 
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': path.resolve(__dirname, './src')
     }
   }
 })
