@@ -9,12 +9,10 @@ const emit = defineEmits(['close-menu'])
 
 const openSections = ref<string[]>([])
 
-/* fechar menu */
 function closeMenu() {
   emit('close-menu')
 }
 
-/* abrir/fechar submenu */
 function toggleSection(section: string) {
   if (openSections.value.includes(section)) {
     openSections.value = openSections.value.filter(
@@ -25,7 +23,6 @@ function toggleSection(section: string) {
   }
 }
 
-/* trava scroll quando menu abre */
 watch(
   () => props.isOpen,
   (value) => {
@@ -143,9 +140,7 @@ watch(
 </template>
 
 <style scoped>
-/* =========================
-   OVERLAY
-========================= */
+/*OVERLAY */
 .overlay {
   position: fixed;
   inset: 0;
@@ -158,7 +153,6 @@ watch(
   align-items: stretch;
 }
 
-/* animação overlay */
 .overlay-fade-enter-active,
 .overlay-fade-leave-active {
   transition: opacity 0.25s ease;
@@ -169,9 +163,7 @@ watch(
   opacity: 0;
 }
 
-/* =========================
-   SIDEBAR
-========================= */
+/*SIDEBAR */
 .menu-container {
   width: 82%;
   max-width: 320px;
@@ -191,7 +183,6 @@ watch(
   animation: slideIn 0.25s ease;
 }
 
-/* animação lateral */
 @keyframes slideIn {
   from {
     transform: translateX(-100%);
@@ -202,9 +193,7 @@ watch(
   }
 }
 
-/* =========================
-   BOTÃO FECHAR
-========================= */
+/*BOTÃO FECHAR */
 .close-button {
   background: transparent;
   border: none;
@@ -214,9 +203,7 @@ watch(
   margin-bottom: 20px;
 }
 
-/* =========================
-   TEXTOS
-========================= */
+/*TEXTOS */
 .menu-title {
   font-size: 13px;
   color: #888;
@@ -230,9 +217,7 @@ watch(
   cursor: pointer;
 }
 
-/* =========================
-   ITENS
-========================= */
+/*ITENS */
 .menu-item {
   display: flex;
   justify-content: space-between;
@@ -249,9 +234,7 @@ watch(
   opacity: 0.75;
 }
 
-/* =========================
-   SUBMENU
-========================= */
+/*SUBMENU */
 .submenu {
   padding: 10px 0 10px 12px;
   color: #bdbdbd;
@@ -263,9 +246,7 @@ watch(
   cursor: pointer;
 }
 
-/* =========================
-   ANIMAÇÃO SUBMENU
-========================= */
+/*ANIMAÇÃO SUBMENU */
 .fade-enter-active,
 .fade-leave-active {
   transition: all 0.2s ease;
@@ -277,9 +258,7 @@ watch(
   transform: translateY(-6px);
 }
 
-/* =========================
-   DESKTOP
-========================= */
+/*DESKTOP */
 @media (min-width: 768px) {
   .menu-container {
     width: 320px;

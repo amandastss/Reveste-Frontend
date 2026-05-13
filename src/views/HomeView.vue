@@ -32,7 +32,7 @@ const categorias = [
 const fetchProdutos = async () => {
   try {
     const response = await axios.get('http://127.0.0.1:8000/api/produtos/')
-    produtos.value = response.data.results // 💥 AQUI
+    produtos.value = response.data.results 
   } catch (error) {
     console.error('Erro ao buscar produtos:', error)
   }

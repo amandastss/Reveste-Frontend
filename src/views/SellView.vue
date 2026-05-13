@@ -35,12 +35,12 @@ const publicarPeca = async () => {
   try {
     let imagemUrl = ''
 
-    // 1️⃣ Upload da imagem
+    // Upload da imagem
     if (form.value.foto) {
       imagemUrl = await uploadImagem(form.value.foto)
     }
 
-    // 2️⃣ Criar produto
+    // Criar produto
     const formData = new FormData()
 
     formData.append('nome', form.value.titulo)

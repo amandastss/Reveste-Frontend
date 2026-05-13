@@ -2,17 +2,17 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-// ✅ router
+// router
 const router = useRouter()
 
-// ✅ tipagem
+// tipagem
 type Pergunta = {
   pergunta: string
   resposta: string
   avaliacao: 'sim' | 'nao' | null
 }
 
-// ✅ estado
+// estado
 const aberto = ref<number | null>(null)
 
 const perguntas = ref<Pergunta[]>([
@@ -33,12 +33,12 @@ const perguntas = ref<Pergunta[]>([
   }
 ])
 
-// ✅ abrir/fechar
+// abrir/fechar
 function toggle(index: number) {
   aberto.value = aberto.value === index ? null : index
 }
 
-// ✅ avaliar (sem erro TS)
+// avaliar (sem erro TS)
 function avaliar(index: number, tipo: 'sim' | 'nao') {
   const item = perguntas.value[index]
   if (item) {
@@ -46,7 +46,7 @@ function avaliar(index: number, tipo: 'sim' | 'nao') {
   }
 }
 
-// ✅ voltar
+// voltar
 function voltar() {
   router.back()
 }
@@ -90,7 +90,6 @@ function voltar() {
 
             <div class="botoes">
 
-              <!-- 👎 NÃO -->
               <button
                 @click="avaliar(index, 'nao')"
                 :class="{ nao: item.avaliacao === 'nao' }"
@@ -100,7 +99,6 @@ function voltar() {
                 </span>
               </button>
 
-              <!-- 👍 SIM -->
               <button
                 @click="avaliar(index, 'sim')"
                 :class="{ sim: item.avaliacao === 'sim' }"
@@ -113,7 +111,6 @@ function voltar() {
             </div>
           </div>
 
-          <!-- FEEDBACK SE NÃO -->
           <div v-if="item.avaliacao === 'nao'" class="feedback">
             <span class="material-symbols-outlined icone-triste">
               sentiment_dissatisfied
@@ -209,7 +206,6 @@ function voltar() {
   transition: 0.2s;
 }
 
-/* 👍 SIM */
 .botoes button.sim {
   background: #e6f4ea;
 }
@@ -218,7 +214,6 @@ function voltar() {
   color: #2e7d32;
 }
 
-/* 👎 NÃO */
 .botoes button.nao {
   background: #fdecea;
 }
