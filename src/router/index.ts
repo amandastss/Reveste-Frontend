@@ -13,6 +13,8 @@ import RegisterView from '../views/auth/RegisterView.vue'
 import ForgotPasswordView from '../views/auth/ForgotPasswordView.vue'
 import ResetPasswordView from '../views/auth/ResetPasswordView.vue'
 import VerifyCodeView from '../views/auth/VerifyCodeView.vue'
+import PedidosView from '../views/PedidosView.vue';
+import PedidoDetalheView from '../views/PedidoDetalheView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -82,6 +84,15 @@ const router = createRouter({
       name: 'auth-verify-code',
       component: VerifyCodeView,
     },
+    {
+    path: '/pedidos',
+    component: PedidosView,
+  },
+
+  {
+    path: '/pedido/:id',
+    component: PedidoDetalheView,
+  },
   ],
 })
 

@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const props = defineProps<{
   isOpen: boolean
@@ -12,6 +15,12 @@ const openSections = ref<string[]>([])
 /* fechar menu */
 function closeMenu() {
   emit('close-menu')
+}
+
+/* navegar para login */
+function goToLogin() {
+  closeMenu()
+  router.push('/auth/email')
 }
 
 /* abrir/fechar submenu */
@@ -59,7 +68,7 @@ watch(
           <p class="menu-title">menu</p>
 
           <div class="menu-content">
-            <p class="login">Entrar</p>
+            <button class="login" @click="goToLogin">Entrar</button>
 
             <!-- masculino -->
             <div
@@ -228,6 +237,11 @@ watch(
   margin-bottom: 28px;
   font-size: 15px;
   cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font-family: inherit;
 }
 
 /* =========================
