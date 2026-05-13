@@ -4,7 +4,6 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import authApi from '../../api/authApi'
 
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faEnvelope } from '@fortawesome/free-regular-svg-icons'
 import { faFacebookF, faGoogle, faApple } from '@fortawesome/free-brands-svg-icons'
 
@@ -45,7 +44,7 @@ async function next() {
 
       <div class="input">
         <span class="icon">
-          <FontAwesomeIcon :icon="faEnvelope" />
+          <font-awesome-icon :icon="faEnvelope" />
         </span>
 
         <input v-model="email" type="email" placeholder="seu e-mail" />
@@ -61,15 +60,15 @@ async function next() {
 
       <div class="social-icons">
         <div class="circle fb">
-          <FontAwesomeIcon :icon="faFacebookF" />
+          <font-awesome-icon :icon="faFacebookF" />
         </div>
 
         <div class="circle google">
-          <FontAwesomeIcon :icon="faGoogle" />
+          <font-awesome-icon :icon="faGoogle" />
         </div>
 
         <div class="circle apple">
-          <FontAwesomeIcon :icon="faApple" />
+          <font-awesome-icon :icon="faApple" />
         </div>
       </div>
     </div>
