@@ -23,19 +23,16 @@ async function login() {
   if (!password.value) return
 
   try {
-    if (isLogin.value) {
-      // Login - email já existe
-      const res = await authApi.login(email.value, password.value)
-      localStorage.setItem('user', JSON.stringify(res.data))
-      localStorage.setItem('token', res.data.token)
-    } else {
-      // Registro - email novo
-      const res = await authApi.register(email.value, password.value)
-      localStorage.setItem('user', JSON.stringify(res.data))
-      localStorage.setItem('token', res.data.token)
+    if (!isLogin.value) {
+      router.push('/auth/register')
+      return
     }
 
-    router.push('/home')
+    // Login - email já existe
+    const res = await authApi.login(email.value, password.value)
+    localStorage.setItem('user', JSON.stringify(res.data))
+    localStorage.setItem('token', res.data.token)
+    router.push('/')
 
   } catch (err) {
     alert('Erro ao autenticar: ' + (err.response?.data?.message || 'Tente novamente'))

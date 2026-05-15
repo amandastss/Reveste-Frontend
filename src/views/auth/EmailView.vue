@@ -22,14 +22,19 @@ async function next() {
 
     localStorage.setItem('email', email.value)
     localStorage.setItem('isLogin', emailExists ? 'true' : 'false')
+
+    if (emailExists) {
+      router.push('/auth/password')
+    } else {
+      router.push('/auth/register')
+    }
   } catch (err) {
     console.log('Erro ao verificar email:', err)
     // Se falhar a verificação, assume que é novo usuário
     localStorage.setItem('email', email.value)
     localStorage.setItem('isLogin', 'false')
+    router.push('/auth/register')
   }
-
-  router.push('/auth/password')
 }
 </script>
 <template>
