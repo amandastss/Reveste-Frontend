@@ -42,7 +42,6 @@
   align-items: center;
 }
 
-/* bolinha */
 .icon-circle {
   width: 60px;
   height: 60px;
@@ -54,24 +53,20 @@
   justify-content: center;
 }
 
-/* ícone menor */
 .filters .icon-circle .material-icons {
   font-size:30px;
 }
 
-/* texto */
 .filters button span:last-child {
   font-size: 14px;
   color: #333;
 }
 
-/* ativo */
 .filters button.active .icon-circle {
   border: 1px solid #000;
   background: #fff;
 }
 
-/* estado ativo (opcional, se quiser igual app real) */
 .filters button.active .icon-circle {
   border: 1px solid #000;
   background: #fff;
@@ -101,7 +96,7 @@
   color: #333;
 }
 
-/* BOTÃO LIMPAR (X) */
+/* BOTÃO LIMPAR */
 .recente-item button {
   background: none;
   border: none;

@@ -93,6 +93,14 @@ const router = createRouter({
     path: '/pedido/:id',
     component: PedidoDetalheView,
   },
+  {
+  path: '/suporte',
+  component: () => import('@/views/SuporteView.vue')
+},
+{
+  path: '/suporte/categoria',
+  component: () => import('@/views/CategoriaSuporteView.vue')
+}
   ],
 })
 
