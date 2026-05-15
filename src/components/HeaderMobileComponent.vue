@@ -111,13 +111,12 @@ function goHome() {
   font-weight: 540;
   color: black;
 
-  transition: opacity 0.2s ease,
-              letter-spacing 0.2s ease;
+  transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
-.title-button:hover {
+.title-button:active {
+  transform: translateX(-50%) scale(0.96);
   opacity: 0.7;
-  letter-spacing: 1px;
 }
 
 /*BOTÕES*/
