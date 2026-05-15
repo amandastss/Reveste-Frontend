@@ -1,0 +1,56 @@
+.menu-button {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1100;
+  background: transparent;
+  border: none;
+  font-size: 30px;
+  cursor: pointer;
+  color: #000;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 998;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -280px;
+  width: 280px;
+  height: 100vh;
+  background: #000;
+  z-index: 999;
+  transition: 0.3s ease;
+  padding: 30px;
+  box-sizing: border-box;
+}
+
+.sidebar.open {
+  left: 0;
+}
+
+.sidebar-content {
+  margin-top: 60px;
+}
+
+.login {
+  color: white;
+  font-size: 20px;
+  margin-bottom: 50px;
+  cursor: pointer;
+}
+
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  font-size: 20px;
+  margin-bottom: 40px;
+  cursor: pointer;
+}

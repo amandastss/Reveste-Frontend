@@ -36,7 +36,7 @@ function goToSell() {
 <template>
   <footer class="app-footer">
     
-    <!-- MENU QUE ABRE -->
+    <!-- MENU -->
     <div v-if="showMenu" class="floating-menu">
       <button class="sell-button" @click="goToSell">
         Vender
@@ -104,7 +104,7 @@ function goToSell() {
   color: #000;
 }
 
-/* MENU QUE SOBE */
+/* MENU */
 .floating-menu {
   position: absolute;
   bottom: 80px;
@@ -124,7 +124,6 @@ function goToSell() {
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
-/* animaçãozinha pq a gente é chique */
 @keyframes fadeUp {
   from {
     opacity: 0;
@@ -136,7 +135,6 @@ function goToSell() {
   }
 }
 
-/* esconder no desktop */
 @media (min-width: 768px) {
   .app-footer {
     display: none;

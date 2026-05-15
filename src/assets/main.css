@@ -1,5 +1,10 @@
 @import './base.css';
 
+body {
+  font-family: "Manrope", sans-serif;
+  font-weight: normal;
+}
+
 #app {
   max-width: 1280px;
   margin: 0 auto;

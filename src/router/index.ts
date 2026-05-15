@@ -38,6 +38,14 @@ const router = createRouter({
   name: 'menu',
   component: MenuComponent,
   },
+  {
+  path: '/suporte',
+  component: () => import('@/views/SuporteView.vue')
+},
+{
+  path: '/suporte/categoria',
+  component: () => import('@/views/CategoriaSuporteView.vue')
+}
   ],
 
 })

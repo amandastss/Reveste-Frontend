@@ -1,201 +1,252 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue'
 
-const isOpen = ref(true); // controla abrir/fechar
-const openSections = ref<string[]>([]);
+const props = defineProps<{
+  isOpen: boolean
+}>()
+
+const emit = defineEmits(['close-menu'])
+
+const openSections = ref<string[]>([])
+
+function closeMenu() {
+  emit('close-menu')
+}
 
 function toggleSection(section: string) {
   if (openSections.value.includes(section)) {
-    openSections.value = openSections.value.filter(s => s !== section);
+    openSections.value = openSections.value.filter(
+      (item: string) => item !== section
+    )
   } else {
-    openSections.value.push(section);
+    openSections.value.push(section)
   }
 }
 
-function closeMenu() {
-  isOpen.value = false;
-}
+watch(
+  () => props.isOpen,
+  (value) => {
+    document.body.style.overflow = value ? 'hidden' : ''
+  }
+)
 </script>
 
 <template>
-  <div v-if="isOpen" class="overlay" @click="closeMenu">
+  <div>
+    <!-- overlay -->
+    <transition name="overlay-fade">
+      <div
+        v-if="props.isOpen"
+        class="overlay"
+        @click="closeMenu"
+      >
+        <!-- sidebar -->
+        <div
+          class="menu-container"
+          @click.stop
+        >
+          <!-- botão fechar -->
+          <button
+            class="close-button"
+            @click="closeMenu"
+          >
+            ✕
+          </button>
 
-    <div class="menu-container" @click.stop>
+          <p class="menu-title">menu</p>
 
-      <!-- BOTÃO FECHAR -->
-      <button class="close-button" @click="closeMenu">
-        ✕
-      </button>
+          <div class="menu-content">
+            <p class="login">Entrar</p>
 
-      <p class="menu-title">menu</p>
+            <!-- masculino -->
+            <div
+              class="menu-item"
+              @click="toggleSection('masculino')"
+            >
+              <span>Masculino</span>
+              <span>
+                {{
+                  openSections.includes('masculino')
+                    ? '−'
+                    : '+'
+                }}
+              </span>
+            </div>
 
-      <div class="menu-content">
+            <transition name="fade">
+              <div
+                v-if="openSections.includes('masculino')"
+                class="submenu"
+              >
+                <p>Camisetas</p>
+                <p>Calças</p>
+              </div>
+            </transition>
 
-        <p class="login">Entrar</p>
+            <!-- feminino -->
+            <div
+              class="menu-item"
+              @click="toggleSection('feminino')"
+            >
+              <span>Feminino</span>
+              <span>
+                {{
+                  openSections.includes('feminino')
+                    ? '−'
+                    : '+'
+                }}
+              </span>
+            </div>
 
-        <!-- MASCULINO -->
-        <div class="menu-item" @click="toggleSection('masculino')">
-          <span>Masculino</span>
-          <span>{{ openSections.includes('masculino') ? '−' : '+' }}</span>
-        </div>
+            <transition name="fade">
+              <div
+                v-if="openSections.includes('feminino')"
+                class="submenu"
+              >
+                <p>Vestidos</p>
+                <p>Saias</p>
+              </div>
+            </transition>
 
-        <transition name="fade">
-          <div v-if="openSections.includes('masculino')" class="submenu">
-            <p>Camisetas</p>
-            <p>Calças</p>
+            <!-- infantil -->
+            <div
+              class="menu-item"
+              @click="toggleSection('infantil')"
+            >
+              <span>Infantil</span>
+              <span>
+                {{
+                  openSections.includes('infantil')
+                    ? '−'
+                    : '+'
+                }}
+              </span>
+            </div>
+
+            <transition name="fade">
+              <div
+                v-if="openSections.includes('infantil')"
+                class="submenu"
+              >
+                <p>Meninos</p>
+                <p>Meninas</p>
+              </div>
+            </transition>
           </div>
-        </transition>
-
-        <!-- FEMININO -->
-        <div class="menu-item" @click="toggleSection('feminino')">
-          <span>Feminino</span>
-          <span>{{ openSections.includes('feminino') ? '−' : '+' }}</span>
         </div>
-
-        <transition name="fade">
-          <div v-if="openSections.includes('feminino')" class="submenu">
-            <p>Vestidos</p>
-            <p>Saias</p>
-          </div>
-        </transition>
-
-        <!-- INFANTIL -->
-        <div class="menu-item" @click="toggleSection('infantil')">
-          <span>Infantil</span>
-          <span>{{ openSections.includes('infantil') ? '−' : '+' }}</span>
-        </div>
-
-        <transition name="fade">
-          <div v-if="openSections.includes('infantil')" class="submenu">
-            <p>Meninos</p>
-            <p>Meninas</p>
-          </div>
-        </transition>
-
       </div>
-
-    </div>
-
+    </transition>
   </div>
 </template>
 
 <style scoped>
-/* =========================
-   OVERLAY (FUNDO ESCURO)
-========================= */
+/*OVERLAY */
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  z-index: 999;
+  z-index: 9999;
+
+  background: rgba(0, 0, 0, 0.35);
 
   display: flex;
+  justify-content: flex-start;
+  align-items: stretch;
 }
 
-/* animação do overlay */
-.overlay-enter-active,
-.overlay-leave-active {
+.overlay-fade-enter-active,
+.overlay-fade-leave-active {
   transition: opacity 0.25s ease;
 }
 
-.overlay-enter-from,
-.overlay-leave-to {
+.overlay-fade-enter-from,
+.overlay-fade-leave-to {
   opacity: 0;
 }
 
-/* =========================
-   MENU (SIDEBAR)
-========================= */
+/*SIDEBAR */
 .menu-container {
-  background: black;
+  width: 82%;
+  max-width: 320px;
+  height: 100vh;
+
+  background: #000;
   color: white;
 
-  width: 80%;
-  max-width: 320px;
-  height: 100%;
-  font-family: "Montserrat", sans-serif;
   padding: 20px;
+  box-sizing: border-box;
 
-  display: flex;
-  flex-direction: column;
+  font-family: "Montserrat", sans-serif;
 
-  /* IMPORTANTE: animação suave */
-  transform: translateX(0);
+  overflow-y: auto;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.25);
+
+  animation: slideIn 0.25s ease;
 }
 
-/* animação de ENTRADA/SAÍDA */
-.menu-slide-enter-active,
-.menu-slide-leave-active {
-  transition: transform 0.25s ease;
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
 }
 
-.menu-slide-enter-from,
-.menu-slide-leave-to {
-  transform: translateX(-100%);
-}
-
-/* =========================
-   BOTÃO FECHAR
-========================= */
+/*BOTÃO FECHAR */
 .close-button {
   background: transparent;
   border: none;
   color: white;
-  font-size: 22px;
-  margin-bottom: 20px;
+  font-size: 24px;
   cursor: pointer;
+  margin-bottom: 20px;
 }
 
-/* =========================
-   TEXTOS
-========================= */
+/*TEXTOS */
 .menu-title {
-  color: gray;
-  font-size: 14px;
+  font-size: 13px;
+  color: #888;
   margin-bottom: 20px;
+  text-transform: uppercase;
 }
 
 .login {
-  margin-bottom: 30px;
+  margin-bottom: 28px;
+  font-size: 15px;
+  cursor: pointer;
 }
 
-/* =========================
-   ITENS
-========================= */
+/*ITENS */
 .menu-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
 
   padding: 16px 0;
-  cursor: pointer;
+  border-bottom: 1px solid #1f1f1f;
 
-  border-bottom: 1px solid #222;
-  transition: opacity 0.2s ease;
+  cursor: pointer;
+  transition: 0.2s;
 }
 
 .menu-item:hover {
-  opacity: 0.7;
+  opacity: 0.75;
 }
 
-/* =========================
-   SUBMENU
-========================= */
+/*SUBMENU */
 .submenu {
-  padding-left: 10px;
-  color: #bbb;
+  padding: 10px 0 10px 12px;
+  color: #bdbdbd;
   font-size: 14px;
 }
 
-/* itens do submenu */
 .submenu p {
   margin: 10px 0;
   cursor: pointer;
 }
 
-/* =========================
-   ANIMAÇÃO SUBMENU
-========================= */
+/*ANIMAÇÃO SUBMENU */
 .fade-enter-active,
 .fade-leave-active {
   transition: all 0.2s ease;
@@ -207,12 +258,10 @@ function closeMenu() {
   transform: translateY(-6px);
 }
 
-/* =========================
-   DESKTOP (RESPONSIVO)
-========================= */
+/*DESKTOP */
 @media (min-width: 768px) {
   .menu-container {
-    width: 300px;
+    width: 320px;
   }
 }
 </style>
