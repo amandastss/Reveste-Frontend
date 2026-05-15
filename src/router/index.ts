@@ -5,6 +5,8 @@ import SearchView from '../views/SearchView.vue'
 import SellView from '../views/SellView.vue'
 import ProfleView from '../views/ProfileView.vue'
 import MenuComponent from '@/components/MenuComponent.vue'
+import LoginView from '@/views/LoginView.vue'
+import LoginForm from '@/views/LoginForm.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -34,8 +36,15 @@ const router = createRouter({
   name: 'Menu',
   component: MenuComponent,
   },
+  {
+    path: '/login',
+    component: LoginView
+  },
+  {
+    path: '/login-form',
+    component: LoginForm
+  },
   ],
-
 })
 
 export default router
