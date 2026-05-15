@@ -19,7 +19,7 @@ const navItems: NavItem[] = [
 
 const rightItems: NavItem[] = [
   { aria: 'Notificações', icon: 'notifications', route: '/notificacoes' },
-  { aria: 'Carrinho', icon: 'shopping_cart', route: '/carrinho' },
+  { aria: 'Carrinho', icon: 'shopping_cart', route: '/cart' },
   { aria: 'Perfil', icon: 'person', route: '/perfil' },
 ];
 

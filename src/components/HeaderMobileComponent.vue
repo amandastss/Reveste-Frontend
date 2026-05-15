@@ -19,7 +19,7 @@ e não navega para /menu
 */
 const items: MenuItem[] = [
   { aria: 'Notificações', icon: 'notifications', route: '/notificacoes' },
-  { aria: 'Carrinho', icon: 'shopping_cart', route: '/carrinho' },
+  { aria: 'Carrinho', icon: 'shopping_cart', route: '/cart' },
 ]
 
 /* abrir sidebar */
