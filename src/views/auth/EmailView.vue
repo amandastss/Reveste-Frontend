@@ -15,25 +15,20 @@ const isValid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value))
 async function next() {
   if (!isValid.value) return
 
+  localStorage.setItem('email', email.value)
+
   try {
-    // Verifica se email existe
     const response = await authApi.checkEmail(email.value)
     const emailExists = response.data.exists
 
-    localStorage.setItem('email', email.value)
     localStorage.setItem('isLogin', emailExists ? 'true' : 'false')
-
-    if (emailExists) {
-      router.push('/auth/password')
-    } else {
-      router.push('/auth/register')
-    }
+    router.push(emailExists ? '/auth/password' : '/auth/register')
   } catch (err) {
-    console.log('Erro ao verificar email:', err)
-    // Se falhar a verificação, assume que é novo usuário
-    localStorage.setItem('email', email.value)
-    localStorage.setItem('isLogin', 'false')
-    router.push('/auth/register')
+    console.error('Erro ao verificar email:', err)
+    const existingUser = JSON.parse(localStorage.getItem('user') || '{}')
+    const emailKnown = existingUser.email && existingUser.email.toLowerCase() === email.value.toLowerCase()
+    localStorage.setItem('isLogin', emailKnown ? 'true' : 'false')
+    router.push(emailKnown ? '/auth/password' : '/auth/register')
   }
 }
 </script>
@@ -139,9 +134,24 @@ async function next() {
   letter-spacing: 0.5px;
   transition: 0.2s ease;
 }
-.button.active {
+.button.active,
+.button.login {
   background: #000;
   color: #fff;
+}
+.button.register {
+  background: #fff;
+  color: #000;
+  border: 1px solid #000;
+}
+.choice-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.choice-box p {
+  margin-bottom: 8px;
+  color: #444;
 }
 .social {
   text-align: center;

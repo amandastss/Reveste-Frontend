@@ -31,15 +31,23 @@ async function login() {
     // Login - email já existe
     const res = await authApi.login(email.value, password.value)
     const existingUser = JSON.parse(localStorage.getItem('user') || '{}')
-    const mergedUser = {
-      ...existingUser,
-      ...res.data,
-      email: email.value,
-      name: existingUser.name || res.data.name || res.data.username || res.data.first_name || existingUser.name,
-      phone: existingUser.phone || res.data.phone,
-      photo: existingUser.photo || res.data.photo || res.data.avatar || res.data.image,
-      date_of_birth: existingUser.date_of_birth || res.data.date_of_birth || res.data.birthdate,
-    }
+    const currentEmail = email.value?.toLowerCase() || ''
+    const storedEmail = existingUser.email?.toLowerCase() || ''
+
+    const mergedUser = storedEmail === currentEmail
+      ? {
+          ...existingUser,
+          ...res.data,
+          email: email.value,
+          name: existingUser.name || res.data.name || res.data.username || res.data.first_name || undefined,
+          phone: existingUser.phone || res.data.phone,
+          photo: existingUser.photo || res.data.photo || res.data.avatar || res.data.image,
+          date_of_birth: existingUser.date_of_birth || res.data.date_of_birth || res.data.birthdate,
+        }
+      : {
+          ...res.data,
+          email: email.value,
+        }
 
     localStorage.setItem('user', JSON.stringify(mergedUser))
     localStorage.setItem('token', res.data.token)

@@ -68,9 +68,22 @@ function logout() {
           <span v-else>{{ profileName.charAt(0) || 'U' }}</span>
         </div>
         <h2>{{ profileName }}</h2>
-        <p v-if="profileEmail">{{ profileEmail }}</p>
-        <p v-if="user.phone">Telefone: {{ user.phone }}</p>
-        <p v-if="formattedBirthdate">Nascimento: {{ formattedBirthdate }}</p>
+      </div>
+
+      <div class="account-card">
+        <h3>Minha conta</h3>
+        <div class="account-row">
+          <span>Email</span>
+          <strong>{{ profileEmail }}</strong>
+        </div>
+        <div class="account-row" v-if="user.phone">
+          <span>Telefone</span>
+          <strong>{{ user.phone }}</strong>
+        </div>
+        <div class="account-row" v-if="formattedBirthdate">
+          <span>Data de nascimento</span>
+          <strong>{{ formattedBirthdate }}</strong>
+        </div>
       </div>
 
       <!-- MENU -->
@@ -132,6 +145,38 @@ function logout() {
   text-align: center;
   border-bottom-left-radius: 20px;
   border-bottom-right-radius: 20px;
+}
+
+.account-card {
+  background: white;
+  border-radius: 18px;
+  padding: 20px;
+  margin: 16px 0;
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.05);
+}
+
+.account-card h3 {
+  margin: 0 0 14px;
+  font-size: 18px;
+}
+
+.account-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-top: 1px solid #f0f0f0;
+}
+
+.account-row:first-of-type {
+  border-top: none;
+}
+
+.account-row span {
+  color: #666;
+}
+
+.account-row strong {
+  color: #111;
 }
 
 .avatar {
