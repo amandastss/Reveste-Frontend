@@ -16,7 +16,7 @@ const login = (email, password) => {
 }
 
 // registro
-const register = (email, name, password, role) => {
+const register = (email, name, password, role = 'buyer') => {
   return api.post('/api/registro/', { email, name, password, role })
 }
 

@@ -56,6 +56,7 @@ const router = createRouter({
     },
     {
       path: '/auth/email',
+      alias: '/auth-email',
       name: 'auth-email',
       component: EmailView,
     },

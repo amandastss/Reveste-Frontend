@@ -18,7 +18,7 @@ async function verify() {
     const finalCode = code.value.join('');
     await authApi.verifyCode(email, finalCode);
     localStorage.setItem('code', finalCode);
-    router.push('/auth/reset');
+    router.push('/auth/reset-password');
   } catch {
     alert('Código inválido');
   }

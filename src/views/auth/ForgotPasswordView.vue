@@ -9,7 +9,7 @@ const email = localStorage.getItem('email');
 async function send() {
   try {
     await authApi.requestPasswordReset(email);
-    router.push('/auth/verify');
+    router.push('/auth/verify-code');
   } catch {
     alert('Erro ao enviar código');
   }

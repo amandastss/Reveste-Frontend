@@ -1,7 +1,35 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const user = computed(() => {
+  try {
+    return JSON.parse(localStorage.getItem('user') || '{}')
+  } catch {
+    return {}
+  }
+})
+
+const profileName = computed(
+  () =>
+    user.value.name ||
+    user.value.username ||
+    user.value.first_name ||
+    user.value.full_name ||
+    'Usuário'
+)
+const profileEmail = computed(() => user.value.email || '')
+const profileRole = computed(() => {
+  if (user.value.role === 'seller') return 'Vendedor'
+  if (user.value.role === 'buyer') return 'Comprador'
+  return ''
+})
+const formattedBirthdate = computed(() => {
+  if (!user.value.date_of_birth) return ''
+  const date = new Date(user.value.date_of_birth)
+  return isNaN(date.getTime()) ? '' : date.toLocaleDateString('pt-BR')
+})
 
 const menuItems = [
   { label: 'Meus Pedidos', icon: 'inventory_2', route: '/pedidos' },
@@ -17,7 +45,11 @@ function goTo(route: string) {
 }
 
 function logout() {
-  console.log('Excluir conta')
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+  localStorage.removeItem('email')
+  localStorage.removeItem('isLogin')
+  router.push('/auth/email')
 }
 </script>
 
@@ -27,8 +59,18 @@ function logout() {
 
       <!-- HEADER -->
       <div class="profile-header">
-        <div class="avatar"></div>
-        <h2>Marina Sena</h2>
+        <div class="avatar">
+          <img
+            v-if="user.photo || user.avatar || user.image"
+            :src="user.photo || user.avatar || user.image"
+            alt="Foto de perfil"
+          />
+          <span v-else>{{ profileName.charAt(0) || 'U' }}</span>
+        </div>
+        <h2>{{ profileName }}</h2>
+        <p v-if="profileEmail">{{ profileEmail }}</p>
+        <p v-if="user.phone">Telefone: {{ user.phone }}</p>
+        <p v-if="formattedBirthdate">Nascimento: {{ formattedBirthdate }}</p>
       </div>
 
       <!-- MENU -->
@@ -98,6 +140,19 @@ function logout() {
   background: #ccc;
   border-radius: 50%;
   margin: 0 auto 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: #333;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 /* MENU */
