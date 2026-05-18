@@ -98,7 +98,7 @@ function checkout() {
             </div>
 
             <p class="price">
-              ${{ item.price }}
+              ${{ item.price * item.quantity }}
             </p>
           </div>
 
