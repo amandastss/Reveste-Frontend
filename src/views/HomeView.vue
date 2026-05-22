@@ -6,9 +6,7 @@ interface Produto {
   id: number
   nome: string
   preco: number
-  imagem?: {
-    url: string
-  }
+  imagem_url?: string | null
 }
 
 interface Categoria {
@@ -48,7 +46,6 @@ onMounted(() => {
 
 <template>
   <div class="home">
-
     <!-- Banner -->
     <div class="banner">
       <img src="/banner.jpg" alt="Promoção" />
@@ -57,11 +54,7 @@ onMounted(() => {
     <!-- Categorias -->
     <div class="categories">
       <div v-for="cat in categorias" :key="cat.id" class="item">
-
-        <img
-          class="circle"
-          :src="'http://127.0.0.1:8000' + cat.imagem_url"
-        />
+        <img class="circle" :src="'http://127.0.0.1:8000' + cat.imagem_url" />
 
         <span>{{ cat.nome }}</span>
       </div>
@@ -73,17 +66,13 @@ onMounted(() => {
 
       <div class="grid">
         <div class="card" v-for="p in produtos" :key="p.id">
-
-          <img
-            :src="p.imagem?.url || '/default.png'"
-          />
+         <img :src="p.imagem_url || '/default.png'" />
 
           <p class="name">{{ p.nome }}</p>
           <p class="price">R$ {{ p.preco }}</p>
         </div>
       </div>
     </div>
-
   </div>
 </template>
 
