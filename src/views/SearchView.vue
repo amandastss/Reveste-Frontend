@@ -1,23 +1,49 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
 
-const search = ref('');
+const search = ref('')
+const recentes = ref([])
 
-const categorias = [
-  { nome: 'Feminino' },
-  { nome: 'Masculino' },
-  { nome: 'Infantil' },
-];
+async function carregarHistorico() {
+  try {
+    const response = await axios.get(
+      'http://localhost:8000/search/'
+    )
 
-const recentes = ref([
-  'Jeans',
-  'sapatos',
-  'Cropped',
-  'Jaqueta'
-]);
+    recentes.value = response.data.map(
+      item => item.termo
+    )
 
-function remover(item) {
-  recentes.value = recentes.value.filter(i => i !== item);
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+onMounted(() => {
+  carregarHistorico()
+})
+
+async function salvarPesquisa() {
+
+  if (!search.value) return
+
+  try {
+
+    await axios.post(
+      'http://localhost:8000/search/',
+      {
+        termo: search.value
+      }
+    )
+
+    recentes.value.unshift(search.value)
+
+    search.value = ''
+
+  } catch (error) {
+    console.log(error)
+  }
 }
 </script>
 
@@ -27,11 +53,7 @@ function remover(item) {
     <div class="search-header">
       <span class="material-symbols-outlined back">arrow_back</span>
 
-      <input
-        v-model="search"
-        placeholder="Search..."
-        class="search-input"
-      />
+      <input v-model="search" @keyup.enter="salvarPesquisa" placeholder="Search..." class="search-input" />
 
       <span class="material-symbols-outlined camera">photo_camera</span>
     </div>
@@ -48,16 +70,9 @@ function remover(item) {
     <div class="recentes">
       <h3>Pesquisas recentes</h3>
 
-      <div
-        v-for="item in recentes"
-        :key="item"
-        class="recente-item"
-      >
+      <div v-for="item in recentes" :key="item" class="recente-item">
         <span>{{ item }}</span>
-        <span
-          class="material-symbols-outlined close"
-          @click="remover(item)"
-        >
+        <span class="material-symbols-outlined close" @click="remover(item)">
           close
         </span>
       </div>
@@ -91,7 +106,8 @@ function remover(item) {
   font-size: 14px;
 }
 
-.back, .camera {
+.back,
+.camera {
   font-size: 22px;
   color: #555;
 }

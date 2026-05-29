@@ -18,10 +18,7 @@ function handleClick(item) {
   <header class="header-mobile">
 
     <div class="left">
-      <button
-        class="headermobile-button"
-        @click="handleClick(items[0])"
-      >
+      <button class="headermobile-button" @click="handleClick(items[0])">
         <span class="material-symbols-outlined">
           {{ items[0].icon }}
         </span>
@@ -31,12 +28,8 @@ function handleClick(item) {
     <h1 class="title">ReVeste</h1>
 
     <div class="right">
-      <button
-        v-for="(item, index) in items.slice(1)"
-        :key="index"
-        class="headermobile-button"
-        @click="handleClick(item)"
-      >
+      <button v-for="(item, index) in items.slice(1)" :key="index" class="headermobile-button"
+        @click="handleClick(item)">
         <span class="material-symbols-outlined">
           {{ item.icon }}
         </span>
