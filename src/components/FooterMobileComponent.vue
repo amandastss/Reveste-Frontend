@@ -1,63 +1,45 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
-import { ref } from 'vue';
+import { useRouter } from 'vue-router'
+import { ref } from 'vue'
 
-const router = useRouter();
+const router = useRouter()
+
+const activeIndex = ref<number | null>(null)
 
 interface FooterItem {
-  aria: string;
-  icon: string;
-  route: string;
+  aria: string
+  icon: string
+  route: string
 }
-
-const showMenu = ref(false);
 
 const items: FooterItem[] = [
   { aria: 'Home', icon: 'home', route: '/' },
-  { aria: 'Mais', icon: 'add', route: '' },
+  { aria: 'Vender', icon: 'add', route: '/sell' },
   { aria: 'Perfil', icon: 'person', route: '/profile' },
-];
+]
 
-function handleClick(item: FooterItem) {
-  if (item.icon === 'add') {
-    showMenu.value = !showMenu.value;
-  } else {
-    router.push(item.route);
-    showMenu.value = false;
-  }
-}
-
-function goToSell() {
-  router.push('/sell');
-  showMenu.value = false;
+function handleClick(item: FooterItem, index: number) {
+  activeIndex.value = index
+  router.push(item.route)
 }
 </script>
 
 <template>
   <footer class="app-footer">
-    
-    <!-- MENU -->
-    <div v-if="showMenu" class="floating-menu">
-      <button class="sell-button" @click="goToSell">
-        Vender
-      </button>
-    </div>
-
-    <!-- NAV PRINCIPAL -->
     <div class="footer-nav">
       <button
         v-for="(item, index) in items"
         :key="index"
         class="footer-button"
+        :class="{ selected: activeIndex === index }"
         :aria-label="item.aria"
-        @click="handleClick(item)"
+        @click="handleClick(item, index)"
       >
         <span class="material-symbols-outlined">
           {{ item.icon }}
         </span>
       </button>
     </div>
-
   </footer>
 </template>
 
@@ -82,6 +64,7 @@ function goToSell() {
   align-items: center;
 }
 
+/* BOTÃO BASE */
 .footer-button {
   background: transparent;
   border: none;
@@ -93,48 +76,41 @@ function goToSell() {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+
+  transition: all 0.2s ease;
 }
 
 .footer-button:active {
-  background: rgba(0, 0, 0, 0.08);
+  transform: scale(0.92);
+  background: rgba(0, 0, 0, 0.06);
 }
 
+.footer-button.selected {
+  background: #f0f0f0;
+}
+
+/* ÍCONE */
 .material-symbols-outlined {
   font-size: 22px;
   color: #000;
+  transition: color 0.2s ease;
 }
 
-/* MENU */
-.floating-menu {
-  position: absolute;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  animation: fadeUp 0.2s ease;
-}
-
-.sell-button {
+/* BOTÃO DO MEIO (VENDER) */
+.footer-button:nth-child(2) {
   background: black;
+}
+
+.footer-button:nth-child(2) .material-symbols-outlined {
   color: white;
-  border: none;
-  padding: 12px 22px;
-  border-radius: 24px;
-  font-size: 14px;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translate(-50%, 10px);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
+.footer-button:nth-child(2):active {
+  transform: scale(0.95);
+  opacity: 0.9;
 }
 
+/* esconder no desktop */
 @media (min-width: 768px) {
   .app-footer {
     display: none;
