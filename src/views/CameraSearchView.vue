@@ -16,7 +16,6 @@ const resultados = ref<{
 }[]>([])
 
 const fileInput = ref<HTMLInputElement | null>(null)
-// 🔥 abre automaticamente baseado na escolha
 
 onMounted(() => {
   const tipo = route.query.tipo
@@ -83,7 +82,6 @@ function buscarSemelhantes() {
   ]
 }
 
-// voltar sempre funciona
 function voltar() {
   router.back()
 }
@@ -98,7 +96,7 @@ function voltar() {
       <p>PESQUISE PELA FOTO</p>
     </div>
 
-    <!-- INPUT escondido -->
+    <!-- INPUT -->
     <input
       ref="fileInput"
       type="file"
