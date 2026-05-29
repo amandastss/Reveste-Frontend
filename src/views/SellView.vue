@@ -7,10 +7,7 @@ type FormPeca = {
   descricao: string
   preco: string
   condicao: string
-<<<<<<< HEAD
-=======
   marca: string
->>>>>>> 16900ab1cfd88082b4d6241f92a6077610d90a2e
   foto: File | null
 }
 
@@ -33,12 +30,8 @@ const form = ref<FormPeca>({
   descricao: '',
   preco: '',
   condicao: '',
-<<<<<<< HEAD
-  foto: null
-=======
   marca: '',
   foto: null,
->>>>>>> 16900ab1cfd88082b4d6241f92a6077610d90a2e
 })
 
 const abrirGaleria = () => {
@@ -57,46 +50,6 @@ const previewImagem = async (event: Event) => {
 
   form.value.foto = file
   preview.value = URL.createObjectURL(file)
-
-<<<<<<< HEAD
-  await analisarRoupaIA(file)
-}
-
-const analisarRoupaIA = async (foto: File) => {
-  try {
-    analisando.value = true
-
-    const formData = new FormData()
-    formData.append('foto', foto)
-
-    const response = await fetch('http://localhost:8000/api/scanner/', {
-      method: 'POST',
-      body: formData
-    })
-
-    if (!response.ok) {
-      throw new Error('Erro ao analisar a imagem')
-    }
-
-    const data: ResultadoScanner = await response.json()
-
-    resultadoIA.value = data
-    form.value.condicao = data.condicao
-    podePublicar.value = data.aprovado
-  } catch (error) {
-    erroScanner.value = 'Não foi possível analisar a imagem.'
-    podePublicar.value = false
-    console.error(error)
-  } finally {
-    analisando.value = false
-  }
-}
-
-const publicarPeca = () => {
-  if (!podePublicar.value) return
-
-  console.log('Peça aprovada para venda:', form.value)
-=======
   await analisarRoupaIA()
 }
 
@@ -165,20 +118,13 @@ const publicarPeca = async () => {
     console.error(error)
     alert('Erro ao publicar produto.')
   }
->>>>>>> 16900ab1cfd88082b4d6241f92a6077610d90a2e
 }
 </script>
 
 <template>
   <div class="sell-page">
     <header class="top-bar">
-<<<<<<< HEAD
-      <button class="back-btn" @click="$router.back()">
-        ←
-      </button>
-=======
       <button class="back-btn" @click="$router.back()">←</button>
->>>>>>> 16900ab1cfd88082b4d6241f92a6077610d90a2e
 
       <h1>VENDER</h1>
     </header>
@@ -196,56 +142,6 @@ const publicarPeca = async () => {
 
       <div class="field-group">
         <label>PREÇO</label>
-<<<<<<< HEAD
-        <input v-model="form.preco" type="text" />
-      </div>
-
-      <div class="field-group">
-        <label>CONDIÇÃO</label>
-        <input v-model="form.condicao" type="text" readonly />
-      </div>
-
-      <div class="field-group photos">
-        <label>FOTOS</label>
-
-        <div class="photo-tips">
-          <p>Dicas para melhor avaliação da IA:</p>
-
-          <ul>
-            <li>Prefira a roupa vestida em alguém</li>
-            <li>Use fundo branco ou neutro</li>
-            <li>Boa iluminação</li>
-            <li>Mostre frente, costas e detalhes</li>
-            <li>Evite fotos tremidas</li>
-          </ul>
-        </div>
-
-        <button
-          type="button"
-          class="icon-btn"
-          @click="abrirGaleria"
-        >
-          Escolher foto
-        </button>
-
-        <input
-          ref="fileInput"
-          type="file"
-          accept="image/*"
-          capture="environment"
-          class="hidden-input"
-          @change="previewImagem"
-        />
-
-        <div v-if="preview" class="preview-box">
-          <img :src="preview" alt="Preview" />
-        </div>
-
-        <div v-if="analisando" class="scanner-status">
-          🔍 Analisando imagem...
-        </div>
-
-=======
         <input v-model="form.preco" type="number" min="0" step="0.01" />
       </div>
 
@@ -291,7 +187,6 @@ const publicarPeca = async () => {
 
         <div v-if="analisando" class="scanner-status">🔍 Analisando imagem...</div>
 
->>>>>>> 16900ab1cfd88082b4d6241f92a6077610d90a2e
         <div v-if="resultadoIA" class="scanner-result">
           <p>
             <strong>Condição:</strong>
@@ -310,28 +205,6 @@ const publicarPeca = async () => {
           {{ erroScanner }}
         </div>
       </div>
-
-<<<<<<< HEAD
-      <p
-        v-if="resultadoIA && !podePublicar"
-        class="scanner-error"
-      >
-        A peça não atingiu a qualidade mínima para venda.
-      </p>
-    </form>
-
-    <div class="publish-wrapper">
-      <button
-        class="publish-btn"
-        type="submit"
-        :disabled="!podePublicar || analisando"
-      >
-        Publicar
-      </button>
-    </div>
-  </div>
-</template>
-=======
       <p v-if="resultadoIA && !podePublicar" class="scanner-error">
         A peça não atingiu a qualidade mínima para venda.
       </p>
@@ -342,8 +215,5 @@ const publicarPeca = async () => {
       </button>
     </div>
     </form>
-
-    
   </div>
 </template>
->>>>>>> 16900ab1cfd88082b4d6241f92a6077610d90a2e

@@ -21,17 +21,10 @@ const categorias = ref<Categoria[]>([])
 // PRODUTOS
 const fetchProdutos = async () => {
   try {
-<<<<<<< HEAD
-    const response = await axios.get('http://127.0.0.1:8000/api/produtos/')
-    produtos.value = response.data.results
-  } catch (error) {
-    console.error('Erro ao buscar produtos:', error)
-=======
     const res = await axios.get('http://127.0.0.1:8000/api/produtos/')
     produtos.value = res.data.results
   } catch (err) {
     console.error(err)
->>>>>>> 16900ab1cfd88082b4d6241f92a6077610d90a2e
   }
 }
 

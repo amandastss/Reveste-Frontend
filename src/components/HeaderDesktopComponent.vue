@@ -19,13 +19,8 @@ const navItems: NavItem[] = [
 
 const rightItems: NavItem[] = [
   { aria: 'Notificações', icon: 'notifications', route: '/notificacoes' },
-<<<<<<< HEAD
-  { aria: 'Carrinho', icon: 'shopping_cart', route: '/cart' },
-  { aria: 'Perfil', icon: 'person', route: '/perfil' },
-=======
   { aria: 'Carrinho', icon: 'shopping_cart', route: '/carrinho' },
   { aria: 'Perfil', icon: 'person', route: '/profile' },
->>>>>>> 16900ab1cfd88082b4d6241f92a6077610d90a2e
 ];
 
 function handleNavClick(item: NavItem) {
