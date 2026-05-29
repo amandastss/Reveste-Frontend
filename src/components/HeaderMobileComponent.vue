@@ -12,11 +12,6 @@ interface MenuItem {
   route: string
 }
 
-/*
-removemos o route do menu,
-porque agora ele abre o sidebar
-e não navega para /menu
-*/
 const items: MenuItem[] = [
   { aria: 'Notificações', icon: 'notifications', route: '/notificacoes' },
   { aria: 'Carrinho', icon: 'shopping_cart', route: '/carrinho' },
@@ -79,9 +74,7 @@ function goHome() {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap');
 
-/* =========================
-   HEADER MOBILE
-========================= */
+/*HEADER MOBILE*/
 .header-mobile {
   display: flex;
   align-items: center;
@@ -94,9 +87,7 @@ function goHome() {
   position: relative;
 }
 
-/* =========================
-   LADOS
-========================= */
+/*LADOS*/
 .left {
   display: flex;
 }
@@ -106,9 +97,7 @@ function goHome() {
   gap: 10px;
 }
 
-/* =========================
-   LOGO / TÍTULO
-========================= */
+/*LOGO / TÍTULO*/
 .title-button {
   all: unset;
   cursor: pointer;
@@ -122,18 +111,15 @@ function goHome() {
   font-weight: 540;
   color: black;
 
-  transition: opacity 0.2s ease,
-              letter-spacing 0.2s ease;
+  transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
-.title-button:hover {
+.title-button:active {
+  transform: translateX(-50%) scale(0.96);
   opacity: 0.7;
-  letter-spacing: 1px;
 }
 
-/* =========================
-   BOTÕES
-========================= */
+/*BOTÕES*/
 .headermobile-button {
   background: transparent;
   border: none;
@@ -142,9 +128,7 @@ function goHome() {
   padding: 4px 0 0 15px;
 }
 
-/* =========================
-   ÍCONES
-========================= */
+/*ÍCONES*/
 .material-symbols-outlined {
   font-size: 20px;
   color: black;
@@ -155,9 +139,7 @@ function goHome() {
   color: black;
 }
 
-/* =========================
-   DESKTOP
-========================= */
+/*DESKTOP*/
 @media (min-width: 768px) {
   .header-mobile {
     display: none;
