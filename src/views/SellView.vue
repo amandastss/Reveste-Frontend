@@ -2,6 +2,11 @@
 import { ref } from 'vue'
 import '../css/sell.css'
 
+const estaLogado = () => {
+  return !!localStorage.getItem('token')
+}
+const mostrarLoginAviso = ref(false)
+
 type FormPeca = {
   titulo: string
   descricao: string
@@ -59,11 +64,11 @@ const analisarRoupaIA = async () => {
 
   setTimeout(() => {
     const fakeResultado: ResultadoScanner = {
-  aprovado: true,
-  condicao: 'seminovo',
-  score: 85,
-  detalhes: 'Peça em boas condições para venda.',
-}
+      aprovado: true,
+      condicao: 'seminovo',
+      score: 85,
+      detalhes: 'Peça em boas condições para venda.',
+    }
 
     resultadoIA.value = fakeResultado
     form.value.condicao = fakeResultado.condicao
@@ -73,6 +78,11 @@ const analisarRoupaIA = async () => {
 }
 
 const publicarPeca = async () => {
+  if (!estaLogado()) {
+    mostrarLoginAviso.value = true
+    return
+  }
+
   if (!podePublicar.value) return
 
   try {
@@ -124,6 +134,15 @@ const publicarPeca = async () => {
 
 <template>
   <div class="sell-page">
+    <div v-if="mostrarLoginAviso" class="overlay">
+  <div class="modal">
+    <h2>Ops!</h2>
+    <p>Você precisa estar logado para vender uma peça.</p>
+    <button @click="$router.push('/auth-email')">
+      Entrar / Criar conta
+    </button>
+  </div>
+</div>
     <header class="top-bar">
       <button class="back-btn" @click="$router.back()">←</button>
 
@@ -196,7 +215,7 @@ const publicarPeca = async () => {
 
           <p>
             <strong>Score:</strong>
-            ⭐ {{ resultadoIA.score }}%
+            {{ resultadoIA.score }}%
           </p>
 
           <p>{{ resultadoIA.detalhes }}</p>
@@ -212,12 +231,10 @@ const publicarPeca = async () => {
       </p>
 
       <div class="publish-wrapper">
-      <button class="publish-btn" type="submit" :disabled="!podePublicar || analisando">
-        Publicar
-      </button>
-    </div>
+        <button class="publish-btn" type="submit" :disabled="!podePublicar || analisando">
+          Publicar
+        </button>
+      </div>
     </form>
-
-    
   </div>
 </template>
