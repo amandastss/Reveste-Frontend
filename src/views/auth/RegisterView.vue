@@ -9,21 +9,22 @@ const email = ref(localStorage.getItem('email') || '')
 const password = ref('')
 const birthdate = ref('')
 const phone = ref('')
-const photo = ref('')
+const photo = ref<File | null>(null)
 const photoPreview = ref('')
 
-function handlePhotoChange(event) {
-  const file = event.target.files?.[0]
+function handlePhotoChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0] || null
+  photo.value = file
+
   if (!file) {
-    photo.value = ''
     photoPreview.value = ''
     return
   }
 
   const reader = new FileReader()
   reader.onload = () => {
-    photo.value = reader.result || ''
-    photoPreview.value = reader.result || ''
+    photoPreview.value = (reader.result as string) || ''
   }
   reader.readAsDataURL(file)
 }
@@ -35,31 +36,78 @@ async function register() {
   }
 
   try {
-    const response = await authApi.register(email.value, name.value, password.value)
+    const response = await authApi.register(
+      email.value,
+      name.value,
+      password.value,
+      'buyer',
+      phone.value,
+      birthdate.value,
+      photo.value ?? undefined,
+      undefined
+    )
+
+    const responseData = response.data || {}
     const userData = {
-      ...response.data,
+      ...responseData,
       name: name.value,
       email: email.value,
       phone: phone.value,
-      photo: photo.value,
+      photo: photoPreview.value,
       date_of_birth: birthdate.value,
     }
 
-    if (response?.data?.token) {
-      localStorage.setItem('user', JSON.stringify(userData))
-      localStorage.setItem('token', response.data.token)
-      localStorage.setItem('isLogin', 'true')
-      router.push('/')
+    localStorage.setItem('email', email.value)
+    localStorage.setItem('user', JSON.stringify(userData))
+
+    const token = typeof responseData.token === 'string' ? responseData.token : undefined
+    if (token) {
+      try { localStorage.setItem('token', token) } catch {}
+      try { localStorage.setItem('isLogin', 'true') } catch {}
+
+      try {
+        function extractCandidateId(obj: unknown): string | number | undefined {
+          if (!obj || typeof obj !== 'object') return undefined
+          const o = obj as Record<string, unknown>
+          const uid = o.user_id ?? (o.user && (o.user as Record<string, unknown>).id)
+          if (typeof uid === 'string' || typeof uid === 'number') return uid
+          return undefined
+        }
+
+        const candidateId = extractCandidateId(responseData)
+        const serverUser = await authApi.fetchUserFromCandidates(token, candidateId)
+        if (serverUser) {
+          const enriched = {
+            ...userData,
+            ...serverUser,
+            photo: userData.photo || serverUser.profile_image || serverUser.photo || serverUser.avatar || serverUser.image,
+            date_of_birth: userData.date_of_birth || serverUser.birth_date || serverUser.date_of_birth || serverUser.birthdate,
+          }
+          try { localStorage.setItem('user', JSON.stringify(enriched)) } catch {}
+        }
+      } catch {}
+
+      router.push('/profile')
       return
     }
 
-    localStorage.setItem('user', JSON.stringify(userData))
-    localStorage.setItem('isLogin', 'true')
+    try { localStorage.setItem('isLogin', 'true') } catch {}
     alert('Conta criada com sucesso! Agora faça login.')
     router.push('/auth/password')
-  } catch (err) {
+  } catch (err: unknown) {
     console.error('Register error:', err)
-    alert('Erro ao criar conta: ' + (err.response?.data?.message || 'Tente novamente'))
+    const msg = (() => {
+      if (typeof err === 'object' && err !== null && 'response' in err) {
+        try {
+          const e = err as Record<string, unknown>
+          const resp = e.response as Record<string, unknown> | undefined
+          const data = resp?.data as Record<string, unknown> | undefined
+          if (data && typeof data.message === 'string') return data.message
+        } catch {}
+      }
+      return 'Tente novamente'
+    })()
+    alert('Erro ao criar conta: ' + msg)
   }
 }
 </script>
