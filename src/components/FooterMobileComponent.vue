@@ -45,7 +45,7 @@ function handleClick(item: FooterItem, index: number) {
 
 <style scoped>
 .app-footer {
-  position: fixed;
+  position:fixed;
   bottom: 0;
   left: 0;
   right: 0;

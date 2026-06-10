@@ -21,68 +21,113 @@ import CartView from '../views/CartView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
+
   routes: [
     {
       path: '/',
       name: 'home',
       component: HomeView,
     },
+
     {
       path: '/search',
       name: 'search',
       component: SearchView,
     },
+
     {
       path: '/sell',
       name: 'sell',
       component: SellView,
     },
+
     {
       path: '/profile',
       name: 'profile',
       component: ProfileView,
     },
+
     {
       path: '/menu',
       name: 'menu',
       component: MenuComponent,
     },
+
     {
       path: '/about',
       name: 'about',
       component: AboutView,
     },
+
     {
       path: '/camera-search',
       name: 'camera-search',
       component: CameraSearchView,
     },
+
+    {
+      path: '/carrinho',
+      name: 'cart',
+      component: CartView,
+    },
+
+    {
+      path: '/pedidos',
+      name: 'pedidos',
+      component: PedidosView,
+    },
+
+    {
+      path: '/pedido/:id',
+      name: 'pedido-detalhe',
+      component: PedidoDetalheView,
+    },
+
+    {
+      path: '/suporte',
+      name: 'suporte',
+      component: () => import('@/views/SuporteView.vue'),
+    },
+
+    {
+      path: '/suporte/categoria',
+      name: 'categoria-suporte',
+      component: () => import('@/views/CategoriaSuporteView.vue'),
+    },
+
+    // AUTH
+
     {
       path: '/auth/email',
       alias: '/auth-email',
       name: 'auth-email',
       component: EmailView,
     },
+
     {
       path: '/auth/password',
       name: 'auth-password',
       component: PasswordView,
     },
+
     {
       path: '/auth/register',
       name: 'auth-register',
       component: RegisterView,
     },
+
     {
       path: '/auth/forgot-password',
       name: 'auth-forgot-password',
       component: ForgotPasswordView,
     },
+
     {
       path: '/auth/reset-password',
       name: 'auth-reset-password',
       component: ResetPasswordView,
     },
+
     {
       path: '/auth/verify-code',
       name: 'auth-verify-code',

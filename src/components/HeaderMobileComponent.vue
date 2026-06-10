@@ -14,7 +14,7 @@ interface MenuItem {
 
 const items: MenuItem[] = [
   { aria: 'Notificações', icon: 'notifications', route: '/notificacoes' },
-  { aria: 'Carrinho', icon: 'shopping_cart', route: '/cart' },
+  { aria: 'Carrinho', icon: 'shopping_cart', route: '/carrinho' },
 ]
 
 /* abrir sidebar */
