@@ -19,8 +19,8 @@ const navItems: NavItem[] = [
 
 const rightItems: NavItem[] = [
   { aria: 'Notificações', icon: 'notifications', route: '/notificacoes' },
-  { aria: 'Carrinho', icon: 'shopping_cart', route: '/cart' },
-  { aria: 'Perfil', icon: 'person', route: '/perfil' },
+  { aria: 'Carrinho', icon: 'shopping_cart', route: '/carrinho' },
+  { aria: 'Perfil', icon: 'person', route: '/profile' },
 ];
 
 function handleNavClick(item: NavItem) {
@@ -49,7 +49,7 @@ function handleSearch() {
     
     <div class="header-inner">
 
-      <!-- MENU FLUTUANTE -->
+      <!-- MENU -->
       <div v-if="showMenu" class="floating-menu">
         <button class="sell-button" @click="goToSell">
           Vender
@@ -103,7 +103,7 @@ function handleSearch() {
 </template>
 
 <style scoped>
-/* HEADER FULL WIDTH */
+/* HEADER */
 .header-desktop {
   width: 100%;
   background: white;
@@ -125,7 +125,7 @@ function handleSearch() {
   position: relative;
 }
 
-/* MENU FLUTUANTE */
+/* MENU */
 .floating-menu {
   position: absolute;
   top: 60px;
@@ -243,7 +243,6 @@ function handleSearch() {
   color: black;
 }
 
-/* ESCONDER NO MOBILE */
 @media (max-width: 767px) {
   .header-desktop {
     display: none;
