@@ -26,8 +26,7 @@ const login = (email: string, password: string): AuthResponse => {
   return api.post('/api/login/', { email, password })
 }
 
-// Try to fetch user data from multiple common endpoints when /api/me/ is not available
-async function fetchUserFromCandidates(token: string, userId?: string | number): Promise<any | null> {
+async function fetchUserFromCandidates(token: string, userId?: string | number): Promise<Record<string, unknown> | null> {
   const authHeaders = (scheme: 'Token' | 'Bearer') => ({ headers: { Authorization: `${scheme} ${token}` } })
 
   try {
@@ -60,7 +59,6 @@ try {
       try { r = await api.get(url, authHeaders('Token')) } catch { r = await api.get(url, authHeaders('Bearer')) }
       if (r && r.data) return r.data
     } catch {
-      // ignore and continue
     }
   }
 
