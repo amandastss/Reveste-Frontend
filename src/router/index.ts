@@ -18,6 +18,8 @@ import VerifyCodeView from '../views/auth/VerifyCodeView.vue'
 import PedidosView from '../views/PedidosView.vue'
 import PedidoDetalheView from '../views/PedidoDetalheView.vue'
 import CartView from '../views/CartView.vue'
+import ProdutoDetalheView from '../views/ProdutoDetalheView.vue'
+import ReviewsView from '../views/ReviewsView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -82,7 +84,18 @@ const router = createRouter({
       name: 'pedido-detalhe',
       component: PedidoDetalheView,
     },
-
+    {
+      path: '/produto/:id',
+      name: 'produto-detalhe',
+      component: ProdutoDetalheView,
+      props: true, // Permite receber o :id como prop dentro da View
+    },
+    {
+      path: '/produto/:id/avaliacoes',
+      name: 'produto-avaliacoes',
+      component: ReviewsView,
+      props: true,
+    },
     {
       path: '/suporte',
       name: 'suporte',
@@ -96,7 +109,6 @@ const router = createRouter({
     },
 
     // AUTH
-
     {
       path: '/auth/email',
       alias: '/auth-email',
@@ -132,31 +144,6 @@ const router = createRouter({
       path: '/auth/verify-code',
       name: 'auth-verify-code',
       component: VerifyCodeView,
-    },
-    {
-      path: '/pedidos',
-      name: 'pedidos',
-      component: PedidosView,
-    },
-    {
-      path: '/pedido/:id',
-      name: 'pedido-detalhe',
-      component: PedidoDetalheView,
-    },
-    {
-      path: '/cart',
-      name: 'cart',
-      component: CartView,
-    },
-    {
-      path: '/suporte',
-      name: 'suporte',
-      component: () => import('@/views/SuporteView.vue'),
-    },
-    {
-      path: '/suporte/categoria',
-      name: 'categoria-suporte',
-      component: () => import('@/views/CategoriaSuporteView.vue'),
     },
   ],
 })
