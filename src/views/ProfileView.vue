@@ -20,11 +20,7 @@ const profileName = computed(
     'Usuário'
 )
 const profileEmail = computed(() => user.value.email || '')
-const profileRole = computed(() => {
-  if (user.value.role === 'seller') return 'Vendedor'
-  if (user.value.role === 'buyer') return 'Comprador'
-  return ''
-})
+
 const formattedBirthdate = computed(() => {
   if (!user.value.date_of_birth) return ''
   const date = new Date(user.value.date_of_birth)
