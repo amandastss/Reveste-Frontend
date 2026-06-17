@@ -41,8 +41,8 @@ async function login() {
           email: email.value,
           name: existingUser.name || res.data.name || res.data.username || res.data.first_name || undefined,
           phone: existingUser.phone || res.data.phone,
-          photo: existingUser.photo || res.data.photo || res.data.avatar || res.data.image,
-          date_of_birth: existingUser.date_of_birth || res.data.date_of_birth || res.data.birthdate,
+          photo: existingUser.photo || res.data.profile_image || res.data.photo || res.data.avatar || res.data.image,
+          date_of_birth: existingUser.date_of_birth || res.data.date_of_birth || res.data.birthdate || res.data.birth_date,
         }
       : {
           ...res.data,
@@ -50,7 +50,33 @@ async function login() {
         }
 
     localStorage.setItem('user', JSON.stringify(mergedUser))
-    localStorage.setItem('token', res.data.token)
+    if (res.data && res.data.token) {
+      try {
+        localStorage.setItem('token', res.data.token)
+      } catch {}
+    }
+    localStorage.setItem('email', email.value)
+
+    // try to enrich user data from backend if login response is minimal
+    try {
+      const token = res.data?.token || localStorage.getItem('token')
+      const candidateId = res.data?.user_id || res.data?.user?.id || mergedUser.user_id || mergedUser.id
+      if (token) {
+        const serverUser = await authApi.fetchUserFromCandidates(token, candidateId)
+        if (serverUser) {
+          const enriched = {
+            ...mergedUser,
+            ...serverUser,
+            photo: mergedUser.photo || serverUser.profile_image || serverUser.photo || serverUser.avatar || serverUser.image,
+            date_of_birth: mergedUser.date_of_birth || serverUser.birth_date || serverUser.date_of_birth || serverUser.birthdate,
+          }
+          localStorage.setItem('user', JSON.stringify(enriched))
+        }
+      }
+    } catch (e) {
+      // ignore enrichment errors
+    }
+
     router.push('/')
 
   } catch (err) {
