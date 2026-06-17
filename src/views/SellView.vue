@@ -55,7 +55,6 @@ const previewImagem = async (event: Event) => {
 
   form.value.foto = file
   preview.value = URL.createObjectURL(file)
-
   await analisarRoupaIA()
 }
 
@@ -225,7 +224,6 @@ const publicarPeca = async () => {
           {{ erroScanner }}
         </div>
       </div>
-
       <p v-if="resultadoIA && !podePublicar" class="scanner-error">
         A peça não atingiu a qualidade mínima para venda.
       </p>
