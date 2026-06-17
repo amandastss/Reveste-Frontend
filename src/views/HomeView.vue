@@ -14,6 +14,8 @@ interface Categoria {
   id: number
   nome: string
   imagem_url: string | null
+  name?: string
+  title?: string
 }
 
 const router = useRouter()
@@ -65,8 +67,9 @@ onMounted(() => {
     <!-- Categorias -->
     <div class="categories">
       <div v-for="cat in categorias" :key="cat.id" class="item">
-          <img class="circle" :src="formatMediaUrl(cat.imagem_url)" />
-      </div>
+            <img class="circle" :src="formatMediaUrl(cat.imagem_url)" />
+            <span>{{ cat.nome || cat.name || cat.title }}</span>
+          </div>
     </div>
 
     <!-- Produtos -->
