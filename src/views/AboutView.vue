@@ -5,10 +5,6 @@
   </div>
 </template>
 
-<script setup>
-// Script setup vazio por enquanto
-</script>
-
 <style scoped>
 .about {
   padding: 20px;
