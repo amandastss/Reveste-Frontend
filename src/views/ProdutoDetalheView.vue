@@ -1,57 +1,55 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import SizeBottomSheetComponent from '../components/SizeBottomSheetComponent.vue';
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import axios from 'axios'
 
-// Controle do Modal de Tamanhos
-const isBottomSheetOpen = ref<boolean>(false);
-const chosenSize = ref<string>('XXL');
+interface Produto {
+  id: number
+  nome: string
+  descricao: string
+  preco: number
+  marca: string
+  condicao?: string
+  imagem_url?: string | null
+}
 
-// Controle do Slider de Imagens (Simulado)
-const activeImageIndex = ref<number>(0);
-const productImages = [
-  'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=600&q=80'
-];
+const route = useRoute()
+const router = useRouter()
+const productId = String(route.params.id || '')
 
-// Dados estruturados baseados no mockup
-const productData = ref({
-  title: 'Calça Jeans preta básica',
-  price: 100,
-  brand: 'chanel',
-  condition: 'Usado',
-  description: 'Inspirada no carisma nato de uma vocalista de rock, a Lola é uma favorita cult e a calça skinny de cintura alta icônica da Denim Forum. A Lola tem modelagem ajustada no quadril e na coxa, com perna skinny que termina no tornozelo. Bolsos inovadores com contornos e o tecido Best Asset™ abraçam e levantam, criando curvas nos lugares certos. Ela é feita com algodão orgânico italiano premium que fica ainda melhor com o tempo — o equivalente em jeans ao rock clássico. Esta versão vem em preto lavado e tem barra reta.',
-  specifications: [
-    'Corte: Skinny',
-    'Cintura: 28 cm',
-    'Comprimento da perna: Skinny',
-    'Comprimento: 75 cm',
-    'A modelo mede 1,74 m e veste tamanho 25'
-  ],
-  shippingDetails: [
-    'Pedidos a partir de US$ 50 têm frete padrão grátis.',
-    'Entrega padrão em 4 a 5 dias úteis.',
-    'Entrega expressa em 2 a 4 dias úteis.',
-    'Os pedidos são processados e entregues de segunda a sexta-feira (exceto feriados).'
-  ]
-});
+const productData = ref<Produto | null>(null)
+const loading = ref(true)
+const error = ref('')
 
-// Carrossel de Parecidos
-const similarItems = ref([
-  { id: 1, name: 'The Lola High Rise Skinny 30L', price: 76.44, img: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=300&q=80' },
-  { id: 2, name: 'The Yoko High Rise Slim 26L', price: 100.00, img: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=300&q=80' },
-  { id: 3, name: 'The Long Skinny Rock', price: 100.00, img: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=300&q=80' }
-]);
+const mainImage = computed(() => {
+  if (!productData.value?.imagem_url) {
+    return 'https://via.placeholder.com/600x600?text=Sem+imagem'
+  }
+  return productData.value.imagem_url.startsWith('http')
+    ? productData.value.imagem_url
+    : `http://127.0.0.1:8000${productData.value.imagem_url}`
+})
 
-// Funções de clique dos botões
-const goBack = () => alert('Voltar para a lista anterior');
-const toggleFavorite = () => alert('Adicionado aos favoritos!');
-const openCart = () => alert('Abrindo o carrinho...');
-const openReviews = () => alert('Abrindo modal de avaliações!');
+const goBack = () => router.back()
+const toggleFavorite = () => alert('Adicionado aos favoritos!')
+const openCart = () => alert('Abrindo o carrinho...')
+const openReviews = () => router.push({ name: 'produto-avaliacoes', params: { id: productId } })
 
-const handleSizeSelection = (size: string) => {
-  chosenSize.value = size;
-  console.log(`Tamanho atualizado na View principal: ${size}`);
-};
+const fetchProduct = async () => {
+  loading.value = true
+  error.value = ''
+  try {
+    const res = await axios.get(`http://127.0.0.1:8000/api/produtos/${productId}/`)
+    productData.value = res.data
+  } catch (err) {
+    console.error(err)
+    error.value = 'Erro ao carregar os dados do produto.'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchProduct)
 </script>
 
 <template>
@@ -68,87 +66,51 @@ const handleSizeSelection = (size: string) => {
     <main class="scrollable-content">
 
       <div class="image-slider-wrapper">
-        <img :src="productImages[activeImageIndex]" alt="Imagem do Produto" class="main-product-image" />
-        <div class="slider-dots">
-          <span
-            v-for="(img, idx) in productImages"
-            :key="idx"
-            class="dot"
-            :class="{ active: activeImageIndex === idx }"
-            @click="activeImageIndex = idx"
-          ></span>
-        </div>
+        <img :src="mainImage" alt="Imagem do Produto" class="main-product-image" />
       </div>
 
-      <section class="basic-info-section">
-        <h1 class="product-title">{{ productData.title }}</h1>
-        <div class="rating-container">
-          <span>★★★★☆</span>
-        </div>
-        <p class="product-price">${{ productData.price }}</p>
-      </section>
+      <div v-if="loading" class="loading-state">
+        Carregando produto...
+      </div>
 
-      <hr class="divider" />
+      <div v-else-if="error" class="error-state">
+        {{ error }}
+      </div>
 
-      <section class="similar-section">
-        <h2>Parecidos</h2>
-        <div class="horizontal-scroll">
-          <div v-for="item in similarItems" :key="item.id" class="similar-card">
-            <img :src="item.img" alt="Similar item" />
-            <p class="similar-name">{{ item.name }}</p>
-            <p class="similar-price">${{ item.price }}</p>
+      <div v-else>
+        <section class="basic-info-section">
+          <h1 class="product-title">{{ productData?.nome }}</h1>
+          <div class="rating-container">
+            <span>★★★★☆</span>
           </div>
-        </div>
-      </section>
+          <p class="product-price">R$ {{ productData?.preco }}</p>
+        </section>
 
-      <section class="detail-section">
-        <h2>DESCRIÇÃO</h2>
-        <p class="description-text">{{ productData.description }}</p>
-      </section>
+        <hr class="divider" />
 
-      <section class="detail-section">
-        <h2>MARCA</h2>
-        <p class="brand-text">• {{ productData.brand }}</p>
-      </section>
+        <section class="detail-section">
+          <h2>DESCRIÇÃO</h2>
+          <p class="description-text">{{ productData?.descricao }}</p>
+        </section>
 
-      <section class="detail-section">
-        <h2>CONDIÇÃO DO PRODUTO</h2>
-        <span class="badge-condition">{{ productData.condition }}</span>
-      </section>
+        <section class="detail-section">
+          <h2>MARCA</h2>
+          <p class="brand-text">• {{ productData?.marca }}</p>
+        </section>
 
-      <section class="detail-section">
-        <h2>SIZE</h2>
-        <ul class="bullet-list">
-          <li v-for="(spec, index) in productData.specifications" :key="index">{{ spec }}</li>
-        </ul>
-      </section>
+        <section class="detail-section">
+          <h2>CONDIÇÃO DO PRODUTO</h2>
+          <span class="badge-condition">{{ productData?.condicao || 'Não informado' }}</span>
+        </section>
 
-      <section class="detail-section">
-        <h2>SHIPPING AND RETURN</h2>
-        <ul class="bullet-list">
-          <li v-for="(ship, index) in productData.shippingDetails" :key="index">{{ ship }}</li>
-        </ul>
-      </section>
-
-      <section class="reviews-section" @click="openReviews">
-        <div class="reviews-header">
-          <span>Reviews (9)</span>
-          <span>★★★★☆ &nbsp; →</span>
-        </div>
-      </section>
+        <section class="reviews-section" @click="openReviews">
+          <div class="reviews-header">
+            <span>Reviews</span>
+            <span>★★★★☆ &nbsp; →</span>
+          </div>
+        </section>
+      </div>
     </main>
-
-    <footer class="sticky-footer">
-      <button class="btn-full-width" @click="isBottomSheetOpen = true">
-        SELECIONE O TAMANHO ({{ chosenSize }})
-      </button>
-    </footer>
-
-    <SizeBottomSheetComponent
-      :is-open="isBottomSheetOpen"
-      @close="isBottomSheetOpen = false"
-      @sizeSelected="handleSizeSelection"
-    />
   </div>
 </template>
 
