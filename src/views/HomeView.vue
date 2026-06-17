@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
 
 interface Produto {
@@ -13,10 +14,22 @@ interface Categoria {
   id: number
   nome: string
   imagem_url: string | null
+  name?: string
+  title?: string
 }
 
+const router = useRouter()
 const produtos = ref<Produto[]>([])
 const categorias = ref<Categoria[]>([])
+
+const goToProduto = (id: number) => {
+  router.push({ name: 'produto-detalhe', params: { id } })
+}
+
+const formatMediaUrl = (url?: string | null) => {
+  if (!url) return '/default.png'
+  return url.startsWith('http') ? url : `http://127.0.0.1:8000${url}`
+}
 
 // PRODUTOS
 const fetchProdutos = async () => {
@@ -54,10 +67,9 @@ onMounted(() => {
     <!-- Categorias -->
     <div class="categories">
       <div v-for="cat in categorias" :key="cat.id" class="item">
-        <img class="circle" :src="'http://127.0.0.1:8000' + cat.imagem_url" />
-
-        <span>{{ cat.nome }}</span>
-      </div>
+            <img class="circle" :src="formatMediaUrl(cat.imagem_url)" />
+            <span>{{ cat.nome || cat.name || cat.title }}</span>
+          </div>
     </div>
 
     <!-- Produtos -->
@@ -65,8 +77,8 @@ onMounted(() => {
       <h3>Para você</h3>
 
       <div class="grid">
-        <div class="card" v-for="p in produtos" :key="p.id">
-         <img :src="p.imagem_url || '/default.png'" />
+        <div class="card" v-for="p in produtos" :key="p.id" @click="goToProduto(p.id)">
+          <img :src="formatMediaUrl(p.imagem_url)" />
 
           <p class="name">{{ p.nome }}</p>
           <p class="price">R$ {{ p.preco }}</p>
