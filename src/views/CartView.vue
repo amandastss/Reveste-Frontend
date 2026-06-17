@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import EditItemModal from './EditItemModal.vue'
@@ -87,7 +86,7 @@ function checkout() {
 <template>
   <div class="cart-page">
     <header class="cart-header">
-      <button class="back-btn" @click="goBack">←</button>
+      <button class="back-btn" @click="goBack">❮</button>
       <h1>SEU CARRINHO</h1>
     </header>
 
@@ -138,7 +137,6 @@ function checkout() {
       </button>
     </footer>
 
-    <!-- Modal de edição -->
     <EditItemModal
       :item="itemBeingEdited"
       :visible="editModalVisible"
