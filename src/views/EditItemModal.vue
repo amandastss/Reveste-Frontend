@@ -88,7 +88,7 @@ function onTouchMove(e: TouchEvent) {
   if (dy > 0) {
     sheetTranslateY.value = dy
     e.preventDefault()
-  }
+  }  
 }
 
 function onTouchEnd() {
