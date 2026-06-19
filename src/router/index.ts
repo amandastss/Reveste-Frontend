@@ -7,7 +7,7 @@ import ProfileView from '../views/ProfileView.vue'
 import MenuComponent from '@/components/MenuComponent.vue'
 import AboutView from '../views/AboutView.vue'
 import CameraSearchView from '../views/CameraSearchView.vue'
-
+import PesquisaItensCameraView from '@/views/PesquisaItensCameraView.vue'
 import EmailView from '../views/auth/EmailView.vue'
 import PasswordView from '../views/auth/PasswordView.vue'
 import RegisterView from '../views/auth/RegisterView.vue'
@@ -36,7 +36,11 @@ const router = createRouter({
       name: 'search',
       component: SearchView,
     },
-
+    {
+      path: '/pesquisa-camera',
+      name: 'pesquisa-camera',
+      component: PesquisaItensCameraView,
+    },
     {
       path: '/sell',
       name: 'sell',

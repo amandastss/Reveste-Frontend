@@ -200,16 +200,43 @@ function fecharModal() {
 async function irParaCamera(tipo: "camera" | "gallery") {
   fecharModal()
 
-  if (tipo === "camera") {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
-      console.log('stream', stream)
-    } catch (error) {
-      console.error("Permissão negada", error)
-    }
-  } else {
-    console.log('abrir galeria')
+  if (tipo === 'gallery') {
+    // abrir seletor de arquivos, ler imagem e enviar para a página de pesquisa
+    return new Promise<void>((resolve) => {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = 'image/*'
+      input.style.display = 'none'
+      document.body.appendChild(input)
+
+      input.onchange = async () => {
+        const file = input.files && input.files[0]
+        if (file) {
+          const reader = new FileReader()
+          reader.onload = () => {
+            const data = reader.result as string
+            try {
+              sessionStorage.setItem('camera-image', data)
+            } catch (e) {
+              console.warn('Não foi possível salvar a imagem no sessionStorage', e)
+            }
+            document.body.removeChild(input)
+            router.push('/pesquisa-camera')
+            resolve()
+          }
+          reader.readAsDataURL(file)
+        } else {
+          document.body.removeChild(input)
+          resolve()
+        }
+      }
+
+      input.click()
+    })
   }
+
+  // para câmera, navega normalmente
+  router.push({ name: 'camera-search', query: { tipo } })
 }
 </script>
 <template>
@@ -306,9 +333,9 @@ async function irParaCamera(tipo: "camera" | "gallery") {
     </div>
 
     <div v-if="mostrarModalCamera" class="camera-sheet">
-      <button @click="irParaCamera('camera')">Take a photo</button>
-      <button @click="irParaCamera('gallery')">Browse from Gallery</button>
-      <button class="cancel" @click="fecharModal">Cancel</button>
+      <button @click="irParaCamera('camera')">Tirar foto</button>
+      <button @click="irParaCamera('gallery')">Importar da galeria</button>
+      <button class="cancel" @click="fecharModal">Cancelar</button>
     </div>
   </div>
 </template>
