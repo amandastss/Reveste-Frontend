@@ -106,7 +106,7 @@ function logout() {
         <div class="menu-item delete" @click="logout">
           <div class="left">
             <span class="material-symbols-outlined">logout</span>
-            <span>Excluir conta</span>
+            <span>Sair</span>
           </div>
         </div>
 
@@ -200,7 +200,11 @@ function logout() {
 .menu {
   margin-top: 10px;
 }
-
+.profile-container {
+  width: 100%;
+  max-width: 900px;
+  padding-bottom: 100px;
+}
 /* GRID NO DESKTOP */
 @media (min-width: 768px) {
   .menu {

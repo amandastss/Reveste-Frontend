@@ -57,7 +57,7 @@ async function login() {
     }
     localStorage.setItem('email', email.value)
 
-    // try to enrich user data from backend if login response is minimal
+
     try {
       const token = res.data?.token || localStorage.getItem('token')
       const candidateId = res.data?.user_id || res.data?.user?.id || mergedUser.user_id || mergedUser.id
