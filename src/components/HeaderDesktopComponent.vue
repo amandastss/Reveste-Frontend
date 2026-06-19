@@ -3,7 +3,6 @@ import { useRouter } from 'vue-router';
 import { ref } from 'vue';
 
 const router = useRouter();
-const searchQuery = ref('');
 const showMenu = ref(false);
 
 interface NavItem {
@@ -37,16 +36,11 @@ function goToSell() {
   showMenu.value = false;
 }
 
-function handleSearch() {
-  if (searchQuery.value.trim()) {
-    router.push({ path: '/search', query: { q: searchQuery.value } });
-  }
-}
 </script>
 
 <template>
   <header class="header-desktop">
-    
+
     <div class="header-inner">
 
       <!-- MENU -->
@@ -69,20 +63,6 @@ function handleSearch() {
           <span class="nav-text">{{ item.aria }}</span>
         </button>
       </nav>
-
-      <!-- CENTRO (BUSCA) -->
-      <div class="search-container">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Pesquisar..."
-          class="search-input"
-          @keyup.enter="handleSearch"
-        />
-        <button class="search-button" @click="handleSearch">
-          <span class="material-symbols-outlined">search</span>
-        </button>
-      </div>
 
       <!-- DIREITA -->
       <div class="right">
