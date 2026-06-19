@@ -51,7 +51,7 @@ async function next() {
       </div>
 
       <button class="button" :class="{ active: isValid }" :disabled="!isValid" @click="next">
-        CONTINUE
+        CONTINUE...
       </button>
     </div>
 
