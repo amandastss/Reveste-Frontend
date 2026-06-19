@@ -27,7 +27,7 @@ const mainImage = computed(() => {
   }
   return productData.value.imagem_url.startsWith('http')
     ? productData.value.imagem_url
-    : `http://127.0.0.1:8000${productData.value.imagem_url}`
+    : `${import.meta.env.VITE_API_URL}/api${productData.value.imagem_url}`
 })
 
 const goBack = () => router.back()
@@ -39,7 +39,7 @@ const fetchProduct = async () => {
   loading.value = true
   error.value = ''
   try {
-    const res = await axios.get(`http://127.0.0.1:8000/api/produtos/${productId}/`)
+    const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/produtos/${productId}/`)
     productData.value = res.data
   } catch (err) {
     console.error(err)
