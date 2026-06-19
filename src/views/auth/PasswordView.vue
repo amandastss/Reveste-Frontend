@@ -30,7 +30,6 @@ async function login() {
 
     // Login - email já existe
     const res = await authApi.login(email.value, password.value)
-    console.log('LOGIN RESPONSE:', res.data)
     const existingUser = JSON.parse(localStorage.getItem('user') || '{}')
     const currentEmail = email.value?.toLowerCase() || ''
     const storedEmail = existingUser.email?.toLowerCase() || ''
