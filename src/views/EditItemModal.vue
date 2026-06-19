@@ -1,19 +1,10 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-
-interface CartItem {
-  id: number
-  name: string
-  color: string
-  size: string
-  price: number
-  quantity: number
-  image: string
-}
+import { useCartStore } from '@/stores/cart'
 
 const props = defineProps<{
-  item: CartItem | null
+  itemId: number | null
   visible: boolean
 }>()
 
@@ -22,16 +13,23 @@ const emit = defineEmits<{
   update: [data: { size: string; color: string }]
 }>()
 
+const cartStore = useCartStore()
+
 const selectedSize = ref('')
 const selectedColor = ref('')
 const activeImageIndex = ref(0)
 
+const item = computed(() => {
+  if (!props.itemId) return null
+  return cartStore.items.find(i => i.id === props.itemId) ?? null
+})
+
 watch(
-  () => props.item,
-  (item) => {
-    if (item) {
-      selectedSize.value = item.size
-      selectedColor.value = item.color
+  () => props.itemId,
+  (itemId) => {
+    if (itemId && item.value) {
+      selectedSize.value = item.value.size
+      selectedColor.value = item.value.color
       activeImageIndex.value = 0
     }
   },
@@ -56,9 +54,9 @@ const colorOptions = [
 ]
 
 const productImages = computed(() => {
-  if (!props.item) return []
+  if (!item.value) return []
   return [
-    props.item.image,
+    item.value.image,
     'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?q=80&w=400&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=400&auto=format&fit=crop'
   ]
