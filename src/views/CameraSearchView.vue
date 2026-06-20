@@ -1,88 +1,92 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
-import { useRouter, useRoute } from "vue-router"
+import { ref, onMounted, onUnmounted, nextTick } from "vue"
+import { useRouter } from "vue-router"
+import axios from 'axios'
 
 const router = useRouter()
-const route = useRoute()
 
-const previews = ref<string[]>([])
+const videoRef = ref<HTMLVideoElement | null>(null)
+const stream = ref<MediaStream | null>(null)
 const imagem = ref<string | null>(null)
+const resultados = ref<any[]>([])
+const loading = ref(false)
 
-const resultados = ref<{
-  id: number
-  nome: string
-  preco: number
-  imagem: string
-}[]>([])
+async function startCamera() {
+  try {
+    const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    stream.value = s
+    if (videoRef.value) {
+      videoRef.value.srcObject = s
+      await videoRef.value.play()
+    }
+  } catch (err) {
+    console.error('Erro ao acessar câmera', err)
+    alert('Não foi possível acessar a câmera. Verifique permissões.')
+    router.back()
+  }
+}
 
-const fileInput = ref<HTMLInputElement | null>(null)
+function stopCamera() {
+  if (stream.value) {
+    stream.value.getTracks().forEach(t => t.stop())
+    stream.value = null
+  }
+  if (videoRef.value) {
+    videoRef.value.pause()
+    videoRef.value.srcObject = null
+  }
+}
 
-onMounted(() => {
-  const tipo = route.query.tipo
+const cameraPermitida = ref(false)
 
-  if (tipo === "camera" || tipo === "gallery") {
-    abrirInput(tipo)
+onMounted(async () => {
+  try {
+    await navigator.mediaDevices.getUserMedia({ video: true })
+    cameraPermitida.value = true
+    startCamera()
+  } catch (err) {
+    console.error(err)
+    alert('Permissão da câmera negada')
+    router.back()
   }
 })
+onUnmounted(() => {
+  stopCamera()
+})
 
-function abrirInput(tipo: string) {
-  if (!fileInput.value) return
+function capturePhoto() {
+  if (!videoRef.value) return
 
-  if (tipo === "camera") {
-    fileInput.value.setAttribute("capture", "environment")
-  } else {
-    fileInput.value.removeAttribute("capture")
+  const canvas = document.createElement('canvas')
+  canvas.width = videoRef.value.videoWidth || 1280
+  canvas.height = videoRef.value.videoHeight || 720
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+  ctx.drawImage(videoRef.value, 0, 0, canvas.width, canvas.height)
+  imagem.value = canvas.toDataURL('image/jpeg', 0.9)
+  if (videoRef.value) {
+    videoRef.value.pause()
   }
-
-  fileInput.value.click()
 }
 
-// captura
-function onFileChange(event: Event) {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
-
-  if (!file) {
-    voltar() // usuário cancelou
-    return
+async function retakePhoto() {
+  imagem.value = null
+  await nextTick()
+  if (videoRef.value && stream.value) {
+    await videoRef.value.play()
   }
-
-  const reader = new FileReader()
-  reader.onload = () => {
-    imagem.value = reader.result as string
-    buscarSemelhantes()
-  }
-
-  reader.readAsDataURL(file)
 }
 
-// resultados fake
-function buscarSemelhantes() {
+async function enviarFoto() {
   if (!imagem.value) return
 
-  previews.value = [
-    imagem.value,
-    "/src/assets/roupas/calcajeansskinny.png",
-    "/src/assets/roupas/blusalaranjabasica.png"
-  ]
+  sessionStorage.setItem('camera-image', imagem.value)
 
-  resultados.value = [
-    {
-      id: 1,
-      nome: "Calça Jeans Skinny",
-      preco: 76.44,
-      imagem: "/src/assets/roupas/calcajeansskinny.png"
-    },
-    {
-      id: 2,
-      nome: "Blusa laranja básica",
-      preco: 100,
-      imagem: "/src/assets/roupas/blusalaranjabasica.png"
-    }
-  ]
+  router.push('/pesquisa-camera')
 }
 
 function voltar() {
+  stopCamera()
   router.back()
 }
 </script>
@@ -92,23 +96,36 @@ function voltar() {
 
     <!-- HEADER -->
     <div class="top-bar">
-      <span class="material-icons" @click="voltar">arrow_back</span>
-      <p>PESQUISE PELA FOTO</p>
+      <span class="material-symbols-outlined" @click="voltar">arrow_back</span>
+
+      <p>TIRE UMA FOTO</p>
     </div>
 
-    <!-- INPUT -->
-    <input
-      ref="fileInput"
-      type="file"
-      accept="image/*"
-      capture="environment"
-      hidden
-      @change="onFileChange"
-    />
+    <!-- VIDEO / CAMERA / PREVIEW -->
+    <div class="camera-container">
+      <div class="camera-frame">
+        <video
+          ref="videoRef"
+          v-show="!imagem"
+          autoplay
+          playsinline
+          muted
+          class="camera-video"
+        ></video>
+        <img v-show="imagem" :src="imagem" alt="Preview" class="camera-photo" />
 
-    <!-- PREVIEWS -->
-    <div class="preview-list" v-if="previews.length">
-      <img v-for="(img, i) in previews" :key="i" :src="img" />
+        <div v-if="!imagem" class="camera-controls">
+          <button class="capture-btn" @click="capturePhoto">Tirar foto</button>
+        </div>
+
+        <div v-else class="preview-controls">
+          <div class="row-actions">
+            <button class="confirm-btn" @click="enviarFoto" :disabled="loading">Enviar foto</button>
+            <button class="retake-btn" @click="retakePhoto">Tirar novamente</button>
+          </div>
+          <button class="cancel-btn" @click="voltar">Cancelar</button>
+        </div>
+      </div>
     </div>
 
     <!-- RESULTADOS -->

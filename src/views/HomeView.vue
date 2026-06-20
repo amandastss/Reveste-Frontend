@@ -26,6 +26,9 @@ const goToProduto = (id: number) => {
   router.push({ name: 'produto-detalhe', params: { id } })
 }
 
+const goToSearch = () => {
+  router.push({ name: 'search' })
+}
 const formatMediaUrl = (url?: string | null) => {
   if (!url) return '/default.png'
   return url.startsWith('http') ? url : `http://127.0.0.1:8000${url}`
@@ -59,6 +62,19 @@ onMounted(() => {
 
 <template>
   <div class="home">
+    <!-- Search bar -->
+    <div class="search-bar" @click="goToSearch">
+      <div class="search-input-wrapper">
+        <input type="text" placeholder="Pesquisar itens..." readonly />
+        <span class="search-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+            <path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </span>
+      </div>
+    </div>
+
     <!-- Banner -->
     <div class="banner">
       <img src="/banner.jpg" alt="Promoção" />
@@ -95,6 +111,58 @@ onMounted(() => {
   padding-bottom: 80px;
   background: #f6f6f7;
   font-family: 'Montserrat', sans-serif;
+}
+
+/* SEARCH BAR */
+.search-bar {
+  padding: 12px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+}
+
+.search-input-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 420px; /* same max width as .home for visual alignment */
+}
+
+.search-input-wrapper input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 44px 10px 14px;
+  border-radius: 20px;
+  border: 1px solid #00000066;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  font-size: 14px;
+  color: #333;
+  line-height: 1;
+}
+
+.search-input-wrapper input::placeholder {
+  color: #9a9a9a;
+}
+
+.search-icon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #9a9a9a;
+  pointer-events: none;
+}
+
+@media (max-width: 420px) {
+  .search-bar { padding: 10px; }
+  .search-input-wrapper { max-width: 100%; }
+  .search-input-wrapper input { padding: 10px 42px 10px 12px; font-size: 14px; }
 }
 
 /* BANNER */
