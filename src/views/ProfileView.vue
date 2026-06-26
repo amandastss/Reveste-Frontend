@@ -22,9 +22,21 @@ const profileName = computed(
 const profileEmail = computed(() => user.value.email || '')
 
 const formattedBirthdate = computed(() => {
-  if (!user.value.date_of_birth) return ''
-  const date = new Date(user.value.date_of_birth)
+  if (!user.value.birth_date
+) return ''
+  const date = new Date(user.value.birth_date
+)
   return isNaN(date.getTime()) ? '' : date.toLocaleDateString('pt-BR')
+})
+const formattedImageUrl = computed(() => {
+  if (!user.value.photo && !user.value.profile_image && !user.value.avatar && !user.value.image) {
+    return 'https://via.placeholder.com/150?text=Sem+imagem'
+  }
+  const imageUrl =
+    user.value.photo || user.value.profile_image || user.value.avatar || user.value.image || ''
+  return imageUrl.startsWith('http')
+    ? imageUrl
+    : `${import.meta.env.VITE_API_URL}/api${imageUrl}`
 })
 
 const menuItems = [
@@ -55,8 +67,11 @@ function logout() {
 
       <div class="profile-header">
         <div class="avatar">
-          <img v-if="user.photo || user.avatar || user.image" :src="user.photo || user.avatar || user.image"
-            alt="Foto de perfil" />
+          <img
+            v-if="user.photo || user.profile_image || user.avatar || user.image"
+            :src="formattedImageUrl"
+            alt="Foto de perfil"
+          />
           <span v-else>{{ profileName.charAt(0) || 'U' }}</span>
         </div>
         <h2>{{ profileName }}</h2>
