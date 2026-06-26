@@ -32,13 +32,13 @@ const goToSearch = () => {
 }
 const formatMediaUrl = (url?: string | null) => {
   if (!url) return '/default.png'
-  return url.startsWith('http') ? url : `http://127.0.0.1:8000${url}`
+  return url.startsWith('http') ? url : `${import.meta.env.VITE_API_URL}${url}`
 }
 
 // PRODUTOS
 const fetchProdutos = async () => {
   try {
-    const res = await axios.get('http://127.0.0.1:8000/api/produtos/')
+    const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/produtos/`)
     produtos.value = res.data.results
   } catch (err) {
     console.error(err)
@@ -48,7 +48,7 @@ const fetchProdutos = async () => {
 // CATEGORIAS
 const fetchCategorias = async () => {
   try {
-    const res = await axios.get('http://127.0.0.1:8000/api/categorias/')
+    const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/categorias/`)
     categorias.value = res.data.results
   } catch (err) {
     console.error(err)

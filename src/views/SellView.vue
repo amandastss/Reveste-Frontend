@@ -97,7 +97,7 @@ const publicarPeca = async () => {
       formData.append('imagem', form.value.foto)
     }
 
-    const response = await fetch('http://localhost:8000/api/produtos/', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/produtos/`, {
       method: 'POST',
       body: formData,
     })

@@ -1,3 +1,4 @@
+
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 
@@ -69,18 +70,25 @@ const dragStartY = ref(0)
 const isDragging = ref(false)
 
 function onTouchStart(e: TouchEvent) {
-  if (!e.touches || !e.touches[0]) return // Validação de segurança para o TypeScript
-  dragStartY.value = e.touches[0].clientY
+  const touch = e.touches[0]
+  if (!touch) return
+
+  dragStartY.value = touch.clientY
   isDragging.value = true
 }
 
 function onTouchMove(e: TouchEvent) {
-  if (!isDragging.value || !e.touches || !e.touches[0]) return // Validação de segurança para o TypeScript
-  const dy = e.touches[0].clientY - dragStartY.value
+  if (!isDragging.value) return
+
+  const touch = e.touches[0]
+  if (!touch) return
+
+  const dy = touch.clientY - dragStartY.value
+
   if (dy > 0) {
     sheetTranslateY.value = dy
     e.preventDefault()
-  }
+  }  
 }
 
 function onTouchEnd() {
@@ -113,22 +121,27 @@ function onSheetClick(e: MouseEvent) {
         class="edit-overlay"
         @click="onOverlayClick"
       >
-        <Transition name="sheet-slide" appear>
+        <Transition name="sheet-slide">
           <div
+            v-if="visible"
             class="edit-sheet"
             :style="{ transform: `translateY(${sheetTranslateY}px)` }"
             :class="{ 'is-dragging': isDragging && sheetTranslateY > 0 }"
             @click="onSheetClick"
-            @touchstart="onTouchStart"
+            @touchstart.passive="onTouchStart"
             @touchmove="onTouchMove"
             @touchend="onTouchEnd"
           >
+            <!-- Drag handle (mobile) -->
             <div class="drag-handle" />
 
+            <!-- Close button (desktop) -->
             <button class="close-btn" @click="emit('close')">✕</button>
 
+            <!-- Title -->
             <h2 class="modal-title">EDITAR</h2>
 
+            <!-- Image gallery -->
             <div class="gallery">
               <div
                 class="gallery-track"
@@ -145,6 +158,7 @@ function onSheetClick(e: MouseEvent) {
               </div>
             </div>
 
+            <!-- Gallery dots -->
             <div class="gallery-dots">
               <button
                 v-for="(_, i) in productImages"
@@ -155,6 +169,7 @@ function onSheetClick(e: MouseEvent) {
               />
             </div>
 
+            <!-- Sizes -->
             <div class="section">
               <h3>Tamanho</h3>
               <div class="size-grid">
@@ -170,6 +185,7 @@ function onSheetClick(e: MouseEvent) {
               </div>
             </div>
 
+            <!-- Colors -->
             <div class="section">
               <h3>Cores</h3>
               <div class="color-grid">
@@ -186,6 +202,7 @@ function onSheetClick(e: MouseEvent) {
               </div>
             </div>
 
+            <!-- Update button -->
             <button class="update-btn" @click="updateItem">
               ATUALIZAR ITEM
             </button>
@@ -195,5 +212,4 @@ function onSheetClick(e: MouseEvent) {
     </Transition>
   </Teleport>
 </template>
-
 <style scoped src="../css/edititem.css"></style>

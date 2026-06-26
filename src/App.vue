@@ -64,11 +64,18 @@ function closeMenu() {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background: var(--app-bg);
+  color: var(--text-color);
 }
 
 /* conteúdo principal */
 .content {
   flex: 1;
+  background: var(--app-bg);
+}
+
+/* centralização */
+.content > * {
   width: 100%;
 }
 </style>
