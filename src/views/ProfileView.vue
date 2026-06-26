@@ -22,31 +22,15 @@ const profileName = computed(
 const profileEmail = computed(() => user.value.email || '')
 
 const formattedBirthdate = computed(() => {
-  const birthDateValue =
-    user.value.birth_date || user.value.date_of_birth || user.value.birthdate
-
-  if (!birthDateValue) return ''
-  const date = new Date(birthDateValue)
+  if (!user.value.date_of_birth) return ''
+  const date = new Date(user.value.date_of_birth)
   return isNaN(date.getTime()) ? '' : date.toLocaleDateString('pt-BR')
-})
-
-const formattedImageUrl = computed(() => {
-  const imageUrl =
-    user.value.photo || user.value.profile_image || user.value.avatar || user.value.image || ''
-
-  if (!imageUrl) {
-    return 'https://via.placeholder.com/150?text=Sem+imagem'
-  }
-
-  return imageUrl.startsWith('http')
-    ? imageUrl
-    : `${import.meta.env.VITE_API_URL}/api${imageUrl}`
 })
 
 const menuItems = [
   { label: 'Meus Pedidos', icon: 'inventory_2', route: '/pedidos' },
-  { label: 'Promoções', icon: 'emoji_events', route: '/notificacoes' },
-  { label: 'Favoritos', icon: 'favorite', extra: '5 itens', route: '/search' },
+  { label: 'Promoções', icon: 'emoji_events', route: '/promocoes' },
+  { label: 'Favoritos', icon: 'favorite', extra: '5 itens', route: '/favoritos' },
   { label: 'Seguindo', icon: 'star', route: '/seguindo' },
   { label: 'Aparência', icon: 'palette', route: '/aparencia' },
   { label: 'Ajuda e Suporte', icon: 'lock', route: '/suporte' }
@@ -71,11 +55,8 @@ function logout() {
 
       <div class="profile-header">
         <div class="avatar">
-          <img
-            v-if="user.photo || user.profile_image || user.avatar || user.image"
-            :src="formattedImageUrl"
-            alt="Foto de perfil"
-          />
+          <img v-if="user.photo || user.avatar || user.image" :src="user.photo || user.avatar || user.image"
+            alt="Foto de perfil" />
           <span v-else>{{ profileName.charAt(0) || 'U' }}</span>
         </div>
         <h2>{{ profileName }}</h2>
@@ -98,28 +79,24 @@ function logout() {
           </div>
         </div>
 
-        <div class="menu" v-if="menuItems.length">
-          <div
-            v-for="(item, index) in menuItems"
-            :key="index"
-            class="menu-item"
-            @click="goTo(item.route)"
-          >
+        <div class="menu">
+          <div v-for="(item, index) in menuItems" :key="index" class="menu-item" @click="goTo(item.route)">
             <div class="left">
               <span class="material-symbols-outlined">{{ item.icon }}</span>
               <span>{{ item.label }}</span>
             </div>
+
             <div class="right">
               <span v-if="item.extra" class="extra">{{ item.extra }}</span>
               <span class="material-symbols-outlined arrow">chevron_right</span>
             </div>
           </div>
-        </div>
 
-        <div class="menu-item delete" @click="logout">
-          <div class="left">
-            <span class="material-symbols-outlined">logout</span>
-            <span>Sair da conta</span>
+          <div class="menu-item delete" @click="logout">
+            <div class="left">
+              <span class="material-symbols-outlined">logout</span>
+              <span>Sair da conta</span>
+            </div>
           </div>
         </div>
       </div>
@@ -130,13 +107,11 @@ function logout() {
 
 <style scoped>
 .profile-page {
-  background: var(--app-bg);
+  background: #f5f5f5;
   min-height: 100vh;
-  font-family: "Montserrat", sans-serif;
-  color: var(--text-color);
-
-  display: flex;
-  justify-content: center;
+  width: 100%;
+  color: black;
+  display: block;
 }
 
 /* CONTAINER CENTRAL */
@@ -146,9 +121,9 @@ function logout() {
 
 /* HEADER */
 .profile-header {
-  background: var(--header-bg);
-  color: var(--header-text);
-  padding: 40px 30px 20px;
+  background: black;
+  color: white;
+  padding: 40px 30px 30px;
   text-align: center;
 }
 
@@ -159,11 +134,11 @@ function logout() {
 }
 
 .account-card {
-  background: var(--surface-bg);
+  background: white;
   border-radius: 18px;
   padding: 20px;
   margin: 16px 0;
-  box-shadow: 0 14px 35px var(--shadow-color);
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.05);
 }
 
 .account-card h3 {
@@ -183,24 +158,24 @@ function logout() {
 }
 
 .account-row span {
-  color: var(--text-muted);
+  color: #666;
 }
 
 .account-row strong {
-  color: var(--text-color);
+  color: #111;
 }
 
 .avatar {
   width: 80px;
   height: 80px;
-  background: var(--surface-elevated);
+  background: #ccc;
   border-radius: 50%;
   margin: 0 auto 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  color: var(--text-color);
+  color: #333;
   font-size: 28px;
   font-weight: 700;
 }
@@ -215,11 +190,7 @@ function logout() {
 .menu {
   margin-top: 10px;
 }
-.profile-container {
-  width: 100%;
-  max-width: 900px;
-  padding-bottom: 100px;
-}
+
 /* GRID NO DESKTOP */
 @media (min-width: 768px) {
   .profile-content {
@@ -245,18 +216,19 @@ function logout() {
 }
 
 .menu-item {
-  background: var(--surface-bg);
+  background: white;
   padding: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  border-bottom: 1px solid var(--border-color);
-  transition: background 0.2s;
+  border-bottom: 1px solid #eee;
+  transition: background 0.2s, transform 0.2s;
 }
 
 .menu-item:hover {
-  background: var(--surface-elevated);
+  background: #f9f9f9;
+  transform: translateY(-2px);
 }
 
 .left {
@@ -273,7 +245,7 @@ function logout() {
 
 .extra {
   font-size: 12px;
-  color: var(--text-muted);
+  color: gray;
 }
 
 .arrow {
