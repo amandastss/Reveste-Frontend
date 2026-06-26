@@ -28,6 +28,16 @@ const formattedBirthdate = computed(() => {
 )
   return isNaN(date.getTime()) ? '' : date.toLocaleDateString('pt-BR')
 })
+const formattedImageUrl = computed(() => {
+  if (!user.value.photo && !user.value.avatar && !user.value.image) {
+    return 'https://via.placeholder.com/150?text=Sem+imagem'
+  }
+  const imageUrl =
+    user.value.photo || user.value.avatar || user.value.image || ''
+  return imageUrl.startsWith('http')
+    ? imageUrl
+    : `${import.meta.env.VITE_API_URL}/api${imageUrl}`
+})
 
 const menuItems = [
   { label: 'Meus Pedidos', icon: 'inventory_2', route: '/pedidos' },
@@ -60,7 +70,7 @@ function logout() {
         <div class="avatar">
           <img
             v-if="user.photo || user.avatar || user.image"
-            :src="user.photo || user.avatar || user.image"
+            :src="formattedImageUrl"
             alt="Foto de perfil"
           />
           <span v-else>{{ profileName.charAt(0) || 'U' }}</span>
