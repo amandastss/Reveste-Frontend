@@ -22,18 +22,22 @@ const profileName = computed(
 const profileEmail = computed(() => user.value.email || '')
 
 const formattedBirthdate = computed(() => {
-  if (!user.value.birth_date
-) return ''
-  const date = new Date(user.value.birth_date
-)
+  const birthDateValue =
+    user.value.birth_date || user.value.date_of_birth || user.value.birthdate
+
+  if (!birthDateValue) return ''
+  const date = new Date(birthDateValue)
   return isNaN(date.getTime()) ? '' : date.toLocaleDateString('pt-BR')
 })
+
 const formattedImageUrl = computed(() => {
-  if (!user.value.photo && !user.value.profile_image && !user.value.avatar && !user.value.image) {
-    return 'https://via.placeholder.com/150?text=Sem+imagem'
-  }
   const imageUrl =
     user.value.photo || user.value.profile_image || user.value.avatar || user.value.image || ''
+
+  if (!imageUrl) {
+    return 'https://via.placeholder.com/150?text=Sem+imagem'
+  }
+
   return imageUrl.startsWith('http')
     ? imageUrl
     : `${import.meta.env.VITE_API_URL}/api${imageUrl}`
@@ -41,8 +45,8 @@ const formattedImageUrl = computed(() => {
 
 const menuItems = [
   { label: 'Meus Pedidos', icon: 'inventory_2', route: '/pedidos' },
-  { label: 'Promoções', icon: 'emoji_events', route: '/promocoes' },
-  { label: 'Favoritos', icon: 'favorite', extra: '5 itens', route: '/favoritos' },
+  { label: 'Promoções', icon: 'emoji_events', route: '/notificacoes' },
+  { label: 'Favoritos', icon: 'favorite', extra: '5 itens', route: '/search' },
   { label: 'Seguindo', icon: 'star', route: '/seguindo' },
   { label: 'Aparência', icon: 'palette', route: '/aparencia' },
   { label: 'Ajuda e Suporte', icon: 'lock', route: '/suporte' }
@@ -94,18 +98,28 @@ function logout() {
           </div>
         </div>
 
-        <!-- DELETE -->
+        <div class="menu" v-if="menuItems.length">
+          <div
+            v-for="(item, index) in menuItems"
+            :key="index"
+            class="menu-item"
+            @click="goTo(item.route)"
+          >
+            <div class="left">
+              <span class="material-symbols-outlined">{{ item.icon }}</span>
+              <span>{{ item.label }}</span>
+            </div>
+            <div class="right">
+              <span v-if="item.extra" class="extra">{{ item.extra }}</span>
+              <span class="material-symbols-outlined arrow">chevron_right</span>
+            </div>
+          </div>
+        </div>
+
         <div class="menu-item delete" @click="logout">
           <div class="left">
             <span class="material-symbols-outlined">logout</span>
-            <span>Sair</span>
-          </div>
-
-          <div class="menu-item delete" @click="logout">
-            <div class="left">
-              <span class="material-symbols-outlined">logout</span>
-              <span>Sair da conta</span>
-            </div>
+            <span>Sair da conta</span>
           </div>
         </div>
       </div>

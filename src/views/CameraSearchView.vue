@@ -1,28 +1,21 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from "vue"
 import { useRouter } from "vue-router"
-import axios from 'axios'
 
 const router = useRouter()
 
 const videoRef = ref<HTMLVideoElement | null>(null)
 const stream = ref<MediaStream | null>(null)
 const imagem = ref<string | null>(null)
-const resultados = ref<any[]>([])
+const resultados = ref<Array<{ id?: string; imagem?: string; nome?: string; preco?: number }>>([])
 const loading = ref(false)
 
 async function startCamera() {
-  try {
-    const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-    stream.value = s
-    if (videoRef.value) {
-      videoRef.value.srcObject = s
-      await videoRef.value.play()
-    }
-  } catch (err) {
-    console.error('Erro ao acessar câmera', err)
-    alert('Não foi possível acessar a câmera. Verifique permissões.')
-    router.back()
+  const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+  stream.value = s
+  if (videoRef.value) {
+    videoRef.value.srcObject = s
+    await videoRef.value.play()
   }
 }
 
@@ -37,15 +30,11 @@ function stopCamera() {
   }
 }
 
-const cameraPermitida = ref(false)
-
 onMounted(async () => {
   try {
-    await navigator.mediaDevices.getUserMedia({ video: true })
-    cameraPermitida.value = true
-    startCamera()
+    await startCamera()
   } catch (err) {
-    console.error(err)
+    console.error('Erro ao acessar câmera', err)
     alert('Permissão da câmera negada')
     router.back()
   }
@@ -80,7 +69,11 @@ async function retakePhoto() {
 async function enviarFoto() {
   if (!imagem.value) return
 
-  sessionStorage.setItem('camera-image', imagem.value)
+  try {
+    sessionStorage.setItem('camera-image', imagem.value)
+  } catch (err) {
+    console.error('Erro ao salvar imagem na sessão', err)
+  }
 
   router.push('/pesquisa-camera')
 }
@@ -112,7 +105,7 @@ function voltar() {
           muted
           class="camera-video"
         ></video>
-        <img v-show="imagem" :src="imagem" alt="Preview" class="camera-photo" />
+        <img v-show="imagem" :src="imagem || ''" alt="Preview" class="camera-photo" />
 
         <div v-if="!imagem" class="camera-controls">
           <button class="capture-btn" @click="capturePhoto">Tirar foto</button>
