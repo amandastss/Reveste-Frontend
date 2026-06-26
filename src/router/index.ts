@@ -21,6 +21,7 @@ import CartView from '../views/CartView.vue'
 import ProdutoDetalheView from '../views/ProdutoDetalheView.vue'
 import ReviewsView from '../views/ReviewsView.vue'
 import AppearanceView from '../views/AppearanceView.vue'
+import NotificationsView from '../views/NotificationsView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
