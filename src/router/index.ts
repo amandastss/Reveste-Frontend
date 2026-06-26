@@ -21,6 +21,8 @@ import CartView from '../views/CartView.vue'
 import ProdutoDetalheView from '../views/ProdutoDetalheView.vue'
 import ReviewsView from '../views/ReviewsView.vue'
 import AppearanceView from '../views/AppearanceView.vue'
+import NotificationsView from '../views/NotificationsView.vue'
+
 
 const router = createRouter({
   history: createWebHistory(),
@@ -126,6 +128,11 @@ const router = createRouter({
       path: '/suporte/categoria',
       name: 'categoria-suporte',
       component: () => import('@/views/CategoriaSuporteView.vue'),
+    },
+    {
+      path: '/suporte',
+      name: 'suporte',
+      component: () => import('@/views/SuporteView.vue'),
     },
 
     // AUTH
