@@ -22,8 +22,10 @@ const profileName = computed(
 const profileEmail = computed(() => user.value.email || '')
 
 const formattedBirthdate = computed(() => {
-  if (!user.value.date_of_birth) return ''
-  const date = new Date(user.value.date_of_birth)
+  if (!user.value.birth_date
+) return ''
+  const date = new Date(user.value.birth_date
+)
   return isNaN(date.getTime()) ? '' : date.toLocaleDateString('pt-BR')
 })
 
