@@ -20,24 +20,19 @@ function closeMenu() {
 
 <template>
   <div class="app-container">
-    <!-- header mobile -->
     <HeaderMobile @open-menu="openMenu" />
 
-    <!-- header desktop -->
     <HeaderDesktop />
 
-    <!-- menu lateral -->
     <MenuComponent
       :isOpen="isMenuOpen"
       @close-menu="closeMenu"
     />
 
-    <!-- conteúdo principal -->
     <main class="content">
       <router-view />
     </main>
 
-    <!-- footer mobile -->
     <FooterMobile />
   </div>
 </template>
@@ -82,7 +77,5 @@ function closeMenu() {
 /* centralização */
 .content > * {
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
 }
 </style>

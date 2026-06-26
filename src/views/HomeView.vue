@@ -5,6 +5,7 @@ import axios from 'axios'
 
 interface Produto {
   id: number
+  name: string /* Alterado de 'nome' para 'name' conforme o padrão do seu carrinho se necessário, mas mantido a lógica */
   nome: string
   preco: number
   imagem_url?: string | null
@@ -26,6 +27,9 @@ const goToProduto = (id: number) => {
   router.push({ name: 'produto-detalhe', params: { id } })
 }
 
+const goToSearch = () => {
+  router.push({ name: 'search' })
+}
 const formatMediaUrl = (url?: string | null) => {
   if (!url) return '/default.png'
   return url.startsWith('http') ? url : `${import.meta.env.VITE_API_URL}${url}`
@@ -59,12 +63,23 @@ onMounted(() => {
 
 <template>
   <div class="home">
+    <!-- Search bar -->
+    <div class="search-bar" @click="goToSearch">
+      <div class="search-input-wrapper">
+        <input type="text" placeholder="Pesquisar itens..." readonly />
+        <span class="search-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+            <path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </span>
+      </div>
+    </div>
     <!-- Banner -->
     <div class="banner">
       <img src="/banner.jpg" alt="Promoção" />
     </div>
 
-    <!-- Categorias -->
     <div class="categories">
       <div v-for="cat in categorias" :key="cat.id" class="item">
             <img class="circle" :src="formatMediaUrl(cat.imagem_url)" />
@@ -72,14 +87,12 @@ onMounted(() => {
           </div>
     </div>
 
-    <!-- Produtos -->
     <div class="products">
       <h3>Para você</h3>
 
       <div class="grid">
         <div class="card" v-for="p in produtos" :key="p.id" @click="goToProduto(p.id)">
           <img :src="formatMediaUrl(p.imagem_url)" />
-
           <p class="name">{{ p.nome }}</p>
           <p class="price">R$ {{ p.preco }}</p>
         </div>
@@ -90,16 +103,71 @@ onMounted(() => {
 
 <style scoped>
 .home {
-  max-width: 420px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: none; /* Remove a limitação de 420px mobile */
+  margin: 0;
+  padding: 12px;
   padding-bottom: 80px;
-  background: #f6f6f7;
+  background: white; /* Corrigido de #f6f6f7 para white para unificar as cores de fundo */
   font-family: 'Montserrat', sans-serif;
+}
+
+/* SEARCH BAR */
+.search-bar {
+  padding: 12px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+}
+
+.search-input-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 420px; /* same max width as .home for visual alignment */
+}
+
+.search-input-wrapper input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 44px 10px 14px;
+  border-radius: 20px;
+  border: 1px solid #00000066;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  font-size: 14px;
+  color: #333;
+  line-height: 1;
+}
+
+.search-input-wrapper input::placeholder {
+  color: #9a9a9a;
+}
+
+.search-icon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #9a9a9a;
+  pointer-events: none;
+}
+
+@media (max-width: 420px) {
+  .search-bar { padding: 10px; }
+  .search-input-wrapper { max-width: 100%; }
+  .search-input-wrapper input { padding: 10px 42px 10px 12px; font-size: 14px; }
 }
 
 /* BANNER */
 .banner {
-  padding: 12px;
+  padding: 0;
+  margin-bottom: 16px;
 }
 
 .banner img {
@@ -113,7 +181,7 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 14px;
-  padding: 12px;
+  padding: 12px 0;
 }
 
 .item {
@@ -142,7 +210,7 @@ onMounted(() => {
 
 /* PRODUTOS */
 .products {
-  padding: 12px;
+  padding: 12px 0;
 }
 
 .products h3 {
@@ -164,12 +232,8 @@ onMounted(() => {
   border-radius: 16px;
   padding: 10px;
   cursor: pointer;
-
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .card:active {
@@ -207,14 +271,12 @@ onMounted(() => {
 /* DESKTOP */
 @media (min-width: 768px) {
   .home {
-    max-width: 1200px;
     padding: 20px;
-    padding-bottom: 20px;
+    padding-bottom: 40px;
   }
 
   .banner {
-    padding: 0;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
   }
 
   .categories {
@@ -230,10 +292,6 @@ onMounted(() => {
 
   .item {
     font-size: 13px;
-  }
-
-  .products {
-    padding: 0;
   }
 
   .products h3 {

@@ -53,52 +53,29 @@ function logout() {
   <div class="profile-page">
     <div class="profile-container">
 
-      <!-- HEADER -->
       <div class="profile-header">
         <div class="avatar">
-          <img
-            v-if="user.photo || user.avatar || user.image"
-            :src="user.photo || user.avatar || user.image"
-            alt="Foto de perfil"
-          />
+          <img v-if="user.photo || user.avatar || user.image" :src="user.photo || user.avatar || user.image"
+            alt="Foto de perfil" />
           <span v-else>{{ profileName.charAt(0) || 'U' }}</span>
         </div>
         <h2>{{ profileName }}</h2>
       </div>
 
-      <div class="account-card">
-        <h3>Minha conta</h3>
-        <div class="account-row">
-          <span>Email</span>
-          <strong>{{ profileEmail }}</strong>
-        </div>
-        <div class="account-row" v-if="user.phone">
-          <span>Telefone</span>
-          <strong>{{ user.phone }}</strong>
-        </div>
-        <div class="account-row" v-if="formattedBirthdate">
-          <span>Data de nascimento</span>
-          <strong>{{ formattedBirthdate }}</strong>
-        </div>
-      </div>
-
-      <!-- MENU -->
-      <div class="menu">
-
-        <div
-          v-for="(item, index) in menuItems"
-          :key="index"
-          class="menu-item"
-          @click="goTo(item.route)"
-        >
-          <div class="left">
-            <span class="material-symbols-outlined">{{ item.icon }}</span>
-            <span>{{ item.label }}</span>
+      <div class="profile-content">
+        <div class="account-card">
+          <h3>Minha conta</h3>
+          <div class="account-row">
+            <span>Email</span>
+            <strong>{{ profileEmail }}</strong>
           </div>
-
-          <div class="right">
-            <span v-if="item.extra" class="extra">{{ item.extra }}</span>
-            <span class="material-symbols-outlined arrow">chevron_right</span>
+          <div class="account-row" v-if="user.phone">
+            <span>Telefone</span>
+            <strong>{{ user.phone }}</strong>
+          </div>
+          <div class="account-row" v-if="formattedBirthdate">
+            <span>Data de nascimento</span>
+            <strong>{{ formattedBirthdate }}</strong>
           </div>
         </div>
 
@@ -108,8 +85,14 @@ function logout() {
             <span class="material-symbols-outlined">logout</span>
             <span>Sair</span>
           </div>
-        </div>
 
+          <div class="menu-item delete" @click="logout">
+            <div class="left">
+              <span class="material-symbols-outlined">logout</span>
+              <span>Sair da conta</span>
+            </div>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -130,7 +113,6 @@ function logout() {
 /* CONTAINER CENTRAL */
 .profile-container {
   width: 100%;
-  max-width: 900px;
 }
 
 /* HEADER */
@@ -139,8 +121,12 @@ function logout() {
   color: var(--header-text);
   padding: 40px 30px 20px;
   text-align: center;
-  border-bottom-left-radius: 20px;
-  border-bottom-right-radius: 20px;
+}
+
+/* CONTEÚDO (Minha Conta e Menu) */
+.profile-content {
+  padding: 0 20px 40px;
+  width: 100%;
 }
 
 .account-card {
@@ -207,11 +193,16 @@ function logout() {
 }
 /* GRID NO DESKTOP */
 @media (min-width: 768px) {
+  .profile-content {
+
+    padding: 0 40px 40px;
+  }
+
   .menu {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    padding: 10px;
+    gap: 14px;
+    padding: 10px 0;
   }
 
   .menu-item {
@@ -261,7 +252,7 @@ function logout() {
   color: #999;
 }
 
-/* DELETE */
+/* DELETE (Sair) */
 .delete {
   color: red;
   font-weight: 500;

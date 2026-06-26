@@ -142,12 +142,16 @@ const publicarPeca = async () => {
     </button>
   </div>
 </div>
-    <header class="top-bar">
-      <button class="back-btn" @click="$router.back()">←</button>
-
-      <h1>VENDER</h1>
+<header class="top-bar">
+      <button @click="$router.back()" class="back-btn" aria-label="Voltar">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+      </button>
+      <h1>Vender</h1>
     </header>
-
     <form class="sell-form" @submit.prevent="publicarPeca">
       <div class="field-group">
         <label>NOME DO PRODUTO</label>
