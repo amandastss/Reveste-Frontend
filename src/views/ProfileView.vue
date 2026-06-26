@@ -29,11 +29,11 @@ const formattedBirthdate = computed(() => {
   return isNaN(date.getTime()) ? '' : date.toLocaleDateString('pt-BR')
 })
 const formattedImageUrl = computed(() => {
-  if (!user.value.photo && !user.value.avatar && !user.value.image) {
+  if (!user.value.photo && !user.value.profile_image && !user.value.avatar && !user.value.image) {
     return 'https://via.placeholder.com/150?text=Sem+imagem'
   }
   const imageUrl =
-    user.value.photo || user.value.avatar || user.value.image || ''
+    user.value.photo || user.value.profile_image || user.value.avatar || user.value.image || ''
   return imageUrl.startsWith('http')
     ? imageUrl
     : `${import.meta.env.VITE_API_URL}/api${imageUrl}`
@@ -69,7 +69,7 @@ function logout() {
       <div class="profile-header">
         <div class="avatar">
           <img
-            v-if="user.photo || user.avatar || user.image"
+            v-if="user.photo || user.profile_image || user.avatar || user.image"
             :src="formattedImageUrl"
             alt="Foto de perfil"
           />
