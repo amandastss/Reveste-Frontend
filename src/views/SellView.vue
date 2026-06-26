@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import axios from 'axios'
 import '../css/sell.css'
 
 const estaLogado = () => {
@@ -13,6 +14,7 @@ type FormPeca = {
   preco: string
   condicao: string
   marca: string
+  categoria: string
   foto: File | null
 }
 
@@ -26,6 +28,7 @@ type ResultadoScanner = {
 const fileInput = ref<HTMLInputElement | null>(null)
 const preview = ref<string>('')
 const analisando = ref(false)
+const categorias = ref<Array<{ id: number; nome?: string; name?: string; title?: string }>>([])
 const podePublicar = ref(false)
 const erroScanner = ref('')
 const resultadoIA = ref<ResultadoScanner | null>(null)
@@ -36,7 +39,26 @@ const form = ref<FormPeca>({
   preco: '',
   condicao: '',
   marca: '',
+  categoria: '',
   foto: null,
+})
+
+const carregarCategorias = async () => {
+  try {
+    const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/categorias/`)
+    categorias.value = Array.isArray(res.data?.results)
+      ? res.data.results
+      : Array.isArray(res.data)
+        ? res.data
+        : []
+  } catch (error) {
+    console.error('Erro ao carregar categorias:', error)
+    categorias.value = []
+  }
+}
+
+onMounted(() => {
+  carregarCategorias()
 })
 
 const abrirGaleria = () => {
@@ -84,6 +106,11 @@ const publicarPeca = async () => {
 
   if (!podePublicar.value) return
 
+  if (!form.value.categoria) {
+    alert('Selecione uma categoria para publicar o produto.')
+    return
+  }
+
   try {
     const formData = new FormData()
 
@@ -92,6 +119,7 @@ const publicarPeca = async () => {
     formData.append('preco', form.value.preco)
     formData.append('marca', form.value.marca)
     formData.append('condicao', form.value.condicao)
+    formData.append('categoria', form.value.categoria)
 
     if (form.value.foto) {
       formData.append('imagem', form.value.foto)
@@ -119,6 +147,7 @@ const publicarPeca = async () => {
       preco: '',
       condicao: '',
       marca: '',
+      categoria: '',
       foto: null,
     }
     preview.value = ''
@@ -171,6 +200,16 @@ const publicarPeca = async () => {
       <div class="field-group">
         <label>MARCA</label>
         <input v-model="form.marca" type="text" />
+      </div>
+
+      <div class="field-group">
+        <label>CATEGORIA</label>
+        <select v-model="form.categoria">
+          <option value="">Selecione uma categoria</option>
+          <option v-for="categoria in categorias" :key="categoria.id" :value="String(categoria.id)">
+            {{ categoria.nome || categoria.name || categoria.title }}
+          </option>
+        </select>
       </div>
 
       <div class="field-group">
