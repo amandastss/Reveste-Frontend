@@ -34,25 +34,25 @@ async function login() {
     const currentEmail = email.value?.toLowerCase() || ''
     const storedEmail = existingUser.email?.toLowerCase() || ''
 
-    const mergedUser = storedEmail === currentEmail
-      ? {
-          ...existingUser,
-          ...res.data,
-          email: email.value,
-          name: existingUser.name || res.data.name || res.data.username || res.data.first_name || undefined,
-          phone: existingUser.phone || res.data.phone,
-          photo: existingUser.photo || res.data.profile_image || res.data.photo || res.data.avatar || res.data.image,
-          date_of_birth: existingUser.date_of_birth || res.data.date_of_birth || res.data.birthdate || res.data.birth_date,
-        }
-      : {
-          ...res.data,
-          email: email.value,
-        }
+    // const mergedUser = storedEmail === currentEmail
+    //   ? {
+    //       ...existingUser,
+    //       ...res.data,
+    //       email: email.value,
+    //       name: existingUser.name || res.data.name || res.data.username || res.data.first_name || undefined,
+    //       phone: existingUser.phone || res.data.phone,
+    //       photo: existingUser.photo || res.data.profile_image || res.data.photo || res.data.avatar || res.data.image,
+    //       date_of_birth: existingUser.date_of_birth || res.data.date_of_birth || res.data.birthdate || res.data.birth_date,
+    //     }
+    //   : {
+    //       ...res.data,
+    //       email: email.value,
+    //     }
 
-    localStorage.setItem('user', JSON.stringify(mergedUser))
-    if (res.data && res.data.token) {
+    localStorage.setItem('user', JSON.stringify(res))
+    if (res.data && res.data.access) {
       try {
-        localStorage.setItem('token', res.data.token)
+        localStorage.setItem('token', res.data.access)
       } catch {}
     }
     localStorage.setItem('email', email.value)

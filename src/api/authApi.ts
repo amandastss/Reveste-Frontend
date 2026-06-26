@@ -23,26 +23,21 @@ const sendEmail = (email: string): AuthResponse => {
 }
 
 const login = (email: string, password: string): AuthResponse => {
-  return api.post('/login/', { email, password })
+  return api.post('/token/', { email, password })
 }
 
 async function fetchUserFromCandidates(
   token: string,
   userId?: string | number
 ): Promise<Record<string, unknown> | null> {
-  const authHeaders = (scheme: 'Token' | 'Bearer') => ({
-    headers: {
-      Authorization: `${scheme} ${token}`
-    }
-  })
+  // const authHeaders = (scheme: 'Token' | 'Bearer') => ({
+  //   headers: {
+  //     Authorization: `${scheme} ${token}`
+  //   }
+  // })
 
   try {
-    const res = await api.get('/usuarios/me/', authHeaders('Token'))
-    if (res?.data) return res.data
-  } catch {}
-
-  try {
-    const res = await api.get('/usuarios/me/', authHeaders('Bearer'))
+    const res = await api.get('/usuarios/me/')
     if (res?.data) return res.data
   } catch {}
 
@@ -73,9 +68,9 @@ async function fetchUserFromCandidates(
       let response
 
       try {
-        response = await api.get(url, authHeaders('Token'))
+        response = await api.get(url)
       } catch {
-        response = await api.get(url, authHeaders('Bearer'))
+        console.error(`Failed to fetch user from ${url}`)
       }
 
       if (response?.data) {
