@@ -2,6 +2,17 @@ import api from './config'
 import type { AxiosResponse } from 'axios'
 
 type AuthResponse<T = unknown> = Promise<AxiosResponse<T>>
+type UserProfile = {
+  "id": number
+  "email": string
+  "name": string
+  "role": "buyer",
+  "birth_date": string
+  "phone": string
+  "bio": string
+  "profile_image": string
+  "created_at": string
+}
 
 type RegisterPayload = {
   email: string
@@ -24,6 +35,11 @@ const sendEmail = (email: string): AuthResponse => {
 
 const login = (email: string, password: string): AuthResponse => {
   return api.post('/token/', { email, password })
+}
+
+const fetchUserProfile = async () => {
+  const profile = await api.get('/usuarios/me/')
+  return profile.data as UserProfile
 }
 
 async function fetchUserFromCandidates(
@@ -156,6 +172,7 @@ export default {
   checkEmail,
   sendEmail,
   fetchUserFromCandidates,
+  fetchUserProfile,
   login,
   register,
   verifyCode,

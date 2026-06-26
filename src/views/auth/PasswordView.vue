@@ -30,6 +30,7 @@ async function login() {
 
     // Login - email já existe
     const res = await authApi.login(email.value, password.value)
+    const userData =  await authApi.fetchUserProfile()
     const existingUser = JSON.parse(localStorage.getItem('user') || '{}')
     const currentEmail = email.value?.toLowerCase() || ''
     const storedEmail = existingUser.email?.toLowerCase() || ''
@@ -49,7 +50,7 @@ async function login() {
     //       email: email.value,
     //     }
 
-    localStorage.setItem('user', JSON.stringify(res))
+    localStorage.setItem('user', JSON.stringify(userData))
     if (res.data && res.data.access) {
       try {
         localStorage.setItem('token', res.data.access)
