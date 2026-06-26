@@ -86,21 +86,19 @@ function checkout() {
 <template>
   <div class="cart-page">
     <header class="cart-header">
-      <button class="back-btn" @click="goBack">❮</button>
-      <h1>SEU CARRINHO</h1>
+      <button @click="goBack" class="back-btn" aria-label="Voltar">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+      </button>
+      <h1>Seu Carrinho</h1>
     </header>
 
     <section class="cart-items">
-      <div
-        v-for="item in cartItems"
-        :key="item.id"
-        class="cart-item"
-      >
-        <img
-          :src="item.image"
-          :alt="item.name"
-          class="item-image"
-        />
+      <div v-for="item in cartItems" :key="item.id" class="cart-item">
+        <img :src="item.image" :alt="item.name" class="item-image" />
 
         <div class="item-info">
           <div class="top-info">
@@ -137,12 +135,8 @@ function checkout() {
       </button>
     </footer>
 
-    <EditItemModal
-      :item="itemBeingEdited"
-      :visible="editModalVisible"
-      @close="editModalVisible = false"
-      @update="onItemUpdated"
-    />
+    <EditItemModal :item="itemBeingEdited" :visible="editModalVisible" @close="editModalVisible = false"
+      @update="onItemUpdated" />
   </div>
 </template>
 
