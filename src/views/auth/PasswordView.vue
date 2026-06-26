@@ -37,8 +37,8 @@ async function login() {
     }
     const userData =  await authApi.fetchUserProfile()
     const existingUser = JSON.parse(localStorage.getItem('user') || '{}')
-    const currentEmail = email.value?.toLowerCase() || ''
-    const storedEmail = existingUser.email?.toLowerCase() || ''
+    // const currentEmail = email.value?.toLowerCase() || ''
+    // const storedEmail = existingUser.email?.toLowerCase() || ''
 
     // const mergedUser = storedEmail === currentEmail
     //   ? {
