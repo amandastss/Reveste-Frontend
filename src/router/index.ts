@@ -7,19 +7,20 @@ import ProfileView from '../views/ProfileView.vue'
 import MenuComponent from '@/components/MenuComponent.vue'
 import AboutView from '../views/AboutView.vue'
 import CameraSearchView from '../views/CameraSearchView.vue'
-
+import PesquisaItensCameraView from '@/views/PesquisaItensCameraView.vue'
 import EmailView from '../views/auth/EmailView.vue'
 import PasswordView from '../views/auth/PasswordView.vue'
 import RegisterView from '../views/auth/RegisterView.vue'
 import ForgotPasswordView from '../views/auth/ForgotPasswordView.vue'
 import ResetPasswordView from '../views/auth/ResetPasswordView.vue'
 import VerifyCodeView from '../views/auth/VerifyCodeView.vue'
-
+import SeguindoView from '../views/SeguindoView.vue'
 import PedidosView from '../views/PedidosView.vue'
 import PedidoDetalheView from '../views/PedidoDetalheView.vue'
 import CartView from '../views/CartView.vue'
 import ProdutoDetalheView from '../views/ProdutoDetalheView.vue'
 import ReviewsView from '../views/ReviewsView.vue'
+import AppearanceView from '../views/AppearanceView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -36,13 +37,21 @@ const router = createRouter({
       name: 'search',
       component: SearchView,
     },
-
+    {
+      path: '/pesquisa-camera',
+      name: 'pesquisa-camera',
+      component: PesquisaItensCameraView,
+    },
     {
       path: '/sell',
       name: 'sell',
       component: SellView,
     },
-
+    {
+      path: '/seguindo',
+      name: 'seguindo',
+      component: SeguindoView,
+    },
     {
       path: '/profile',
       name: 'profile',
@@ -97,9 +106,20 @@ const router = createRouter({
       props: true,
     },
     {
+      path: '/aparencia',
+      name: 'aparencia',
+      component: AppearanceView,
+    },
+
+    {
       path: '/suporte',
       name: 'suporte',
       component: () => import('@/views/SuporteView.vue'),
+    },
+    {
+      path: '/notificacoes',
+      name: 'notificacoes',
+      component: NotificationsView,
     },
 
     {

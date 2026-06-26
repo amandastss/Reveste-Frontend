@@ -1,132 +1,119 @@
-/*BASE*/
 .camera-page {
   min-height: 100vh;
-  background: #f6f6f6;
-  display: flex;
-  flex-direction: column;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f7f7f7;
 }
 
-/*HEADER*/
 .top-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 16px;
-  background: #fff;
+  background: white;
   border-bottom: 1px solid #eee;
 }
 
-.top-bar span {
-  font-size: 22px;
+.top-bar p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.camera-container {
+  padding: 4px 20px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.camera-frame {
+  width: 100%;
+  max-width: 450px;
+  margin: auto;
+  position: relative;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: 24px;
+  box-shadow: 0 6px 25px rgba(0,0,0,.08);
+  background: #000;
+}
+
+.camera-video,
+.camera-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.camera-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 16px;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+  pointer-events: none;
+}
+
+.camera-controls button {
+  pointer-events: auto;
+}
+
+.capture-btn {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 6px solid white;
+  background: black;
+  cursor: pointer;
+  z-index: 30;
+}
+
+.preview-controls {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 52px;
+  display: flex;
+  flex-direction: column;
+  width: auto;
+  gap: 12px;
+  padding: 0;
+}
+
+.row-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.row-actions button {
+  flex: 1;
+  min-height: 48px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
   cursor: pointer;
 }
 
-.top-bar p {
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-/*BOTÕES INICIAIS*/
-.actions {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 20px;
-}
-
-.actions button {
-  width: 100%;
-  padding: 14px;
-  border-radius: 12px;
+.preview-controls .cancel-btn {
+  min-height: 48px;
   border: none;
-  background: #fff;
-  font-size: 15px;
-  font-weight: 500;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  transition: 0.2s;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
-.actions button:active {
-  transform: scale(0.98);
+.preview-controls .confirm-btn {
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
 }
 
-/*PREVIEWS*/
-.preview-list {
-  display: flex;
-  gap: 10px;
-  padding: 12px 12px 0;
-  overflow-x: auto;
+.preview-controls .retake-btn {
+  background: rgba(255, 255, 255, 0.85);
+  color: #000;
 }
 
-.preview-list img {
-  width: 65px;
-  height: 65px;
-  object-fit: cover;
-  border-radius: 10px;
-  flex-shrink: 0;
-  border: 2px solid #fff;
-}
-
-/*GRID*/
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  padding: 12px;
-}
-
-/*CARD*/
-.item {
-  background: #fff;
-  border-radius: 14px;
-  padding: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  transition: 0.2s;
-}
-
-.item:active {
-  transform: scale(0.97);
-}
-
-.item img {
-  width: 100%;
-  height: 170px;
-  object-fit: cover;
-  border-radius: 10px;
-}
-
-/*TEXTO*/
-.nome {
-  font-size: 13px;
-  margin-top: 6px;
-  font-weight: 500;
-  color: #222;
-}
-
-.preco {
-  font-size: 12px;
-  color: #777;
-  margin-top: 2px;
-}
-
-.preview-list::-webkit-scrollbar {
-  height: 6px;
-}
-
-.preview-list::-webkit-scrollbar-thumb {
-  background: #ddd;
-  border-radius: 10px;
-}
-
-/*RESPONSIVO*/
-@media (max-width: 400px) {
-  .item img {
-    height: 150px;
-  }
-
-  .top-bar p {
-    font-size: 13px;
-  }
+.preview-controls .cancel-btn {
+  background: rgba(236, 236, 236, 0.85);
+  color: #000;
 }

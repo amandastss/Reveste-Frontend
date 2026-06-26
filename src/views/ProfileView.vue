@@ -65,7 +65,6 @@ function logout() {
   <div class="profile-page">
     <div class="profile-container">
 
-      <!-- HEADER -->
       <div class="profile-header">
         <div class="avatar">
           <img
@@ -78,39 +77,20 @@ function logout() {
         <h2>{{ profileName }}</h2>
       </div>
 
-      <div class="account-card">
-        <h3>Minha conta</h3>
-        <div class="account-row">
-          <span>Email</span>
-          <strong>{{ profileEmail }}</strong>
-        </div>
-        <div class="account-row" v-if="user.phone">
-          <span>Telefone</span>
-          <strong>{{ user.phone }}</strong>
-        </div>
-        <div class="account-row" v-if="formattedBirthdate">
-          <span>Data de nascimento</span>
-          <strong>{{ formattedBirthdate }}</strong>
-        </div>
-      </div>
-
-      <!-- MENU -->
-      <div class="menu">
-
-        <div
-          v-for="(item, index) in menuItems"
-          :key="index"
-          class="menu-item"
-          @click="goTo(item.route)"
-        >
-          <div class="left">
-            <span class="material-symbols-outlined">{{ item.icon }}</span>
-            <span>{{ item.label }}</span>
+      <div class="profile-content">
+        <div class="account-card">
+          <h3>Minha conta</h3>
+          <div class="account-row">
+            <span>Email</span>
+            <strong>{{ profileEmail }}</strong>
           </div>
-
-          <div class="right">
-            <span v-if="item.extra" class="extra">{{ item.extra }}</span>
-            <span class="material-symbols-outlined arrow">chevron_right</span>
+          <div class="account-row" v-if="user.phone">
+            <span>Telefone</span>
+            <strong>{{ user.phone }}</strong>
+          </div>
+          <div class="account-row" v-if="formattedBirthdate">
+            <span>Data de nascimento</span>
+            <strong>{{ formattedBirthdate }}</strong>
           </div>
         </div>
 
@@ -120,8 +100,14 @@ function logout() {
             <span class="material-symbols-outlined">logout</span>
             <span>Sair</span>
           </div>
-        </div>
 
+          <div class="menu-item delete" @click="logout">
+            <div class="left">
+              <span class="material-symbols-outlined">logout</span>
+              <span>Sair da conta</span>
+            </div>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -130,10 +116,10 @@ function logout() {
 
 <style scoped>
 .profile-page {
-  background: #f5f5f5;
+  background: var(--app-bg);
   min-height: 100vh;
   font-family: "Montserrat", sans-serif;
-  color: black;
+  color: var(--text-color);
 
   display: flex;
   justify-content: center;
@@ -142,25 +128,28 @@ function logout() {
 /* CONTAINER CENTRAL */
 .profile-container {
   width: 100%;
-  max-width: 900px;
 }
 
 /* HEADER */
 .profile-header {
-  background: black;
-  color: white;
+  background: var(--header-bg);
+  color: var(--header-text);
   padding: 40px 30px 20px;
   text-align: center;
-  border-bottom-left-radius: 20px;
-  border-bottom-right-radius: 20px;
+}
+
+/* CONTEÚDO (Minha Conta e Menu) */
+.profile-content {
+  padding: 0 20px 40px;
+  width: 100%;
 }
 
 .account-card {
-  background: white;
+  background: var(--surface-bg);
   border-radius: 18px;
   padding: 20px;
   margin: 16px 0;
-  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 14px 35px var(--shadow-color);
 }
 
 .account-card h3 {
@@ -180,24 +169,24 @@ function logout() {
 }
 
 .account-row span {
-  color: #666;
+  color: var(--text-muted);
 }
 
 .account-row strong {
-  color: #111;
+  color: var(--text-color);
 }
 
 .avatar {
   width: 80px;
   height: 80px;
-  background: #ccc;
+  background: var(--surface-elevated);
   border-radius: 50%;
   margin: 0 auto 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  color: #333;
+  color: var(--text-color);
   font-size: 28px;
   font-weight: 700;
 }
@@ -219,11 +208,16 @@ function logout() {
 }
 /* GRID NO DESKTOP */
 @media (min-width: 768px) {
+  .profile-content {
+
+    padding: 0 40px 40px;
+  }
+
   .menu {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    padding: 10px;
+    gap: 14px;
+    padding: 10px 0;
   }
 
   .menu-item {
@@ -237,18 +231,18 @@ function logout() {
 }
 
 .menu-item {
-  background: white;
+  background: var(--surface-bg);
   padding: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-color);
   transition: background 0.2s;
 }
 
 .menu-item:hover {
-  background: #f9f9f9;
+  background: var(--surface-elevated);
 }
 
 .left {
@@ -265,7 +259,7 @@ function logout() {
 
 .extra {
   font-size: 12px;
-  color: gray;
+  color: var(--text-muted);
 }
 
 .arrow {
@@ -273,7 +267,7 @@ function logout() {
   color: #999;
 }
 
-/* DELETE */
+/* DELETE (Sair) */
 .delete {
   color: red;
   font-weight: 500;

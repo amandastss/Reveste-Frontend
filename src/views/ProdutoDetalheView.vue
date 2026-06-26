@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
+import { useCartStore } from '@/stores/cart'
 
 interface Produto {
   id: number
@@ -15,11 +16,16 @@ interface Produto {
 
 const route = useRoute()
 const router = useRouter()
-const productId = String(route.params.id || '')
+const cartStore = useCartStore()
+const productId = Number(route.params.id || 0)
 
 const productData = ref<Produto | null>(null)
 const loading = ref(true)
 const error = ref('')
+const showAddToCartConfirm = ref(false)
+const isAddingToCart = ref(false)
+const addToCartError = ref('')
+const addToCartSuccess = ref(false)
 
 const mainImage = computed(() => {
   if (!productData.value?.imagem_url) {
@@ -32,8 +38,48 @@ const mainImage = computed(() => {
 
 const goBack = () => router.back()
 const toggleFavorite = () => alert('Adicionado aos favoritos!')
-const openCart = () => alert('Abrindo o carrinho...')
+const openAddToCartConfirm = () => {
+  showAddToCartConfirm.value = true
+}
+const closeAddToCartConfirm = () => {
+  showAddToCartConfirm.value = false
+  addToCartError.value = ''
+}
+
+const confirmAddToCart = async () => {
+  if (!productData.value) return
+
+  isAddingToCart.value = true
+  addToCartError.value = ''
+
+  try {
+    await cartStore.addItem({
+      productId: productData.value.id,
+      name: productData.value.nome,
+      color: '',
+      size: '',
+      price: Number(productData.value.preco),
+      quantity: 1,
+      image: mainImage.value
+    })
+
+    closeAddToCartConfirm()
+    handleAddToCartSuccess()
+  } catch (err) {
+    addToCartError.value = err instanceof Error ? err.message : 'Erro ao adicionar ao carrinho'
+  } finally {
+    isAddingToCart.value = false
+  }
+}
+
 const openReviews = () => router.push({ name: 'produto-avaliacoes', params: { id: productId } })
+
+const handleAddToCartSuccess = () => {
+  addToCartSuccess.value = true
+  setTimeout(() => {
+    addToCartSuccess.value = false
+  }, 3000)
+}
 
 const fetchProduct = async () => {
   loading.value = true
@@ -59,9 +105,16 @@ onMounted(fetchProduct)
       <button class="icon-btn" @click="goBack">←</button>
       <div class="header-actions">
         <button class="icon-btn" @click="toggleFavorite">♡</button>
-        <button class="icon-btn" @click="openCart">🛒</button>
+        <button class="icon-btn" @click="openAddToCartConfirm">🛒</button>
       </div>
     </header>
+
+    <!-- Success Message -->
+    <Transition name="fade">
+      <div v-if="addToCartSuccess" class="success-message">
+        ✓ Adicionado ao carrinho com sucesso!
+      </div>
+    </Transition>
 
     <main class="scrollable-content">
 
@@ -111,9 +164,113 @@ onMounted(fetchProduct)
         </section>
       </div>
     </main>
+
+    <!-- Add to Cart Confirmation -->
+    <div v-if="showAddToCartConfirm && productData" class="confirm-overlay" @click.self="closeAddToCartConfirm">
+      <div class="confirm-modal">
+        <div class="confirm-header">
+          <h2>Adicionar ao Carrinho</h2>
+          <button class="close-btn" @click="closeAddToCartConfirm">✕</button>
+        </div>
+
+        <p class="confirm-text">
+          Este produto tem apenas 1 unidade disponível.
+          Deseja adicioná-lo ao carrinho?
+        </p>
+
+        <div class="confirm-actions">
+          <button class="btn-secondary" @click="closeAddToCartConfirm">Cancelar</button>
+          <button class="btn-primary" @click="confirmAddToCart" :disabled="isAddingToCart">
+            {{ isAddingToCart ? 'Adicionando...' : 'Adicionar ao Carrinho' }}
+          </button>
+        </div>
+
+        <p v-if="addToCartError" class="error-message">{{ addToCartError }}</p>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
 @import '../css/product-detail.css';
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+}
+
+.confirm-modal {
+  width: min(100%, 420px);
+  background: #fff;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+}
+
+.confirm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.confirm-header h2 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.confirm-text {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #333;
+  margin-bottom: 22px;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.btn-secondary,
+.btn-primary {
+  min-width: 130px;
+  padding: 12px 18px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: #f2f2f2;
+  color: #333;
+}
+
+.btn-primary {
+  background: #2a6fdb;
+  color: #fff;
+}
+
+.close-btn {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.error-message {
+  margin-top: 14px;
+  color: #d72d2d;
+  font-size: 14px;
+}
 </style>

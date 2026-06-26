@@ -20,24 +20,19 @@ function closeMenu() {
 
 <template>
   <div class="app-container">
-    <!-- header mobile -->
     <HeaderMobile @open-menu="openMenu" />
 
-    <!-- header desktop -->
     <HeaderDesktop />
 
-    <!-- menu lateral -->
     <MenuComponent
       :isOpen="isMenuOpen"
       @close-menu="closeMenu"
     />
 
-    <!-- conteúdo principal -->
     <main class="content">
       <router-view />
     </main>
 
-    <!-- footer mobile -->
     <FooterMobile />
   </div>
 </template>
@@ -69,17 +64,18 @@ function closeMenu() {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background: var(--app-bg);
+  color: var(--text-color);
 }
 
 /* conteúdo principal */
 .content {
   flex: 1;
+  background: var(--app-bg);
 }
 
 /* centralização */
 .content > * {
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
 }
 </style>
