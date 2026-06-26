@@ -3,7 +3,6 @@ body,
 #app {
   width: 100%;
   min-height: 100vh;
-
   margin: 0;
   padding: 0;
 }
@@ -15,12 +14,8 @@ body,
 .sell-page {
   width: 100%;
   min-height: 100vh;
-
   background: white;
-
-  padding: 24px 20px 220px;
-
-  font-family: 'Manrope', sans-serif;
+  padding: 24px 24px 220px;
 }
 
 .overlay {
@@ -29,14 +24,11 @@ body,
   left: 0;
   width: 100%;
   height: 100%;
-
-  background: rgba(0, 0, 0, 0.4); /* escurece */
-  backdrop-filter: blur(5px); /* DESFOQUE */
-
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(5px);
   display: flex;
   align-items: center;
   justify-content: center;
-
   z-index: 999;
 }
 
@@ -47,6 +39,7 @@ body,
   text-align: center;
   width: 80%;
   max-width: 300px;
+  animation: pop 0.2s ease;
 }
 
 .modal button {
@@ -57,10 +50,6 @@ body,
   color: white;
   border-radius: 8px;
   cursor: pointer;
-}
-
-.modal {
-  animation: pop 0.2s ease;
 }
 
 @keyframes pop {
@@ -74,111 +63,108 @@ body,
   }
 }
 
-/* HEADER */
+/* =========================================
+   HEADER (PADRONIZADO)
+   ========================================= */
 
 .top-bar {
+  position: relative;
   display: flex;
   align-items: center;
-
-  gap: 85px;
-
-  margin-bottom: 40px;
+  justify-content: center;
+  margin-bottom: 35px;
 }
 
 .top-bar h1 {
-  font-size: 2rem;
+  font-size: 1.6rem;
   font-weight: 500;
-
   margin: 0;
+  color: #000;
+  letter-spacing: -0.5px;
 }
 
 .back-btn {
+  position: absolute;
+  left: 0;
   border: none;
   background: transparent;
-
-  font-size: 1.5rem;
-
+  font-size: 28px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  color: #000;
   padding: 0;
 }
 
-/* FORM */
+.back-btn:hover {
+  opacity: 0.6;
+}
+
+/* =========================================
+   FORM
+   ========================================= */
 
 .sell-form {
   display: flex;
   flex-direction: column;
-
   gap: 28px;
 }
 
 .field-group {
   display: flex;
   flex-direction: column;
-
   gap: 8px;
 }
 
 .field-group label {
   font-size: 0.8rem;
   color: #666;
-
   font-weight: 500;
 }
 
 .field-group input,
 .field-group textarea {
   width: 100%;
-
   border: none;
   border-bottom: 1px solid #777;
-
   background: transparent;
-
   padding: 10px 0;
-
   font-size: 1rem;
-
   outline: none;
 }
 
 .field-group textarea {
   min-height: 80px;
-
   resize: none;
 }
 
-/* FOTOS */
+/* =========================================
+   FOTOS E DICAS
+   ========================================= */
 
 .photos .icon-btn {
   width: 100%;
-
   margin-top: 10px;
   padding: 14px;
-
   border: none;
   border-radius: 12px;
-
   background: #ddd;
-
   cursor: pointer;
-
   font-size: 1rem;
 }
 
 .photo-tips {
   background: #ffffff;
-
   border-radius: 14px;
-
   padding: 14px;
   margin-top: 10px;
-
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .photo-tips p {
   margin: 0 0 8px;
-
   font-size: 0.9rem;
   font-weight: 600;
 }
@@ -191,7 +177,6 @@ body,
 .photo-tips li {
   font-size: 0.85rem;
   color: #555;
-
   margin-bottom: 6px;
 }
 
@@ -199,34 +184,32 @@ body,
   display: none;
 }
 
-/* PREVIEW */
+/* =========================================
+   PREVIEW
+   ========================================= */
 
 .preview-box {
   width: 100%;
-
   margin-top: 16px;
-
   border-radius: 16px;
-
   overflow: hidden;
 }
 
 .preview-box img {
   width: 100%;
   max-height: 250px;
-
   object-fit: cover;
-
   display: block;
 }
 
-/* IA */
+/* =========================================
+   IA (STATUS)
+   ========================================= */
 
 .scanner-status,
 .scanner-result,
 .scanner-error {
   margin-top: 14px;
-
   font-size: 0.95rem;
 }
 
@@ -234,48 +217,41 @@ body,
   color: red;
 }
 
-/* BOTÃO FIXO */
+/* =========================================
+   BOTÃO FIXO
+   ========================================= */
 
 .publish-wrapper {
   position: fixed;
-
   left: 0;
   bottom: 70px;
-
   width: 100%;
-
-  padding: 18px 20px;
-
+  padding: 18px 24px;
   background: white;
-
   border-top: 1px solid #e5e5e5;
-
   z-index: 999;
 }
 
 .publish-btn {
   width: 100%;
   height: 54px;
-
   border: none;
   border-radius: 32px;
-
   background: #111;
   color: white;
-
   font-size: 14px;
   font-weight: 700;
-
   cursor: pointer;
 }
 
 .publish-btn:disabled {
   opacity: 0.5;
-
   cursor: not-allowed;
 }
 
-/* DESKTOP */
+/* =========================================
+   DESKTOP
+   ========================================= */
 
 @media (min-width: 768px) {
   .sell-page {

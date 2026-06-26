@@ -20,6 +20,7 @@ import PedidoDetalheView from '../views/PedidoDetalheView.vue'
 import CartView from '../views/CartView.vue'
 import ProdutoDetalheView from '../views/ProdutoDetalheView.vue'
 import ReviewsView from '../views/ReviewsView.vue'
+import NotificationsView from '@/views/NotificationsView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -108,6 +109,11 @@ const router = createRouter({
       path: '/suporte',
       name: 'suporte',
       component: () => import('@/views/SuporteView.vue'),
+    },
+    {
+      path: '/notificacoes',
+      name: 'notificacoes',
+      component: NotificationsView,
     },
 
     {

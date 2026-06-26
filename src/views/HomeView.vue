@@ -5,6 +5,7 @@ import axios from 'axios'
 
 interface Produto {
   id: number
+  name: string /* Alterado de 'nome' para 'name' conforme o padrão do seu carrinho se necessário, mas mantido a lógica */
   nome: string
   preco: number
   imagem_url?: string | null
@@ -74,13 +75,11 @@ onMounted(() => {
         </span>
       </div>
     </div>
-
     <!-- Banner -->
     <div class="banner">
       <img src="/banner.jpg" alt="Promoção" />
     </div>
 
-    <!-- Categorias -->
     <div class="categories">
       <div v-for="cat in categorias" :key="cat.id" class="item">
             <img class="circle" :src="formatMediaUrl(cat.imagem_url)" />
@@ -88,14 +87,12 @@ onMounted(() => {
           </div>
     </div>
 
-    <!-- Produtos -->
     <div class="products">
       <h3>Para você</h3>
 
       <div class="grid">
         <div class="card" v-for="p in produtos" :key="p.id" @click="goToProduto(p.id)">
           <img :src="formatMediaUrl(p.imagem_url)" />
-
           <p class="name">{{ p.nome }}</p>
           <p class="price">R$ {{ p.preco }}</p>
         </div>
@@ -106,10 +103,12 @@ onMounted(() => {
 
 <style scoped>
 .home {
-  max-width: 420px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: none; /* Remove a limitação de 420px mobile */
+  margin: 0;
+  padding: 12px;
   padding-bottom: 80px;
-  background: #f6f6f7;
+  background: white; /* Corrigido de #f6f6f7 para white para unificar as cores de fundo */
   font-family: 'Montserrat', sans-serif;
 }
 
@@ -167,7 +166,8 @@ onMounted(() => {
 
 /* BANNER */
 .banner {
-  padding: 12px;
+  padding: 0;
+  margin-bottom: 16px;
 }
 
 .banner img {
@@ -181,7 +181,7 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 14px;
-  padding: 12px;
+  padding: 12px 0;
 }
 
 .item {
@@ -210,7 +210,7 @@ onMounted(() => {
 
 /* PRODUTOS */
 .products {
-  padding: 12px;
+  padding: 12px 0;
 }
 
 .products h3 {
@@ -232,12 +232,8 @@ onMounted(() => {
   border-radius: 16px;
   padding: 10px;
   cursor: pointer;
-
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .card:active {
@@ -275,14 +271,12 @@ onMounted(() => {
 /* DESKTOP */
 @media (min-width: 768px) {
   .home {
-    max-width: 1200px;
     padding: 20px;
-    padding-bottom: 20px;
+    padding-bottom: 40px;
   }
 
   .banner {
-    padding: 0;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
   }
 
   .categories {
@@ -298,10 +292,6 @@ onMounted(() => {
 
   .item {
     font-size: 13px;
-  }
-
-  .products {
-    padding: 0;
   }
 
   .products h3 {
