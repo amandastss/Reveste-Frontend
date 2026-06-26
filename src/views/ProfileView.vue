@@ -118,10 +118,10 @@ function logout() {
 
 <style scoped>
 .profile-page {
-  background: #f5f5f5;
+  background: var(--app-bg);
   min-height: 100vh;
   font-family: "Montserrat", sans-serif;
-  color: black;
+  color: var(--text-color);
 
   display: flex;
   justify-content: center;
@@ -135,8 +135,8 @@ function logout() {
 
 /* HEADER */
 .profile-header {
-  background: black;
-  color: white;
+  background: var(--header-bg);
+  color: var(--header-text);
   padding: 40px 30px 20px;
   text-align: center;
   border-bottom-left-radius: 20px;
@@ -144,11 +144,11 @@ function logout() {
 }
 
 .account-card {
-  background: white;
+  background: var(--surface-bg);
   border-radius: 18px;
   padding: 20px;
   margin: 16px 0;
-  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 14px 35px var(--shadow-color);
 }
 
 .account-card h3 {
@@ -168,24 +168,24 @@ function logout() {
 }
 
 .account-row span {
-  color: #666;
+  color: var(--text-muted);
 }
 
 .account-row strong {
-  color: #111;
+  color: var(--text-color);
 }
 
 .avatar {
   width: 80px;
   height: 80px;
-  background: #ccc;
+  background: var(--surface-elevated);
   border-radius: 50%;
   margin: 0 auto 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  color: #333;
+  color: var(--text-color);
   font-size: 28px;
   font-weight: 700;
 }
@@ -225,18 +225,18 @@ function logout() {
 }
 
 .menu-item {
-  background: white;
+  background: var(--surface-bg);
   padding: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-color);
   transition: background 0.2s;
 }
 
 .menu-item:hover {
-  background: #f9f9f9;
+  background: var(--surface-elevated);
 }
 
 .left {
@@ -253,7 +253,7 @@ function logout() {
 
 .extra {
   font-size: 12px;
-  color: gray;
+  color: var(--text-muted);
 }
 
 .arrow {
