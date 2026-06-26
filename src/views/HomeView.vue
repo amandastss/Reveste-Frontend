@@ -30,6 +30,14 @@ const goToProduto = (id: number) => {
 const goToSearch = () => {
   router.push({ name: 'search' })
 }
+
+const goToCategory = (cat: Categoria) => {
+  router.push({
+    name: 'categoria',
+    params: { id: String(cat.id) }
+  })
+}
+
 const formatMediaUrl = (url?: string | null) => {
   if (!url) return '/default.png'
   return url.startsWith('http') ? url : `${import.meta.env.VITE_API_URL}${url}`
@@ -81,10 +89,10 @@ onMounted(() => {
     </div>
 
     <div class="categories">
-      <div v-for="cat in categorias" :key="cat.id" class="item">
-            <img class="circle" :src="formatMediaUrl(cat.imagem_url)" />
-            <span>{{ cat.nome || cat.name || cat.title }}</span>
-          </div>
+      <div v-for="cat in categorias" :key="cat.id" class="item" @click="goToCategory(cat)">
+        <img class="circle" :src="formatMediaUrl(cat.imagem_url)" />
+        <span>{{ cat.nome || cat.name || cat.title }}</span>
+      </div>
     </div>
 
     <div class="products">

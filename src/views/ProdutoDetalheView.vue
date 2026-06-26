@@ -12,6 +12,7 @@ interface Produto {
   marca: string
   condicao?: string
   imagem_url?: string | null
+  categoria?: number | string | { id?: number; nome?: string; name?: string; title?: string } | null
 }
 
 const route = useRoute()
@@ -20,6 +21,7 @@ const cartStore = useCartStore()
 const productId = Number(route.params.id || 0)
 
 const productData = ref<Produto | null>(null)
+const categoriaNome = ref('')
 const loading = ref(true)
 const error = ref('')
 const showAddToCartConfirm = ref(false)
@@ -81,12 +83,46 @@ const handleAddToCartSuccess = () => {
   }, 3000)
 }
 
+const resolveCategoriaNome = async (produto: Produto) => {
+  const categoria = produto.categoria
+
+  if (typeof categoria === 'object' && categoria) {
+    const nomeCategoria = categoria.nome || categoria.name || categoria.title || ''
+    categoriaNome.value = nomeCategoria
+    return
+  }
+
+  const categoriaId = Number(categoria)
+  if (!Number.isFinite(categoriaId) || categoriaId <= 0) {
+    categoriaNome.value = ''
+    return
+  }
+
+  try {
+    const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/categorias/`)
+    const categorias = Array.isArray(res.data?.results)
+      ? res.data.results
+      : Array.isArray(res.data)
+        ? res.data
+        : []
+
+    const categoriaEncontrada = categorias.find((item: { id?: number; nome?: string; name?: string; title?: string }) => Number(item.id) === categoriaId)
+    categoriaNome.value = categoriaEncontrada?.nome || categoriaEncontrada?.name || categoriaEncontrada?.title || ''
+  } catch (err) {
+    console.error('Erro ao carregar categoria do produto:', err)
+    categoriaNome.value = ''
+  }
+}
+
 const fetchProduct = async () => {
   loading.value = true
   error.value = ''
+  categoriaNome.value = ''
+
   try {
     const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/produtos/${productId}/`)
     productData.value = res.data
+    await resolveCategoriaNome(res.data)
   } catch (err) {
     console.error(err)
     error.value = 'Erro ao carregar os dados do produto.'
@@ -149,6 +185,11 @@ onMounted(fetchProduct)
         <section class="detail-section">
           <h2>MARCA</h2>
           <p class="brand-text">• {{ productData?.marca }}</p>
+        </section>
+
+        <section class="detail-section">
+          <h2>CATEGORIA</h2>
+          <p class="brand-text">• {{ categoriaNome || 'Não informada' }}</p>
         </section>
 
         <section class="detail-section">

@@ -22,7 +22,7 @@ import ProdutoDetalheView from '../views/ProdutoDetalheView.vue'
 import ReviewsView from '../views/ReviewsView.vue'
 import AppearanceView from '../views/AppearanceView.vue'
 import NotificationsView from '../views/NotificationsView.vue'
-
+import CategoriaView from '../views/CategoriaView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -38,6 +38,12 @@ const router = createRouter({
       path: '/search',
       name: 'search',
       component: SearchView,
+    },
+    {
+      path: '/categoria/:id',
+      name: 'categoria',
+      component: CategoriaView,
+      props: true,
     },
     {
       path: '/pesquisa-camera',

@@ -2,11 +2,12 @@
 import blusa from '@/assets/roupas/blusalaranjabasica.png'
 import jeans from '@/assets/roupas/calcajeansskinny.png'
 import skinny from '@/assets/roupas/calcaskinny.png'
-import { ref, computed, onMounted } from "vue"
-import { useRouter } from "vue-router"
+import { ref, computed, onMounted, watch } from "vue"
+import { useRoute, useRouter } from "vue-router"
 import axios from 'axios'
 
 const router = useRouter()
+const route = useRoute()
 
 interface Produto {
   id: number
@@ -16,10 +17,15 @@ interface Produto {
   categoria: string
   genero: string
   imagem: string
+  categoria_nome?: string
+  categoriaNome?: string
+  categoria_name?: string
+  tipo?: string
 }
 
 const search = ref("")
 const categoria = ref("")
+const categoriaFiltro = ref("")
 const produtos = ref<Produto[]>([])
 const recentes = ref<string[]>([])
 
@@ -109,9 +115,23 @@ const fetchProdutos = async (q?: string) => {
   }
 }
 
+const aplicarCategoriaDaRota = () => {
+  const valorCategoria = typeof route.query.categoria === 'string' ? route.query.categoria : ''
+  categoriaFiltro.value = valorCategoria
+}
+
+watch(
+  () => route.query.categoria,
+  () => {
+    aplicarCategoriaDaRota()
+  },
+  { immediate: true }
+)
+
 onMounted(() => {
   carregarRecentes()
   fetchProdutos()
+  aplicarCategoriaDaRota()
 })
 
 function onImgError(e: Event) {
@@ -129,17 +149,18 @@ function normalizar(texto: string) {
 
 const filtrados = computed(() => {
   const busca = normalizar(search.value)
+  const filtroCategoria = normalizar(categoriaFiltro.value)
 
   return produtos.value.filter((p) => {
     const texto = normalizar(
-      `${p.nome} ${p.marca} ${p.categoria} ${p.genero}`
+      `${p.nome} ${p.marca} ${p.categoria || ''} ${p.genero || ''} ${p.categoria_nome || ''} ${p.categoriaNome || ''} ${p.categoria_name || ''} ${p.tipo || ''}`
     )
 
     const matchBusca = !busca || texto.includes(busca)
-    const matchGenero =
-      !categoria.value || p.genero === categoria.value
+    const matchCategoria = !filtroCategoria || texto.includes(filtroCategoria)
+    const matchGenero = !categoria.value || p.genero === categoria.value
 
-    return matchBusca && matchGenero
+    return matchBusca && matchCategoria && matchGenero
   })
 })
 
