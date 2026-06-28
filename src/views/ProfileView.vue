@@ -127,7 +127,6 @@ function logout() {
     </div>
   </div>
 </template>
-
 <style scoped>
 .profile-page {
   background: var(--app-bg);
@@ -142,6 +141,7 @@ function logout() {
 /* CONTAINER CENTRAL */
 .profile-container {
   width: 100%;
+  padding-bottom: 100px;
 }
 
 /* HEADER */
@@ -215,16 +215,11 @@ function logout() {
 .menu {
   margin-top: 10px;
 }
-.profile-container {
-  width: 100%;
-  max-width: 900px;
-  padding-bottom: 100px;
-}
+
 /* GRID NO DESKTOP */
 @media (min-width: 768px) {
   .profile-content {
-
-    padding: 0 40px 40px;
+    padding: 0 5% 40px;
   }
 
   .menu {
