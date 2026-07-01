@@ -243,6 +243,7 @@ onMounted(fetchProduct)
   align-items: center;
   justify-content: center;
   z-index: 1200;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .confirm-modal {

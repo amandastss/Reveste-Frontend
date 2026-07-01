@@ -165,6 +165,7 @@ onMounted(() => {
 .categoria-page {
   padding: 16px 12px 80px;
   background: white;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .header {
