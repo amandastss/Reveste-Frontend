@@ -85,6 +85,7 @@ function logout() {
           <span v-else>{{ profileName.charAt(0) || 'U' }}</span>
         </div>
         <h2>{{ profileName }}</h2>
+        <p v-if="user.bio" class="profile-bio">{{ user.bio }}</p>
       </div>
 
       <div class="profile-content">
@@ -242,6 +243,18 @@ function logout() {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.profile-bio {
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-size: 14px;
+  text-align: center;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+  white-space: normal;
+  line-height: 1.4;
 }
 
 /* MENU */
