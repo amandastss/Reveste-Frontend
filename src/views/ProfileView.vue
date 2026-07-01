@@ -3,28 +3,47 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const user = computed(() => {
+
+type StoredUser = Record<string, unknown>
+
+const getStoredUser = (): StoredUser => {
   try {
     return JSON.parse(localStorage.getItem('user') || '{}')
   } catch {
     return {}
   }
+}
+
+const user = computed(() => getStoredUser())
+
+const profileName = computed(() => {
+  const possibleFields = ['name', 'username', 'first_name', 'full_name'] as const
+  const foundName = possibleFields
+    .map((field) => {
+      const value = user.value[field]
+      return typeof value === 'string' ? value : ''
+    })
+    .find((value) => value)
+
+  return foundName || 'Usuário'
 })
 
-const profileName = computed(
-  () =>
-    user.value.name ||
-    user.value.username ||
-    user.value.first_name ||
-    user.value.full_name ||
-    'Usuário'
-)
-const profileEmail = computed(() => user.value.email || '')
+const formattedImageUrl = computed(() => {
+  const imageCandidates = ['photo', 'profile_image', 'avatar', 'image'] as const
+  const imageUrl = imageCandidates
+    .map((field) => {
+      const value = user.value[field]
+      return typeof value === 'string' ? value : ''
+    })
+    .find((value) => value)
 
-const formattedBirthdate = computed(() => {
-  if (!user.value.date_of_birth) return ''
-  const date = new Date(user.value.date_of_birth)
-  return isNaN(date.getTime()) ? '' : date.toLocaleDateString('pt-BR')
+  if (!imageUrl) {
+    return 'https://via.placeholder.com/150?text=Sem+imagem'
+  }
+
+  return imageUrl.startsWith('http')
+    ? imageUrl
+    : `${import.meta.env.VITE_API_URL}/api${imageUrl}`
 })
 
 const menuItems = [
@@ -54,30 +73,19 @@ function logout() {
     <div class="profile-container">
 
       <div class="profile-header">
+        <button class="header-edit-button" @click="goTo('/profile/edit')" aria-label="Editar perfil">
+          <span class="material-symbols-outlined">edit</span>
+        </button>
         <div class="avatar">
           <img v-if="user.photo || user.avatar || user.image" :src="user.photo || user.avatar || user.image"
             alt="Foto de perfil" />
           <span v-else>{{ profileName.charAt(0) || 'U' }}</span>
         </div>
         <h2>{{ profileName }}</h2>
+        <p v-if="user.bio" class="profile-bio">{{ user.bio }}</p>
       </div>
 
       <div class="profile-content">
-        <div class="account-card">
-          <h3>Minha conta</h3>
-          <div class="account-row">
-            <span>Email</span>
-            <strong>{{ profileEmail }}</strong>
-          </div>
-          <div class="account-row" v-if="user.phone">
-            <span>Telefone</span>
-            <strong>{{ user.phone }}</strong>
-          </div>
-          <div class="account-row" v-if="formattedBirthdate">
-            <span>Data de nascimento</span>
-            <strong>{{ formattedBirthdate }}</strong>
-          </div>
-        </div>
 
         <div class="menu">
           <div v-for="(item, index) in menuItems" :key="index" class="menu-item" @click="goTo(item.route)">
@@ -104,7 +112,6 @@ function logout() {
     </div>
   </div>
 </template>
-
 <style scoped>
 .profile-page {
   background: #f5f5f5;
@@ -117,6 +124,7 @@ function logout() {
 /* CONTAINER CENTRAL */
 .profile-container {
   width: 100%;
+  padding-bottom: 100px;
 }
 
 /* HEADER */
@@ -125,6 +133,24 @@ function logout() {
   color: white;
   padding: 40px 30px 30px;
   text-align: center;
+  position: relative;
+}
+
+.header-edit-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  border: none;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
 }
 
 /* CONTEÚDO (Minha Conta e Menu) */
@@ -142,8 +168,32 @@ function logout() {
 }
 
 .account-card h3 {
-  margin: 0 0 14px;
+  margin: 0;
   font-size: 18px;
+}
+
+.account-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.account-hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.edit-profile-button {
+  border: none;
+  background: var(--surface-elevated);
+  color: var(--text-color);
+  padding: 8px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
 }
 
 .account-row {
@@ -186,6 +236,18 @@ function logout() {
   object-fit: cover;
 }
 
+.profile-bio {
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-size: 14px;
+  text-align: center;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+  white-space: normal;
+  line-height: 1.4;
+}
+
 /* MENU */
 .menu {
   margin-top: 10px;
@@ -194,8 +256,7 @@ function logout() {
 /* GRID NO DESKTOP */
 @media (min-width: 768px) {
   .profile-content {
-
-    padding: 0 40px 40px;
+    padding: 0 5% 40px;
   }
 
   .menu {
