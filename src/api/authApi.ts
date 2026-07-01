@@ -25,6 +25,15 @@ type RegisterPayload = {
   bio?: string
 }
 
+type ProfileUpdatePayload = {
+  email?: string
+  name?: string
+  phone?: string
+  birth_date?: string
+  bio?: string
+  profile_image?: File | string
+}
+
 const checkEmail = (email: string): AuthResponse => {
   return api.post('/check-email/', { email })
 }
@@ -143,6 +152,30 @@ const register = (
   return api.post('/registro/', data)
 }
 
+const updateProfile = async (payload: ProfileUpdatePayload): Promise<Record<string, unknown> | null> => {
+  try {
+    if (payload.profile_image instanceof File) {
+      const formData = new FormData()
+
+      if (payload.name) formData.append('name', payload.name)
+      if (payload.email) formData.append('email', payload.email)
+      if (payload.phone) formData.append('phone', payload.phone)
+      if (payload.birth_date) formData.append('birth_date', payload.birth_date)
+      if (payload.bio) formData.append('bio', payload.bio)
+      formData.append('profile_image', payload.profile_image)
+
+      const response = await api.patch('/usuarios/me/', formData)
+      return (response.data || null) as Record<string, unknown> | null
+    }
+
+    const response = await api.patch('/usuarios/me/', payload)
+    return (response.data || null) as Record<string, unknown> | null
+  } catch (error) {
+    console.warn('Não foi possível atualizar o perfil na API, salvando localmente.', error)
+    return null
+  }
+}
+
 const verifyCode = (
   email: string,
   code: string
@@ -175,6 +208,7 @@ export default {
   fetchUserProfile,
   login,
   register,
+  updateProfile,
   verifyCode,
   requestPasswordReset,
   resetPassword
