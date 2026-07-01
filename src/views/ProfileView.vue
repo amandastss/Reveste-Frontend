@@ -3,36 +3,39 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const user = computed(() => {
+
+type StoredUser = Record<string, unknown>
+
+const getStoredUser = (): StoredUser => {
   try {
     return JSON.parse(localStorage.getItem('user') || '{}')
   } catch {
     return {}
   }
-})
+}
 
-const profileName = computed(
-  () =>
-    user.value.name ||
-    user.value.username ||
-    user.value.first_name ||
-    user.value.full_name ||
-    'Usuário'
-)
-const profileEmail = computed(() => user.value.email || '')
+const user = computed(() => getStoredUser())
 
-const formattedBirthdate = computed(() => {
-  const birthDateValue =
-    user.value.birth_date || user.value.date_of_birth || user.value.birthdate
+const profileName = computed(() => {
+  const possibleFields = ['name', 'username', 'first_name', 'full_name'] as const
+  const foundName = possibleFields
+    .map((field) => {
+      const value = user.value[field]
+      return typeof value === 'string' ? value : ''
+    })
+    .find((value) => value)
 
-  if (!birthDateValue) return ''
-  const date = new Date(birthDateValue)
-  return isNaN(date.getTime()) ? '' : date.toLocaleDateString('pt-BR')
+  return foundName || 'Usuário'
 })
 
 const formattedImageUrl = computed(() => {
-  const imageUrl =
-    user.value.photo || user.value.profile_image || user.value.avatar || user.value.image || ''
+  const imageCandidates = ['photo', 'profile_image', 'avatar', 'image'] as const
+  const imageUrl = imageCandidates
+    .map((field) => {
+      const value = user.value[field]
+      return typeof value === 'string' ? value : ''
+    })
+    .find((value) => value)
 
   if (!imageUrl) {
     return 'https://via.placeholder.com/150?text=Sem+imagem'
@@ -70,6 +73,9 @@ function logout() {
     <div class="profile-container">
 
       <div class="profile-header">
+        <button class="header-edit-button" @click="goTo('/profile/edit')" aria-label="Editar perfil">
+          <span class="material-symbols-outlined">edit</span>
+        </button>
         <div class="avatar">
           <img
             v-if="user.photo || user.profile_image || user.avatar || user.image"
@@ -82,21 +88,6 @@ function logout() {
       </div>
 
       <div class="profile-content">
-        <div class="account-card">
-          <h3>Minha conta</h3>
-          <div class="account-row">
-            <span>Email</span>
-            <strong>{{ profileEmail }}</strong>
-          </div>
-          <div class="account-row" v-if="user.phone">
-            <span>Telefone</span>
-            <strong>{{ user.phone }}</strong>
-          </div>
-          <div class="account-row" v-if="formattedBirthdate">
-            <span>Data de nascimento</span>
-            <strong>{{ formattedBirthdate }}</strong>
-          </div>
-        </div>
 
         <div class="menu" v-if="menuItems.length">
           <div
@@ -150,6 +141,24 @@ function logout() {
   color: var(--header-text);
   padding: 40px 30px 20px;
   text-align: center;
+  position: relative;
+}
+
+.header-edit-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  border: none;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
 }
 
 /* CONTEÚDO (Minha Conta e Menu) */
@@ -167,8 +176,32 @@ function logout() {
 }
 
 .account-card h3 {
-  margin: 0 0 14px;
+  margin: 0;
   font-size: 18px;
+}
+
+.account-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.account-hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.edit-profile-button {
+  border: none;
+  background: var(--surface-elevated);
+  color: var(--text-color);
+  padding: 8px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
 }
 
 .account-row {

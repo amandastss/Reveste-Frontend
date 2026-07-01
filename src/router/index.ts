@@ -23,6 +23,7 @@ import ReviewsView from '../views/ReviewsView.vue'
 import AppearanceView from '../views/AppearanceView.vue'
 import NotificationsView from '../views/NotificationsView.vue'
 import CategoriaView from '../views/CategoriaView.vue'
+import EditProfileView from '../views/EditProfileView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -65,7 +66,11 @@ const router = createRouter({
       name: 'profile',
       component: ProfileView,
     },
-
+    {
+      path: '/profile/edit',
+      name: 'profile-edit',
+      component: EditProfileView,
+    },
     {
       path: '/menu',
       name: 'menu',
