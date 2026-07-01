@@ -115,9 +115,22 @@ async function saveProfile() {
     feedback.value = 'Perfil atualizado com sucesso!'
     feedbackType.value = 'success'
     setTimeout(() => router.push('/profile'), 400)
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Erro ao atualizar perfil:', error)
-    feedback.value = 'Não foi possível salvar agora. Tente novamente.'
+
+    const message = (() => {
+      if (!error || typeof error !== 'object') return 'Não foi possível salvar agora. Tente novamente.'
+      if ('response' in error && error.response && typeof error.response === 'object') {
+        const resp = error.response as Record<string, unknown>
+        const data = resp.data as Record<string, unknown> | undefined
+        if (data?.detail && typeof data.detail === 'string') return data.detail
+        if (data?.message && typeof data.message === 'string') return data.message
+      }
+      if ('message' in error && typeof error.message === 'string') return error.message
+      return 'Não foi possível salvar agora. Tente novamente.'
+    })()
+
+    feedback.value = message
     feedbackType.value = 'error'
   } finally {
     isSaving.value = false
