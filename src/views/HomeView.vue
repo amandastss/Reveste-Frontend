@@ -30,6 +30,14 @@ const goToProduto = (id: number) => {
 const goToSearch = () => {
   router.push({ name: 'search' })
 }
+
+const goToCategory = (cat: Categoria) => {
+  router.push({
+    name: 'categoria',
+    params: { id: String(cat.id) }
+  })
+}
+
 const formatMediaUrl = (url?: string | null) => {
   if (!url) return '/default.png'
   return url.startsWith('http') ? url : `${import.meta.env.VITE_API_URL}${url}`
@@ -81,10 +89,10 @@ onMounted(() => {
     </div>
 
     <div class="categories">
-      <div v-for="cat in categorias" :key="cat.id" class="item">
-            <img class="circle" :src="formatMediaUrl(cat.imagem_url)" />
-            <span>{{ cat.nome || cat.name || cat.title }}</span>
-          </div>
+      <div v-for="cat in categorias" :key="cat.id" class="item" @click="goToCategory(cat)">
+        <img class="circle" :src="formatMediaUrl(cat.imagem_url)" />
+        <span>{{ cat.nome || cat.name || cat.title }}</span>
+      </div>
     </div>
 
     <div class="products">
@@ -111,59 +119,69 @@ onMounted(() => {
   background: white; /* Corrigido de #f6f6f7 para white para unificar as cores de fundo */
   font-family: 'Montserrat', sans-serif;
 }
-
 /* SEARCH BAR */
 .search-bar {
-  padding: 12px;
+  padding: 16px 5%; /* Alinhado com o padrão de margens do seu app */
   box-sizing: border-box;
   display: flex;
   justify-content: center;
+  width: 100%;
 }
 
 .search-input-wrapper {
   position: relative;
   width: 100%;
-  max-width: 420px; /* same max width as .home for visual alignment */
+  max-width: 320px; /* Tamanho base no mobile */
 }
 
 .search-input-wrapper input {
   display: block;
   width: 100%;
   box-sizing: border-box;
-  padding: 10px 44px 10px 14px;
-  border-radius: 20px;
-  border: 1px solid #00000066;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-  font-size: 14px;
-  color: #333;
-  line-height: 1;
+  padding: 12px 48px 12px 24px;
+  border-radius: 30px; /* Formato pílula */
+  border: 1px solid transparent;
+  background: #f0f2f5; /* Fundo cinza moderno */
+  font-size: 15px;
+  color: #111;
+  cursor: pointer; /* Mostra a mãozinha de clique */
+  transition: all 0.2s ease-in-out;
+}
+
+/* Como é readonly na Home, o hover imita o focus da outra tela para dar interatividade */
+.search-input-wrapper:hover input {
+  background: #ffffff;
+  border: 1px solid #111;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
 .search-input-wrapper input::placeholder {
-  color: #9a9a9a;
+  color: #777;
+  font-weight: 400;
 }
 
 .search-icon {
   position: absolute;
-  right: 14px;
+  right: 18px;
   top: 50%;
   transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
-  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  color: #9a9a9a;
+  color: #666;
   pointer-events: none;
 }
 
-@media (max-width: 420px) {
-  .search-bar { padding: 10px; }
-  .search-input-wrapper { max-width: 100%; }
-  .search-input-wrapper input { padding: 10px 42px 10px 12px; font-size: 14px; }
+.search-icon svg {
+  width: 100%;
+  height: 100%;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
-
 /* BANNER */
 .banner {
   padding: 0;
@@ -302,6 +320,9 @@ onMounted(() => {
   .grid {
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
+  }
+  .search-input-wrapper {
+    max-width: 700px;
   }
 }
 </style>

@@ -3,36 +3,39 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const user = computed(() => {
+
+type StoredUser = Record<string, unknown>
+
+const getStoredUser = (): StoredUser => {
   try {
     return JSON.parse(localStorage.getItem('user') || '{}')
   } catch {
     return {}
   }
-})
+}
 
-const profileName = computed(
-  () =>
-    user.value.name ||
-    user.value.username ||
-    user.value.first_name ||
-    user.value.full_name ||
-    'Usuário'
-)
-const profileEmail = computed(() => user.value.email || '')
+const user = computed(() => getStoredUser())
 
-const formattedBirthdate = computed(() => {
-  const birthDateValue =
-    user.value.birth_date || user.value.date_of_birth || user.value.birthdate
+const profileName = computed(() => {
+  const possibleFields = ['name', 'username', 'first_name', 'full_name'] as const
+  const foundName = possibleFields
+    .map((field) => {
+      const value = user.value[field]
+      return typeof value === 'string' ? value : ''
+    })
+    .find((value) => value)
 
-  if (!birthDateValue) return ''
-  const date = new Date(birthDateValue)
-  return isNaN(date.getTime()) ? '' : date.toLocaleDateString('pt-BR')
+  return foundName || 'Usuário'
 })
 
 const formattedImageUrl = computed(() => {
-  const imageUrl =
-    user.value.photo || user.value.profile_image || user.value.avatar || user.value.image || ''
+  const imageCandidates = ['photo', 'profile_image', 'avatar', 'image'] as const
+  const imageUrl = imageCandidates
+    .map((field) => {
+      const value = user.value[field]
+      return typeof value === 'string' ? value : ''
+    })
+    .find((value) => value)
 
   if (!imageUrl) {
     return 'https://via.placeholder.com/150?text=Sem+imagem'
@@ -45,8 +48,8 @@ const formattedImageUrl = computed(() => {
 
 const menuItems = [
   { label: 'Meus Pedidos', icon: 'inventory_2', route: '/pedidos' },
-  { label: 'Promoções', icon: 'emoji_events', route: '/notificacoes' },
-  { label: 'Favoritos', icon: 'favorite', extra: '5 itens', route: '/search' },
+  { label: 'Promoções', icon: 'emoji_events', route: '/promocoes' },
+  { label: 'Favoritos', icon: 'favorite', extra: '5 itens', route: '/favoritos' },
   { label: 'Seguindo', icon: 'star', route: '/seguindo' },
   { label: 'Aparência', icon: 'palette', route: '/aparencia' },
   { label: 'Ajuda e Suporte', icon: 'lock', route: '/suporte' }
@@ -70,56 +73,38 @@ function logout() {
     <div class="profile-container">
 
       <div class="profile-header">
+        <button class="header-edit-button" @click="goTo('/profile/edit')" aria-label="Editar perfil">
+          <span class="material-symbols-outlined">edit</span>
+        </button>
         <div class="avatar">
-          <img
-            v-if="user.photo || user.profile_image || user.avatar || user.image"
-            :src="formattedImageUrl"
-            alt="Foto de perfil"
-          />
+          <img v-if="user.photo || user.avatar || user.image" :src="user.photo || user.avatar || user.image"
+            alt="Foto de perfil" />
           <span v-else>{{ profileName.charAt(0) || 'U' }}</span>
         </div>
         <h2>{{ profileName }}</h2>
+        <p v-if="user.bio" class="profile-bio">{{ user.bio }}</p>
       </div>
 
       <div class="profile-content">
-        <div class="account-card">
-          <h3>Minha conta</h3>
-          <div class="account-row">
-            <span>Email</span>
-            <strong>{{ profileEmail }}</strong>
-          </div>
-          <div class="account-row" v-if="user.phone">
-            <span>Telefone</span>
-            <strong>{{ user.phone }}</strong>
-          </div>
-          <div class="account-row" v-if="formattedBirthdate">
-            <span>Data de nascimento</span>
-            <strong>{{ formattedBirthdate }}</strong>
-          </div>
-        </div>
 
-        <div class="menu" v-if="menuItems.length">
-          <div
-            v-for="(item, index) in menuItems"
-            :key="index"
-            class="menu-item"
-            @click="goTo(item.route)"
-          >
+        <div class="menu">
+          <div v-for="(item, index) in menuItems" :key="index" class="menu-item" @click="goTo(item.route)">
             <div class="left">
               <span class="material-symbols-outlined">{{ item.icon }}</span>
               <span>{{ item.label }}</span>
             </div>
+
             <div class="right">
               <span v-if="item.extra" class="extra">{{ item.extra }}</span>
               <span class="material-symbols-outlined arrow">chevron_right</span>
             </div>
           </div>
-        </div>
 
-        <div class="menu-item delete" @click="logout">
-          <div class="left">
-            <span class="material-symbols-outlined">logout</span>
-            <span>Sair da conta</span>
+          <div class="menu-item delete" @click="logout">
+            <div class="left">
+              <span class="material-symbols-outlined">logout</span>
+              <span>Sair da conta</span>
+            </div>
           </div>
         </div>
       </div>
@@ -127,29 +112,45 @@ function logout() {
     </div>
   </div>
 </template>
-
 <style scoped>
 .profile-page {
-  background: var(--app-bg);
+  background: #f5f5f5;
   min-height: 100vh;
-  font-family: "Montserrat", sans-serif;
-  color: var(--text-color);
-
-  display: flex;
-  justify-content: center;
+  width: 100%;
+  color: black;
+  display: block;
 }
 
 /* CONTAINER CENTRAL */
 .profile-container {
   width: 100%;
+  padding-bottom: 100px;
 }
 
 /* HEADER */
 .profile-header {
-  background: var(--header-bg);
-  color: var(--header-text);
-  padding: 40px 30px 20px;
+  background: black;
+  color: white;
+  padding: 40px 30px 30px;
   text-align: center;
+  position: relative;
+}
+
+.header-edit-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  border: none;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
 }
 
 /* CONTEÚDO (Minha Conta e Menu) */
@@ -159,16 +160,40 @@ function logout() {
 }
 
 .account-card {
-  background: var(--surface-bg);
+  background: white;
   border-radius: 18px;
   padding: 20px;
   margin: 16px 0;
-  box-shadow: 0 14px 35px var(--shadow-color);
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.05);
 }
 
 .account-card h3 {
-  margin: 0 0 14px;
+  margin: 0;
   font-size: 18px;
+}
+
+.account-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.account-hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.edit-profile-button {
+  border: none;
+  background: var(--surface-elevated);
+  color: var(--text-color);
+  padding: 8px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
 }
 
 .account-row {
@@ -183,24 +208,24 @@ function logout() {
 }
 
 .account-row span {
-  color: var(--text-muted);
+  color: #666;
 }
 
 .account-row strong {
-  color: var(--text-color);
+  color: #111;
 }
 
 .avatar {
   width: 80px;
   height: 80px;
-  background: var(--surface-elevated);
+  background: #ccc;
   border-radius: 50%;
   margin: 0 auto 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  color: var(--text-color);
+  color: #333;
   font-size: 28px;
   font-weight: 700;
 }
@@ -211,20 +236,27 @@ function logout() {
   object-fit: cover;
 }
 
+.profile-bio {
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-size: 14px;
+  text-align: center;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+  white-space: normal;
+  line-height: 1.4;
+}
+
 /* MENU */
 .menu {
   margin-top: 10px;
 }
-.profile-container {
-  width: 100%;
-  max-width: 900px;
-  padding-bottom: 100px;
-}
+
 /* GRID NO DESKTOP */
 @media (min-width: 768px) {
   .profile-content {
-
-    padding: 0 40px 40px;
+    padding: 0 5% 40px;
   }
 
   .menu {
@@ -245,18 +277,19 @@ function logout() {
 }
 
 .menu-item {
-  background: var(--surface-bg);
+  background: white;
   padding: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  border-bottom: 1px solid var(--border-color);
-  transition: background 0.2s;
+  border-bottom: 1px solid #eee;
+  transition: background 0.2s, transform 0.2s;
 }
 
 .menu-item:hover {
-  background: var(--surface-elevated);
+  background: #f9f9f9;
+  transform: translateY(-2px);
 }
 
 .left {
@@ -273,7 +306,7 @@ function logout() {
 
 .extra {
   font-size: 12px;
-  color: var(--text-muted);
+  color: gray;
 }
 
 .arrow {

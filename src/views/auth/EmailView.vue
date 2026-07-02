@@ -5,12 +5,15 @@ import { useRouter } from 'vue-router'
 import authApi from '../../api/authApi'
 
 import { faEnvelope } from '@fortawesome/free-regular-svg-icons'
-import { faFacebookF, faGoogle, faApple } from '@fortawesome/free-brands-svg-icons'
 
 const email = ref('')
 const router = useRouter()
 
 const isValid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value))
+
+function goHome() {
+  router.push('/')
+}
 
 async function next() {
   if (!isValid.value) return
@@ -35,7 +38,7 @@ async function next() {
 <template>
   <div class="screen">
     <div>
-      <div class="back">←</div>
+      <div class="back" @click="goHome">←</div>
 
       <h1 class="title">
         Insira o seu email para<br />
@@ -53,24 +56,6 @@ async function next() {
       <button class="button" :class="{ active: isValid }" :disabled="!isValid" @click="next">
         CONTINUE...
       </button>
-    </div>
-
-    <div class="social">
-      <p>Ou continue com:</p>
-
-      <div class="social-icons">
-        <div class="circle fb">
-          <font-awesome-icon :icon="faFacebookF" />
-        </div>
-
-        <div class="circle google">
-          <font-awesome-icon :icon="faGoogle" />
-        </div>
-
-        <div class="circle apple">
-          <font-awesome-icon :icon="faApple" />
-        </div>
-      </div>
     </div>
   </div>
 </template>

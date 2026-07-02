@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
 const props = defineProps<{
   isOpen: boolean
 }>()
 
 const emit = defineEmits(['close-menu'])
+const router = useRouter()
 
 const openSections = ref<string[]>([])
 
@@ -21,6 +23,11 @@ function toggleSection(section: string) {
   } else {
     openSections.value.push(section)
   }
+}
+
+function goToLogin() {
+  closeMenu()
+  router.push('/auth/email')
 }
 
 watch(
@@ -56,7 +63,7 @@ watch(
           <p class="menu-title">menu</p>
 
           <div class="menu-content">
-            <p class="login">Entrar</p>
+            <p class="login" @click="goToLogin">Entrar/Cadastrar</p>
 
             <!-- masculino -->
             <div

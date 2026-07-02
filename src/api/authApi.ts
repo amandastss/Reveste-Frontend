@@ -25,6 +25,15 @@ type RegisterPayload = {
   bio?: string
 }
 
+type ProfileUpdatePayload = {
+  email?: string
+  name?: string
+  phone?: string
+  birth_date?: string
+  bio?: string
+  profile_image?: File | string
+}
+
 const checkEmail = (email: string): AuthResponse => {
   return api.post('/check-email/', { email })
 }
@@ -143,6 +152,84 @@ const register = (
   return api.post('/registro/', data)
 }
 
+const sendUpdateRequest = async (method: 'patch' | 'put', url: string, body: FormData | ProfileUpdatePayload) => {
+  if (body instanceof FormData) {
+    return api[method](url, body)
+  }
+  return api[method](url, body)
+}
+
+const updateProfile = async (payload: ProfileUpdatePayload): Promise<Record<string, unknown>> => {
+  const rawUser = localStorage.getItem('user')
+  const storedUser = rawUser ? (JSON.parse(rawUser) as Record<string, unknown>) : {}
+  const userId = storedUser?.id
+
+  const candidateUrls = [
+    '/usuarios/me/',
+    '/usuarios/me',
+    '/usuario/me/',
+    '/usuario/me',
+    '/users/me/',
+    '/users/me'
+  ]
+
+  if (userId !== undefined && userId !== null) {
+    candidateUrls.push(
+      `/usuarios/${userId}/`,
+      `/usuarios/${userId}`,
+      `/usuario/${userId}/`,
+      `/usuario/${userId}`,
+      `/users/${userId}/`,
+      `/users/${userId}`
+    )
+  }
+
+  const requestBody = (() => {
+    if (!(payload.profile_image instanceof File)) {
+      return payload
+    }
+
+    const formData = new FormData()
+    if (payload.name) formData.append('name', payload.name)
+    if (payload.email) formData.append('email', payload.email)
+    if (payload.phone) formData.append('phone', payload.phone)
+    if (payload.birth_date) formData.append('birth_date', payload.birth_date)
+    if (payload.bio) formData.append('bio', payload.bio)
+    formData.append('profile_image', payload.profile_image)
+    return formData
+  })()
+
+  const methods: Array<'patch' | 'put'> = ['patch', 'put']
+
+  let lastError: unknown = new Error('Nenhum endpoint de atualização disponível')
+
+  for (const url of candidateUrls) {
+    for (const method of methods) {
+      try {
+        const response = await sendUpdateRequest(method, url, requestBody)
+        return response.data as Record<string, unknown>
+      } catch (error: unknown) {
+        lastError = error
+        const status = error && typeof error === 'object' && 'response' in error && error.response && typeof (error.response as any).status === 'number'
+          ? (error.response as any).status
+          : undefined
+
+        if (status === 401) {
+          throw error
+        }
+
+        if (status === 405) {
+          continue
+        }
+
+        continue
+      }
+    }
+  }
+
+  throw lastError
+}
+
 const verifyCode = (
   email: string,
   code: string
@@ -175,6 +262,7 @@ export default {
   fetchUserProfile,
   login,
   register,
+  updateProfile,
   verifyCode,
   requestPasswordReset,
   resetPassword
