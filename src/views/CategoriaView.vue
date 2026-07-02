@@ -164,7 +164,7 @@ onMounted(() => {
 <style scoped>
 .categoria-page {
   padding: 16px 12px 80px;
-  background: white;
+  background: var(--surface-bg);
 }
 
 .header {
@@ -176,7 +176,7 @@ onMounted(() => {
 
 .back {
   border: none;
-  background: #f2f2f2;
+  background: var(--surface-elevated);
   border-radius: 999px;
   width: 36px;
   height: 36px;
@@ -191,7 +191,7 @@ h2 {
 
 .status,
 .empty {
-  color: #666;
+  color: var(--text-muted);
   text-align: center;
   padding: 24px 0;
 }
@@ -203,10 +203,10 @@ h2 {
 }
 
 .card {
-  border: 1px solid #eee;
+  border: 1px solid var(--border-color);
   border-radius: 14px;
   overflow: hidden;
-  background: #fff;
+  background: var(--surface-bg);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
@@ -215,7 +215,7 @@ h2 {
   height: 160px;
   object-fit: cover;
   display: block;
-  background: #f7f7f7;
+  background: var(--surface-elevated);
 }
 
 .info {
@@ -230,7 +230,7 @@ h2 {
 .price {
   margin: 0;
   font-weight: 600;
-  color: #111;
+  color: var(--text-color);
 }
 
 @media (max-width: 480px) {

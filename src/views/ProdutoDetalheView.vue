@@ -247,7 +247,7 @@ onMounted(fetchProduct)
 
 .confirm-modal {
   width: min(100%, 420px);
-  background: #fff;
+  background: var(--surface-bg);
   border-radius: 18px;
   padding: 24px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
@@ -269,7 +269,7 @@ onMounted(fetchProduct)
 .confirm-text {
   font-size: 15px;
   line-height: 1.6;
-  color: #333;
+  color: var(--text-color);
   margin-bottom: 22px;
 }
 
@@ -291,8 +291,8 @@ onMounted(fetchProduct)
 }
 
 .btn-secondary {
-  background: #f2f2f2;
-  color: #333;
+  background: var(--surface-elevated);
+  color: var(--text-color);
 }
 
 .btn-primary {

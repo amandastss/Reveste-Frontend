@@ -13,7 +13,7 @@
 /* ── Sheet ───────────────────────────────────────────────────────────────── */
 .edit-sheet {
   position: relative;
-  background: #fff;
+  background: var(--surface-bg);
   border-radius: 20px 20px 0 0;
   width: 100%;
   max-height: 92dvh;
@@ -44,11 +44,11 @@
   border: none;
   font-size: 20px;
   cursor: pointer;
-  color: #333;
+  color: var(--text-color);
   line-height: 1;
   padding: 4px 8px;
 }
-.close-btn:hover { color: #000; }
+.close-btn:hover { color: var(--text-color); }
 
 .modal-title {
   text-align: center;
@@ -94,7 +94,7 @@
   padding: 0;
   transition: background 0.2s;
 }
-.dot.active { background: #111; }
+.dot.active { background: var(--surface-elevated); }
 
 /* ── Section ─────────────────────────────────────────────────────────────── */
 .section {
@@ -118,19 +118,19 @@
   padding: 10px 8px;
   border: 1.5px solid #d0d0d0;
   border-radius: 4px;
-  background: #fff;
+  background: var(--surface-bg);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s, color 0.15s;
 }
 .size-btn.selected {
-  border-color: #111;
-  background: #fff;
+  border-color: var(--border-color);
+  background: var(--surface-bg);
   font-weight: 700;
 }
 .size-btn:hover:not(.selected) {
-  border-color: #888;
+  border-color: var(--text-muted);
 }
 
 /* ── Colors ──────────────────────────────────────────────────────────────── */
@@ -155,18 +155,18 @@
   transition: border-color 0.15s;
 }
 .color-option.selected img {
-  border-color: #111;
+  border-color: var(--border-color);
 }
 .color-option span {
   font-size: 12px;
-  color: #333;
+  color: var(--text-color);
 }
 
 /* ── Update button ───────────────────────────────────────────────────────── */
 .update-btn {
   width: 100%;
   padding: 16px;
-  background: #111;
+  background: var(--surface-elevated);
   color: #fff;
   border: none;
   border-radius: 50px;
@@ -177,7 +177,7 @@
   margin-top: 8px;
   transition: background 0.2s;
 }
-.update-btn:hover { background: #333; }
+.update-btn:hover { background: var(--surface-elevated); }
 
 /* ── Transitions (precisam ser :global porque o Vue injeta sem hash de escopo) */
 :global(.overlay-fade-enter-active),

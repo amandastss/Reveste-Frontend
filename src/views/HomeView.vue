@@ -116,7 +116,7 @@ onMounted(() => {
   margin: 0;
   padding: 12px;
   padding-bottom: 80px;
-  background: white; /* Corrigido de #f6f6f7 para white para unificar as cores de fundo */
+  background: var(--surface-bg); /* Corrigido de #f6f6f7 para white para unificar as cores de fundo */
   font-family: 'Montserrat', sans-serif;
 }
 /* SEARCH BAR */
@@ -141,22 +141,22 @@ onMounted(() => {
   padding: 12px 48px 12px 24px;
   border-radius: 30px; /* Formato pílula */
   border: 1px solid transparent;
-  background: #f0f2f5; /* Fundo cinza moderno */
+  background: var(--surface-elevated); /* Fundo cinza moderno */
   font-size: 15px;
-  color: #111;
+  color: var(--text-color);
   cursor: pointer; /* Mostra a mãozinha de clique */
   transition: all 0.2s ease-in-out;
 }
 
 /* Como é readonly na Home, o hover imita o focus da outra tela para dar interatividade */
 .search-input-wrapper:hover input {
-  background: #ffffff;
-  border: 1px solid #111;
+  background: var(--surface-bg);
+  border: 1px solid var(--border-color);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
 .search-input-wrapper input::placeholder {
-  color: #777;
+  color: var(--text-muted);
   font-weight: 400;
 }
 
@@ -170,7 +170,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #666;
+  color: var(--text-muted);
   pointer-events: none;
 }
 
@@ -234,7 +234,7 @@ onMounted(() => {
 .products h3 {
   font-size: 18px;
   margin-bottom: 14px;
-  color: #111;
+  color: var(--text-color);
 }
 
 /* GRID */
@@ -246,7 +246,7 @@ onMounted(() => {
 
 /* CARD */
 .card {
-  background: white;
+  background: var(--surface-bg);
   border-radius: 16px;
   padding: 10px;
   cursor: pointer;
@@ -283,7 +283,7 @@ onMounted(() => {
   font-size: 14px;
   font-weight: 600;
   margin-top: 2px;
-  color: black;
+  color: var(--text-color);
 }
 
 /* DESKTOP */
