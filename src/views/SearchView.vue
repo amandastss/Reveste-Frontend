@@ -209,7 +209,9 @@ function abrirProduto(id: number) {
   router.push(`/produto/${id}`)
 }
 
-// abrir camera modal
+// ==========================================
+// CÂMERA E BUSCA VISUAL (NOVA LÓGICA)
+// ==========================================
 const mostrarModalCamera = ref(false)
 
 function abrirCameraModal() {
@@ -220,72 +222,88 @@ function fecharModal() {
   mostrarModalCamera.value = false
 }
 
-async function irParaCamera(tipo: 'camera' | 'gallery') {
+function abrirSeletorImagem(tipo: 'camera' | 'gallery') {
   fecharModal()
 
-  if (tipo === 'gallery') {
-    // abrir seletor de arquivos, ler imagem e enviar para a página de pesquisa
-    return new Promise<void>((resolve) => {
-      const input = document.createElement('input')
-      input.type = 'file'
-      input.accept = 'image/*'
-      input.style.display = 'none'
-      document.body.appendChild(input)
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'image/*'
 
-      input.onchange = async () => {
-        const file = input.files && input.files[0]
-        if (file) {
-          const reader = new FileReader()
-          reader.onload = () => {
-            const data = reader.result as string
-            try {
-              sessionStorage.setItem('camera-image', data)
-            } catch (e) {
-              console.warn('Não foi possível salvar a imagem no sessionStorage', e)
-            }
-            document.body.removeChild(input)
-            router.push('/pesquisa-camera')
-            resolve()
-          }
-          reader.readAsDataURL(file)
-        } else {
-          document.body.removeChild(input)
-          resolve()
-        }
-      }
-
-      input.click()
-    })
+  // Se for câmera, tenta forçar a câmera traseira no mobile
+  if (tipo === 'camera') {
+    input.capture = 'environment'
   }
 
-  // para câmera, navega normalmente
-  router.push({ name: 'camera-search', query: { tipo } })
+  input.onchange = async (e: Event) => {
+    const target = e.target as HTMLInputElement
+    const file = target.files?.[0]
+
+    if (file) {
+      await buscarPorImagem(file)
+    }
+  }
+
+  input.click()
+}
+
+async function buscarPorImagem(file: File) {
+  // Feedback visual pro usuário enquanto carrega
+  search.value = 'Analisando a imagem...'
+
+  const formData = new FormData()
+  formData.append('imagem', file)
+
+  try {
+    /* TODO: DESCOMENTE ESTE CÓDIGO QUANDO SEU BACKEND ESTIVER PRONTO
+
+      const res = await axios.post('/api/produtos/busca-visual/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      produtos.value = Array.isArray(res.data) ? res.data : res.data.results || []
+      search.value = 'Resultados da busca visual'
+    */
+
+    // --- SIMULAÇÃO PARA VOCÊ TESTAR NO FRONTEND AGORA ---
+    console.log("Enviando imagem simulada:", file.name)
+    setTimeout(() => {
+      // Simula a API retornando apenas produtos parecidos (ex: mock id 1 e 3)
+      produtos.value = mock.filter(p => p.id === 1 || p.id === 3)
+      search.value = 'Resultados da foto'
+    }, 1500)
+
+  } catch (error) {
+    console.error('Erro na busca por imagem:', error)
+    search.value = 'Erro ao buscar imagem. Tente novamente.'
+  }
+}
+// Limpar a barra de pesquisa
+function limparBusca() {
+  search.value = ''
 }
 </script>
+
 <template>
   <div class="search-page">
-    <!-- HEADER -->
     <div class="top-bar">
       <span class="icon-btn" @click="voltar"></span>
 
       <div class="search-bar">
         <div class="search-input-wrapper">
-          <input
-            type="text"
-            v-model="search"
-            @keyup.enter="pesquisar"
-            placeholder="Pesquisar itens..."
-          />
+          <input type="text" v-model="search" @keyup.enter="pesquisar" placeholder="Pesquisar itens..." />
 
-          <span class="search-icon">
+          <span v-if="!search" class="search-icon">
             <svg viewBox="0 0 24 24" fill="none">
               <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" />
-              <path
-                d="M16.5 16.5L21 21"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-              />
+              <path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </span>
+
+          <span v-else class="search-icon clear-icon" @click="limparBusca">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
             </svg>
           </span>
         </div>
@@ -294,12 +312,10 @@ async function irParaCamera(tipo: 'camera' | 'gallery') {
       <span class="material-symbols-outlined" @click="abrirCameraModal"> photo_camera </span>
     </div>
 
-    <!-- CONTADOR TEMPORÁRIO PARA TESTE -->
     <p style="padding: 10px; font-size: 14px">
       Produtos: {{ produtos.length }} | Filtrados: {{ filtrados.length }}
     </p>
 
-    <!-- FILTROS -->
     <div class="filters">
       <button :class="{ active: categoria === 'feminino' }" @click="categoria = 'feminino'">
         <div class="icon-circle"></div>
@@ -317,7 +333,6 @@ async function irParaCamera(tipo: 'camera' | 'gallery') {
       </button>
     </div>
 
-    <!-- RECENTES -->
     <div v-if="!search.trim()" class="recentes">
       <p class="recentes-title">Pesquisas recentes</p>
 
@@ -332,7 +347,6 @@ async function irParaCamera(tipo: 'camera' | 'gallery') {
       </div>
     </div>
 
-    <!-- RESULTADOS -->
     <div class="results" v-if="filtrados.length">
       <div class="card" v-for="item in filtrados" :key="item.id" @click="abrirProduto(item.id)">
         <img :src="item.imagem" :alt="item.nome" @error="onImgError" />
@@ -345,18 +359,17 @@ async function irParaCamera(tipo: 'camera' | 'gallery') {
       </div>
     </div>
 
-    <!-- EMPTY -->
     <div v-if="search.trim() && !filtrados.length" class="empty">
       <p>Nenhum resultado encontrado</p>
     </div>
 
+    <div v-if="mostrarModalCamera" class="camera-overlay" @click="fecharModal"></div>
     <div v-if="mostrarModalCamera" class="camera-sheet">
-      <button @click="irParaCamera('camera')">Tirar foto</button>
-      <button @click="irParaCamera('gallery')">Importar da galeria</button>
+      <button @click="abrirSeletorImagem('camera')">Tirar foto</button>
+      <button @click="abrirSeletorImagem('gallery')">Importar da galeria</button>
       <button class="cancel" @click="fecharModal">Cancelar</button>
     </div>
   </div>
-  <div v-if="mostrarModalCamera" class="camera-overlay" @click="fecharModal"></div>
-  <div v-if="mostrarModalCamera" class="camera-sheet"></div>
 </template>
+
 <style scoped src="../css/search.css"></style>

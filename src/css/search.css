@@ -1,6 +1,6 @@
 .search-page {
   background: var(--surface-bg);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   padding: 0;
   min-height: 100vh;
 }
@@ -13,7 +13,7 @@
   gap: 16px;
   padding: 16px 20px;
   background: var(--surface-bg);
-  border-bottom: 1px solid var(--border-color); /* Troquei a sombra por uma linha fina e elegante */
+  border-bottom: 1px solid var(--border-color);
   position: relative;
   z-index: 10;
 }
@@ -36,7 +36,7 @@
 
 .top-bar span.material-symbols-outlined:hover,
 .top-bar .icon-btn:hover {
-  background: rgba(0, 0, 0, 0.04); /* Fundo sutil ao passar o mouse */
+  background: rgba(0, 0, 0, 0.04);
 }
 
 /* SEARCH BAR */
@@ -240,7 +240,9 @@
   border-radius: 12px;
   padding: 0;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
   overflow: hidden;
   border: 1px solid var(--border-color);
 }
@@ -296,7 +298,17 @@
   font-size: 16px;
 }
 
-/* CAMERA MODAL */
+/* OVERLAY DA CÂMERA */
+.camera-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* MODAL DA CÂMERA (MOBILE FIRST) */
 .camera-sheet {
   position: fixed;
   bottom: 0;
@@ -313,22 +325,26 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
 .camera-sheet button {
   padding: 16px;
   border-radius: 12px;
   border: none;
-  background: var(--surface-elevated);
-  color: #fff;
+  background: var(--text-color);
+  color: var(--surface-bg);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition:
+    opacity 0.2s,
+    transform 0.1s;
 }
 
 .camera-sheet button:active {
   opacity: 0.85;
+  transform: scale(0.98);
 }
 
 .camera-sheet button.cancel {
@@ -337,12 +353,31 @@
   margin-top: 8px;
 }
 
+/* ANIMAÇÕES NATIVAS */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translate(-50%, 100%);
+  }
+  to {
+    transform: translate(-50%, 0);
+  }
+}
+
 /* =========================================
-   RESPONSIVIDADE DESKTOP (A MÁGICA ACONTECE AQUI)
+   RESPONSIVIDADE DESKTOP
    ========================================= */
 @media (min-width: 768px) {
   .top-bar {
-    padding: 20px 10%; /* Aproxima mais os ícones das laterais para o centro */
+    padding: 20px 10%;
     gap: 32px;
   }
 
@@ -366,14 +401,13 @@
     margin-top: 6px;
   }
 
-  /* Transformando a lista em um "Card" flutuante */
   .recentes {
-    max-width: 650px; /* Limita a largura para não ficar esticado */
+    max-width: 650px;
     background: var(--surface-bg);
-    border: 1px solid #eaeaea; /* Borda fininha */
-    border-radius: 16px; /* Cantos arredondados do card */
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
     padding: 32px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03); /* Sombra super premium */
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
     margin-top: 10px;
   }
 
@@ -396,15 +430,29 @@
   .camera-sheet {
     max-width: 500px;
     bottom: 50%;
-    transform: translate(-50%, 50%);
+    animation: modalFadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
     border-radius: 24px;
     box-shadow: 0 10px 50px rgba(0, 0, 0, 0.2);
   }
-  .camera-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4); /* Fundo escurecido */
-  backdrop-filter: blur(4px); /* Efeito de desfoque moderno */
-  z-index: 999;
-}
+
+  .clear-icon {
+    pointer-events: auto;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .clear-icon:hover {
+    color: var(--text-color);
+  }
+
+  @keyframes modalFadeIn {
+    from {
+      opacity: 0;
+      transform: translate(-50%, 60%);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, 50%);
+    }
+  }
 }
