@@ -81,7 +81,6 @@ function goToSell() {
 
   </header>
 </template>
-
 <style scoped>
 /* HEADER */
 .header-desktop {
@@ -93,15 +92,12 @@ function goToSell() {
 
 /* CONTAINER CENTRAL */
 .header-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 12px 24px;
-
+  width: 100%;
+  padding: 12px 5%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 40px;
-
   position: relative;
 }
 
