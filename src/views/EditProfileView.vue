@@ -200,6 +200,7 @@ async function saveProfile() {
   padding: 24px 16px 48px;
   display: flex;
   justify-content: center;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .edit-profile-card {
