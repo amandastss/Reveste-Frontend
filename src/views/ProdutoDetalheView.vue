@@ -39,7 +39,28 @@ const mainImage = computed(() => {
 })
 
 const goBack = () => router.back()
-const toggleFavorite = () => alert('Adicionado aos favoritos!')
+const isFavorite = ref(false)
+const isAnimating = ref(false)
+
+const loadFavoriteState = () => {
+  if (productId) {
+    const saved = localStorage.getItem(`favorite-${productId}`)
+    isFavorite.value = saved === 'true'
+  }
+}
+
+const toggleFavorite = () => {
+  isFavorite.value = !isFavorite.value
+  if (productId) {
+    localStorage.setItem(`favorite-${productId}`, String(isFavorite.value))
+  }
+  
+  // Animação de pulsação
+  isAnimating.value = true
+  setTimeout(() => {
+    isAnimating.value = false
+  }, 600)
+}
 const openAddToCartConfirm = () => {
   showAddToCartConfirm.value = true
 }
@@ -62,7 +83,7 @@ const confirmAddToCart = async () => {
       size: '',
       price: Number(productData.value.preco),
       quantity: 1,
-      image: mainImage.value
+      image: mainImage.value,
     })
 
     closeAddToCartConfirm()
@@ -106,8 +127,12 @@ const resolveCategoriaNome = async (produto: Produto) => {
         ? res.data
         : []
 
-    const categoriaEncontrada = categorias.find((item: { id?: number; nome?: string; name?: string; title?: string }) => Number(item.id) === categoriaId)
-    categoriaNome.value = categoriaEncontrada?.nome || categoriaEncontrada?.name || categoriaEncontrada?.title || ''
+    const categoriaEncontrada = categorias.find(
+      (item: { id?: number; nome?: string; name?: string; title?: string }) =>
+        Number(item.id) === categoriaId,
+    )
+    categoriaNome.value =
+      categoriaEncontrada?.nome || categoriaEncontrada?.name || categoriaEncontrada?.title || ''
   } catch (err) {
     console.error('Erro ao carregar categoria do produto:', err)
     categoriaNome.value = ''
@@ -131,102 +156,128 @@ const fetchProduct = async () => {
   }
 }
 
-onMounted(fetchProduct)
+onMounted(() => {
+  loadFavoriteState()
+  fetchProduct()
+})
 </script>
 
 <template>
   <div class="product-page-container">
-
+    <!-- HEADER -->
     <header class="app-header">
-      <button class="icon-btn" @click="goBack">←</button>
-      <div class="header-actions">
-        <button class="icon-btn" @click="toggleFavorite">♡</button>
-        <button class="icon-btn" @click="openAddToCartConfirm">🛒</button>
-      </div>
+      <div></div>
+      <div class="header-actions"></div>
     </header>
 
-    <!-- Success Message -->
+    <!-- SUCCESS MESSAGE -->
     <Transition name="fade">
-      <div v-if="addToCartSuccess" class="success-message">
-        ✓ Adicionado ao carrinho com sucesso!
-      </div>
+      <div v-if="addToCartSuccess" class="success-message">✓ Adicionado ao carrinho!</div>
     </Transition>
 
+    <!-- CONTEÚDO -->
     <main class="scrollable-content">
-
-      <div class="image-slider-wrapper">
-        <img :src="mainImage" alt="Imagem do Produto" class="main-product-image" />
+      <!-- IMAGEM COM BOTÃO DE FAVORITO -->
+      <div class="image-wrapper">
+        <img :src="mainImage" class="main-product-image" />
+        <button 
+          class="back-btn" 
+          @click="goBack"
+          title="Voltar"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        <button 
+          class="favorite-btn" 
+          :class="{ 'is-favorite': isFavorite, 'is-animating': isAnimating }"
+          @click="toggleFavorite"
+          title="Adicionar aos favoritos"
+        >
+          <svg v-if="!isFavorite" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+          <svg v-else viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </button>
       </div>
 
-      <div v-if="loading" class="loading-state">
-        Carregando produto...
-      </div>
+      <!-- LOADING -->
+      <div v-if="loading" class="loading-state">Carregando produto...</div>
 
+      <!-- ERRO -->
       <div v-else-if="error" class="error-state">
         {{ error }}
       </div>
 
-      <div v-else>
-        <section class="basic-info-section">
-          <h1 class="product-title">{{ productData?.nome }}</h1>
-          <div class="rating-container">
-            <span>★★★★☆</span>
+      <!-- PRODUTO -->
+      <div v-else class="content">
+        <h1 class="product-title">
+          {{ productData?.nome }}
+        </h1>
+
+        <p class="product-price">R$ {{ productData?.preco }}</p>
+
+        <span class="category-badge">
+          {{ categoriaNome || 'Sem categoria' }}
+        </span>
+
+        <!-- DESCRIÇÃO -->
+        <div class="info-block">
+          <h2>Descrição</h2>
+          <p>{{ productData?.descricao }}</p>
+        </div>
+
+        <!-- MARCA + CONDIÇÃO -->
+        <div class="info-row">
+          <div>
+            <h2>Marca</h2>
+            <p>{{ productData?.marca }}</p>
           </div>
-          <p class="product-price">R$ {{ productData?.preco }}</p>
-        </section>
 
-        <hr class="divider" />
-
-        <section class="detail-section">
-          <h2>DESCRIÇÃO</h2>
-          <p class="description-text">{{ productData?.descricao }}</p>
-        </section>
-
-        <section class="detail-section">
-          <h2>MARCA</h2>
-          <p class="brand-text">• {{ productData?.marca }}</p>
-        </section>
-
-        <section class="detail-section">
-          <h2>CATEGORIA</h2>
-          <p class="brand-text">• {{ categoriaNome || 'Não informada' }}</p>
-        </section>
-
-        <section class="detail-section">
-          <h2>CONDIÇÃO DO PRODUTO</h2>
-          <span class="badge-condition">{{ productData?.condicao || 'Não informado' }}</span>
-        </section>
-
-        <section class="reviews-section" @click="openReviews">
-          <div class="reviews-header">
-            <span>Reviews</span>
-            <span>★★★★☆ &nbsp; →</span>
+          <div>
+            <h2>Condição</h2>
+            <span class="badge-condition">
+              {{ productData?.condicao || 'Não informado' }}
+            </span>
           </div>
-        </section>
+        </div>
+
+        <!-- AVALIAÇÕES -->
+        <div class="reviews-card" @click="openReviews">
+          <span>Ver avaliações</span>
+          <span>→</span>
+        </div>
       </div>
     </main>
 
-    <!-- Add to Cart Confirmation -->
-    <div v-if="showAddToCartConfirm && productData" class="confirm-overlay" @click.self="closeAddToCartConfirm">
-      <div class="confirm-modal">
-        <div class="confirm-header">
-          <h2>Adicionar ao Carrinho</h2>
-          <button class="close-btn" @click="closeAddToCartConfirm">✕</button>
-        </div>
+    <!-- BOTÃO FIXO (ÚNICO!) -->
+    <div class="bottom-bar">
+      <button class="buy-btn" @click="openAddToCartConfirm">Adicionar ao carrinho</button>
+    </div>
 
-        <p class="confirm-text">
-          Este produto tem apenas 1 unidade disponível.
-          Deseja adicioná-lo ao carrinho?
-        </p>
+    <!-- MODAL -->
+    <div
+      v-if="showAddToCartConfirm && productData"
+      class="overlay"
+      @click.self="closeAddToCartConfirm"
+    >
+      <div class="modal">
+        <h2>Adicionar ao carrinho?</h2>
 
-        <div class="confirm-actions">
+        <p>Esse produto possui apenas 1 unidade.</p>
+
+        <div class="actions">
           <button class="btn-secondary" @click="closeAddToCartConfirm">Cancelar</button>
-          <button class="btn-primary" @click="confirmAddToCart" :disabled="isAddingToCart">
-            {{ isAddingToCart ? 'Adicionando...' : 'Adicionar ao Carrinho' }}
-          </button>
+
+          <button class="btn-primary" @click="confirmAddToCart">Adicionar</button>
         </div>
 
-        <p v-if="addToCartError" class="error-message">{{ addToCartError }}</p>
+        <p v-if="addToCartError" class="error-message">
+          {{ addToCartError }}
+        </p>
       </div>
     </div>
   </div>
@@ -234,84 +285,4 @@ onMounted(fetchProduct)
 
 <style scoped>
 @import '../css/product-detail.css';
-
-.confirm-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1200;
-}
-
-.confirm-modal {
-  width: min(100%, 420px);
-  background: var(--surface-bg);
-  border-radius: 18px;
-  padding: 24px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
-}
-
-.confirm-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 18px;
-}
-
-.confirm-header h2 {
-  font-size: 18px;
-  margin: 0;
-}
-
-.confirm-text {
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--text-color);
-  margin-bottom: 22px;
-}
-
-.confirm-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  margin-top: 10px;
-}
-
-.btn-secondary,
-.btn-primary {
-  min-width: 130px;
-  padding: 12px 18px;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-}
-
-.btn-secondary {
-  background: var(--surface-elevated);
-  color: var(--text-color);
-}
-
-.btn-primary {
-  background: #2a6fdb;
-  color: #fff;
-}
-
-.close-btn {
-  border: none;
-  background: transparent;
-  font-size: 20px;
-  cursor: pointer;
-  line-height: 1;
-  padding: 2px 4px;
-}
-
-.error-message {
-  margin-top: 14px;
-  color: #d72d2d;
-  font-size: 14px;
-}
 </style>
