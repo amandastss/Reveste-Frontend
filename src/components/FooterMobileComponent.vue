@@ -49,8 +49,8 @@ function handleClick(item: FooterItem, index: number) {
   bottom: 0;
   left: 0;
   right: 0;
-  background: #ffffff;
-  border-top: 1px solid #e5e5e5;
+  background: var(--surface-bg);
+  border-top: 1px solid var(--border-color);
   padding: 12px;
   box-shadow: 0 -1px 8px rgba(0, 0, 0, 0.05);
 }
@@ -82,27 +82,27 @@ function handleClick(item: FooterItem, index: number) {
 
 .footer-button:active {
   transform: scale(0.92);
-  background: rgba(0, 0, 0, 0.06);
+  background: rgba(15, 23, 42, 0.06);
 }
 
 .footer-button.selected {
-  background: #f0f0f0;
+  background: var(--surface-elevated);
 }
 
 /* ÍCONE */
 .material-symbols-outlined {
   font-size: 22px;
-  color: #000;
+  color: var(--text-color);
   transition: color 0.2s ease;
 }
 
 /* BOTÃO DO MEIO (VENDER) */
 .footer-button:nth-child(2) {
-  background: black;
+  background: var(--accent);
 }
 
 .footer-button:nth-child(2) .material-symbols-outlined {
-  color: white;
+  color: var(--surface-bg);
 }
 
 .footer-button:nth-child(2):active {

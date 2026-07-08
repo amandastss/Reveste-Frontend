@@ -113,7 +113,7 @@ const handleNotificationClick = (notif: Notification) => {
 </template>
 <style scoped>
 .notifications-page {
-  background-color: #ffffff;
+  background-color: var(--surface-bg);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -142,7 +142,7 @@ const handleNotificationClick = (notif: Notification) => {
   align-items: center;
   justify-content: center;
   transition: opacity 0.2s;
-  color: #000;
+  color: var(--text-color);
 }
 
 .back-btn:hover {
@@ -153,7 +153,7 @@ const handleNotificationClick = (notif: Notification) => {
   font-size: 1.7rem;
   font-weight: 500;
   margin: 0;
-  color: #000;
+  color: var(--text-color);
   letter-spacing: -0.5px;
 }
 
@@ -170,7 +170,7 @@ const handleNotificationClick = (notif: Notification) => {
   display: flex;
   align-items: flex-start;
   padding: 18px;
-  background-color: #ffffff;
+  background-color: var(--surface-bg);
   border: 1px solid #eeeeee;
   border-radius: 16px;
   cursor: pointer;
@@ -179,8 +179,8 @@ const handleNotificationClick = (notif: Notification) => {
 }
 
 .notification-card.unread {
-  border-color: #000000;
-  background-color: #ffffff;
+  border-color: var(--border-color);
+  background-color: var(--surface-bg);
 }
 
 .icon-wrapper {
@@ -194,9 +194,9 @@ const handleNotificationClick = (notif: Notification) => {
   margin-right: 14px;
 }
 
-.icon-wrapper.promo { background-color: #000; color: #fff; }
-.icon-wrapper.delivery { background-color: #f7f7f7; color: #000; }
-.icon-wrapper.stock { background-color: #fff1f1; color: #000; }
+.icon-wrapper.promo { background-color: var(--text-color); color: #fff; }
+.icon-wrapper.delivery { background-color: var(--surface-elevated); color: var(--text-color); }
+.icon-wrapper.stock { background-color: var(--surface-elevated); color: var(--text-color); }
 
 .notification-content h3 {
   font-size: 0.95rem;
@@ -206,7 +206,7 @@ const handleNotificationClick = (notif: Notification) => {
 
 .notification-content p {
   font-size: 0.85rem;
-  color: #666;
+  color: var(--text-muted);
   margin: 0 0 6px 0;
   line-height: 1.4;
 }
@@ -219,7 +219,7 @@ const handleNotificationClick = (notif: Notification) => {
 .unread-dot {
   width: 7px;
   height: 7px;
-  background-color: #000;
+  background-color: var(--text-color);
   border-radius: 50%;
   position: absolute;
   top: 22px;
@@ -244,7 +244,7 @@ const handleNotificationClick = (notif: Notification) => {
 }
 
 .notifications-page {
-  background-color: #ffffff;
+  background-color: var(--surface-bg);
   min-height: 100vh;
   width: 100%;
   display: flex;

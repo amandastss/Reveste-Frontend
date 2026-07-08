@@ -97,13 +97,13 @@ function statusClass(status: string) {
 
 <style scoped>
 .pedidos-page {
-  background: #f5f5f5;
+  background: var(--surface-elevated);
   min-height: 100vh;
   font-family: "Montserrat", sans-serif;
 }
 
 .header {
-  background: white;
+  background: var(--surface-bg);
   padding: 20px;
   display: flex;
   align-items: center;
@@ -115,7 +115,7 @@ function statusClass(status: string) {
 }
 
 .pedido-card {
-  background: white;
+  background: var(--surface-bg);
   display: flex;
   padding: 15px;
   gap: 15px;
@@ -146,7 +146,7 @@ function statusClass(status: string) {
 }
 
 .info p {
-  color: #666;
+  color: var(--text-muted);
   font-size: 13px;
 }
 
@@ -169,7 +169,7 @@ function statusClass(status: string) {
 }
 
 .gray {
-  background: #eee;
+  background: var(--surface-elevated);
   color: gray;
 }
 

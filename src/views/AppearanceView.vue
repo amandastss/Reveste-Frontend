@@ -167,13 +167,13 @@ onMounted(() => {
 }
 
 .chip-light {
-  background: #f3f4f6;
-  color: #111827;
+  background: var(--surface-elevated);
+  color: var(--text-color);
 }
 
 .chip-dark {
-  background: #111827;
-  color: #f9fafb;
+  background: var(--surface-bg);
+  color: var(--surface-bg);
 }
 
 .theme-preview {

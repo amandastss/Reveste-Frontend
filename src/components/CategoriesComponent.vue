@@ -32,7 +32,7 @@ const categorias = [
   width: 45px;
   height: 45px;
   border-radius: 50%;
-  background: #eee;
+  background: var(--surface-elevated);
   margin: 0 auto 5px;
 }
 </style>

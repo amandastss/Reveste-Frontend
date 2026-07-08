@@ -77,7 +77,7 @@ function logout() {
           <span class="material-symbols-outlined">edit</span>
         </button>
         <div class="avatar">
-          <img v-if="user.photo || user.avatar || user.image" :src="user.photo || user.avatar || user.image"
+          <img v-if="user.photo || user.profile_image || user.avatar || user.image" :src="formattedImageUrl"
             alt="Foto de perfil" />
           <span v-else>{{ profileName.charAt(0) || 'U' }}</span>
         </div>
@@ -114,10 +114,10 @@ function logout() {
 </template>
 <style scoped>
 .profile-page {
-  background: #f5f5f5;
+  background: var(--surface-elevated);
   min-height: 100vh;
   width: 100%;
-  color: black;
+  color: var(--text-color);
   display: block;
 }
 
@@ -160,7 +160,7 @@ function logout() {
 }
 
 .account-card {
-  background: white;
+  background: var(--surface-bg);
   border-radius: 18px;
   padding: 20px;
   margin: 16px 0;
@@ -208,11 +208,11 @@ function logout() {
 }
 
 .account-row span {
-  color: #666;
+  color: var(--text-muted);
 }
 
 .account-row strong {
-  color: #111;
+  color: var(--text-color);
 }
 
 .avatar {
@@ -225,7 +225,7 @@ function logout() {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  color: #333;
+  color: var(--text-color);
   font-size: 28px;
   font-weight: 700;
 }
@@ -277,7 +277,7 @@ function logout() {
 }
 
 .menu-item {
-  background: white;
+  background: var(--surface-bg);
   padding: 16px;
   display: flex;
   justify-content: space-between;
@@ -288,7 +288,7 @@ function logout() {
 }
 
 .menu-item:hover {
-  background: #f9f9f9;
+  background: var(--surface-elevated);
   transform: translateY(-2px);
 }
 
@@ -311,7 +311,7 @@ function logout() {
 
 .arrow {
   font-size: 18px;
-  color: #999;
+  color: var(--text-muted);
 }
 
 /* DELETE (Sair) */

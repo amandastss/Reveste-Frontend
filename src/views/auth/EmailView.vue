@@ -62,7 +62,7 @@ async function next() {
 <style scoped>
 .screen {
   height: 100vh;
-  background: #f7f7f7;
+  background: var(--surface-elevated);
   max-width: 390px;
   margin: 0 auto;
   padding: 24px 20px;
@@ -73,7 +73,7 @@ async function next() {
 }
 .back {
   font-size: 20px;
-  color: #000;
+  color: var(--text-color);
   margin-bottom: 24px;
   cursor: pointer;
 }
@@ -81,7 +81,7 @@ async function next() {
   font-size: 26px;
   font-weight: 500;
   line-height: 1.35;
-  color: #111;
+  color: var(--text-color);
   margin-bottom: 40px;
 }
 .input {
@@ -102,7 +102,7 @@ async function next() {
   background: transparent;
   font-size: 15px;
   flex: 1;
-  color: #111;
+  color: var(--text-color);
 }
 .input input::placeholder {
   color: #bdbdbd;
@@ -125,8 +125,8 @@ async function next() {
   color: #fff;
 }
 .button.register {
-  background: #fff;
-  color: #000;
+  background: var(--surface-bg);
+  color: var(--text-color);
   border: 1px solid #000;
 }
 .choice-box {
@@ -136,7 +136,7 @@ async function next() {
 }
 .choice-box p {
   margin-bottom: 8px;
-  color: #444;
+  color: var(--text-color);
 }
 .social {
   text-align: center;
@@ -144,7 +144,7 @@ async function next() {
 }
 .social p {
   font-size: 14px;
-  color: #555;
+  color: var(--text-muted);
   margin-bottom: 18px;
 }
 .social-icons {

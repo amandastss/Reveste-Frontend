@@ -138,7 +138,7 @@ function togglePassword() {
 <style scoped>
 .screen {
   height: 100vh;
-  background: #f7f7f7;
+  background: var(--surface-elevated);
   max-width: 390px;
   margin: 0 auto;
   padding: 24px 20px;
@@ -160,7 +160,7 @@ function togglePassword() {
 
 .email {
   font-size: 14px;
-  color: #888;
+  color: var(--text-muted);
   margin-bottom: 30px;
 }
 
@@ -175,7 +175,7 @@ function togglePassword() {
 }
 
 .icon {
-  color: #999;
+  color: var(--text-muted);
 }
 
 .input input {
@@ -196,7 +196,7 @@ function togglePassword() {
   border-radius: 30px;
   border: none;
   background: #eaeaea;
-  color: #aaa;
+  color: var(--text-muted);
   font-weight: bold;
 }
 

@@ -70,7 +70,7 @@ function voltar() {
 <style scoped>
 .page {
   min-height: 100vh;
-  background: #f7f7f7;
+  background: var(--surface-elevated);
 }
 
 .top-bar {
@@ -78,7 +78,7 @@ function voltar() {
   align-items: center;
   gap: 12px;
   padding: 16px;
-  background: white;
+  background: var(--surface-bg);
   border-bottom: 1px solid #eee;
 }
 
@@ -118,7 +118,7 @@ function voltar() {
 }
 
 .card {
-  background: white;
+  background: var(--surface-bg);
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 2px 10px rgba(0,0,0,.05);
@@ -141,6 +141,6 @@ function voltar() {
 
 .info p {
   margin-top: 4px;
-  color: #666;
+  color: var(--text-muted);
 }
 </style>

@@ -176,8 +176,8 @@ watch([aba, search], carregarUsuarios, { immediate: true })
 }
 
 .following.inactive {
-  background: #fff;
-  color: #000;
+  background: var(--surface-bg);
+  color: var(--text-color);
 }
 
 .following:hover {
@@ -187,6 +187,6 @@ watch([aba, search], carregarUsuarios, { immediate: true })
 .empty {
   text-align: center;
   padding: 30px;
-  color: #888;
+  color: var(--text-muted);
 }
 </style>

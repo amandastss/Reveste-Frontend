@@ -85,8 +85,8 @@ function goToSell() {
 /* HEADER */
 .header-desktop {
   width: 100%;
-  background: white;
-  border-bottom: 1px solid #eee;
+  background: var(--surface-bg);
+  border-bottom: 1px solid var(--border-color);
   position: relative;
 }
 
@@ -110,14 +110,14 @@ function goToSell() {
 }
 
 .sell-button {
-  background: black;
-  color: white;
+  background: var(--accent);
+  color: var(--surface-bg);
   border: none;
   padding: 10px 18px;
   border-radius: 20px;
   font-size: 14px;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
 }
 
 /* ANIMAÇÃO */
@@ -152,7 +152,7 @@ function goToSell() {
 }
 
 .nav-button:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: rgba(15, 23, 42, 0.06);
 }
 
 .nav-text {
@@ -168,10 +168,10 @@ function goToSell() {
   display: flex;
   align-items: center;
 
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 24px;
   padding: 8px 16px;
-  background: #f5f5f5;
+  background: var(--surface-elevated);
 }
 
 .search-input {
@@ -210,13 +210,13 @@ function goToSell() {
 }
 
 .headerdesktop-button:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: rgba(15, 23, 42, 0.06);
 }
 
 /* ÍCONES */
 .material-symbols-outlined {
   font-size: 24px;
-  color: black;
+  color: var(--text-color);
 }
 
 @media (max-width: 767px) {

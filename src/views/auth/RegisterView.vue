@@ -180,7 +180,7 @@ button {
 
 .field-group label {
   font-size: 12px;
-  color: #555;
+  color: var(--text-muted);
 }
 
 .field-group select,
@@ -226,7 +226,7 @@ button {
 
 .field-group label {
   font-size: 12px;
-  color: #555;
+  color: var(--text-muted);
 }
 
 .field-group select,
