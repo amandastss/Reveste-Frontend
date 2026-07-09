@@ -137,6 +137,7 @@ function logout() {
   width: 100%;
   color: black;
   display: block;
+  font-family: "Montserrat", sans-serif;
 }
 
 /* CONTAINER CENTRAL */
