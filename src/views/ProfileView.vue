@@ -16,29 +16,37 @@ const getStoredUser = (): StoredUser => {
 
 const user = computed(() => getStoredUser())
 
+const getUserValue = (field: string): string => {
+  const value = user.value[field]
+  return typeof value === 'string' ? value : ''
+}
+
+const isLoggedIn = computed(() => {
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  const token = localStorage.getItem('token')
+  const storedUser = getStoredUser()
+
+  return Boolean(token || Object.keys(storedUser).length)
+})
+
 const profileName = computed(() => {
   const possibleFields = ['name', 'username', 'first_name', 'full_name'] as const
-  const foundName = possibleFields
-    .map((field) => {
-      const value = user.value[field]
-      return typeof value === 'string' ? value : ''
-    })
-    .find((value) => value)
+  const foundName = possibleFields.map((field) => getUserValue(field)).find((value) => value)
 
   return foundName || 'Usuário'
 })
 
-const formattedImageUrl = computed(() => {
+const profileBio = computed(() => getUserValue('bio'))
+
+const profileImageUrl = computed(() => {
   const imageCandidates = ['photo', 'profile_image', 'avatar', 'image'] as const
-  const imageUrl = imageCandidates
-    .map((field) => {
-      const value = user.value[field]
-      return typeof value === 'string' ? value : ''
-    })
-    .find((value) => value)
+  const imageUrl = imageCandidates.map((field) => getUserValue(field)).find((value) => value)
 
   if (!imageUrl) {
-    return 'https://via.placeholder.com/150?text=Sem+imagem'
+    return ''
   }
 
   return imageUrl.startsWith('http')
@@ -59,6 +67,10 @@ function goTo(route: string) {
   router.push(route)
 }
 
+function openAuth() {
+  router.push('/auth/email')
+}
+
 function logout() {
   localStorage.removeItem('token')
   localStorage.removeItem('user')
@@ -73,16 +85,15 @@ function logout() {
     <div class="profile-container">
 
       <div class="profile-header">
-        <button class="header-edit-button" @click="goTo('/profile/edit')" aria-label="Editar perfil">
+        <button v-if="isLoggedIn" class="header-edit-button" @click="goTo('/profile/edit')" aria-label="Editar perfil">
           <span class="material-symbols-outlined">edit</span>
         </button>
         <div class="avatar">
-          <img v-if="user.photo || user.profile_image || user.avatar || user.image" :src="formattedImageUrl"
-            alt="Foto de perfil" />
+          <img v-if="profileImageUrl" :src="profileImageUrl" alt="Foto de perfil" />
           <span v-else>{{ profileName.charAt(0) || 'U' }}</span>
         </div>
         <h2>{{ profileName }}</h2>
-        <p v-if="user.bio" class="profile-bio">{{ user.bio }}</p>
+        <p v-if="profileBio" class="profile-bio">{{ profileBio }}</p>
       </div>
 
       <div class="profile-content">
@@ -100,10 +111,17 @@ function logout() {
             </div>
           </div>
 
-          <div class="menu-item delete" @click="logout">
+          <div v-if="isLoggedIn" class="menu-item delete" @click="logout">
             <div class="left">
               <span class="material-symbols-outlined">logout</span>
               <span>Sair da conta</span>
+            </div>
+          </div>
+
+          <div v-else class="menu-item auth" @click="openAuth">
+            <div class="left">
+              <span class="material-symbols-outlined">login</span>
+              <span>Entrar / Cadastrar</span>
             </div>
           </div>
         </div>
@@ -114,10 +132,10 @@ function logout() {
 </template>
 <style scoped>
 .profile-page {
-  background: var(--surface-elevated);
+  background: #f5f5f5;
   min-height: 100vh;
   width: 100%;
-  color: var(--text-color);
+  color: black;
   display: block;
 }
 
@@ -160,7 +178,7 @@ function logout() {
 }
 
 .account-card {
-  background: var(--surface-bg);
+  background: white;
   border-radius: 18px;
   padding: 20px;
   margin: 16px 0;
@@ -208,11 +226,11 @@ function logout() {
 }
 
 .account-row span {
-  color: var(--text-muted);
+  color: #666;
 }
 
 .account-row strong {
-  color: var(--text-color);
+  color: #111;
 }
 
 .avatar {
@@ -225,7 +243,7 @@ function logout() {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  color: var(--text-color);
+  color: #333;
   font-size: 28px;
   font-weight: 700;
 }
@@ -277,7 +295,7 @@ function logout() {
 }
 
 .menu-item {
-  background: var(--surface-bg);
+  background: white;
   padding: 16px;
   display: flex;
   justify-content: space-between;
@@ -288,7 +306,7 @@ function logout() {
 }
 
 .menu-item:hover {
-  background: var(--surface-elevated);
+  background: #f9f9f9;
   transform: translateY(-2px);
 }
 
@@ -311,12 +329,17 @@ function logout() {
 
 .arrow {
   font-size: 18px;
-  color: var(--text-muted);
+  color: #999;
 }
 
 /* DELETE (Sair) */
 .delete {
   color: red;
+  font-weight: 500;
+}
+
+.auth {
+  color: #1f6feb;
   font-weight: 500;
 }
 

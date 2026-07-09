@@ -77,14 +77,14 @@ const confirmAddToCart = async () => {
 
   try {
     await cartStore.addItem({
-      productId: productData.value.id,
-      name: productData.value.nome,
-      color: '',
-      size: '',
-      price: Number(productData.value.preco),
-      quantity: 1,
-      image: mainImage.value,
-    })
+  id: productData.value.id,
+  name: productData.value.nome,
+  color: '',
+  size: '',
+  price: Number(productData.value.preco),
+  quantity: 1,
+  image: mainImage.value,
+})
 
     closeAddToCartConfirm()
     handleAddToCartSuccess()

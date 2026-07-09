@@ -24,7 +24,7 @@ const form = ref({
   email: '',
   phone: '',
   birthDate: '',
-  bio: ''
+  bio: '',
 })
 const photoFile = ref<File | null>(null)
 const photoPreview = ref('')
@@ -41,7 +41,7 @@ function handlePhotoChange(event: Event) {
 
   if (!file) {
     photoPreview.value = getImagePreview(
-      user.value.photo || user.value.profile_image || user.value.avatar || user.value.image
+      user.value.photo || user.value.profile_image || user.value.avatar || user.value.image,
     )
     return
   }
@@ -67,11 +67,11 @@ onMounted(() => {
         : typeof currentUser.birth_date === 'string'
           ? currentUser.birth_date
           : '',
-    bio: typeof currentUser.bio === 'string' ? currentUser.bio : ''
+    bio: typeof currentUser.bio === 'string' ? currentUser.bio : '',
   }
 
   photoPreview.value = getImagePreview(
-    currentUser.photo || currentUser.profile_image || currentUser.avatar || currentUser.image
+    currentUser.photo || currentUser.profile_image || currentUser.avatar || currentUser.image,
   )
 })
 
@@ -91,12 +91,12 @@ async function saveProfile() {
       email: form.value.email.trim(),
       phone: form.value.phone.trim(),
       birth_date: form.value.birthDate,
-      bio: form.value.bio.trim()
+      bio: form.value.bio.trim(),
     }
 
     const serverUser = await authApi.updateProfile({
       ...payload,
-      profile_image: photoFile.value || undefined
+      profile_image: photoFile.value || undefined,
     })
 
     const mergedUser = {
@@ -105,8 +105,10 @@ async function saveProfile() {
       date_of_birth: form.value.birthDate,
       birth_date: form.value.birthDate,
       photo: photoPreview.value || (typeof user.value.photo === 'string' ? user.value.photo : ''),
-      profile_image: photoPreview.value || (typeof user.value.profile_image === 'string' ? user.value.profile_image : ''),
-      ...(serverUser && typeof serverUser === 'object' ? (serverUser as StoredUser) : {})
+      profile_image:
+        photoPreview.value ||
+        (typeof user.value.profile_image === 'string' ? user.value.profile_image : ''),
+      ...(serverUser && typeof serverUser === 'object' ? (serverUser as StoredUser) : {}),
     }
 
     localStorage.setItem('user', JSON.stringify(mergedUser))
@@ -119,7 +121,8 @@ async function saveProfile() {
     console.error('Erro ao atualizar perfil:', error)
 
     const message = (() => {
-      if (!error || typeof error !== 'object') return 'Não foi possível salvar agora. Tente novamente.'
+      if (!error || typeof error !== 'object')
+        return 'Não foi possível salvar agora. Tente novamente.'
       if ('response' in error && error.response && typeof error.response === 'object') {
         const resp = error.response as Record<string, unknown>
         const data = resp.data as Record<string, unknown> | undefined
@@ -139,181 +142,256 @@ async function saveProfile() {
 </script>
 
 <template>
-  <div class="edit-profile-page">
-    <div class="edit-profile-card">
-      <div class="header">
-        <button class="back-button" @click="router.push('/profile')">← Voltar</button>
-        <h1>Editar perfil</h1>
+  <div class="page">
+    <!-- HEADER -->
+    <div class="topbar">
+      <button class="back" @click="router.back()">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <h1>Editar perfil</h1>
+      <button class="save" @click="saveProfile" :disabled="isSaving">
+        {{ isSaving ? 'Salvando...' : 'Salvar' }}
+      </button>
+    </div>
+
+    <!-- FOTO -->
+    <div class="photo-area">
+      <div class="photo">
+        <img v-if="photoPreview" :src="photoPreview" />
+        <span v-else>+</span>
+      </div>
+      <label class="change-photo">
+        Alterar foto
+        <input type="file" accept="image/*" @change="handlePhotoChange" />
+      </label>
+    </div>
+
+    <!-- FORM -->
+    <div class="form-area">
+      <div class="input-group">
+        <label>Nome</label>
+        <input v-model="form.name" placeholder="Seu nome completo" />
       </div>
 
-      <form class="form" @submit.prevent="saveProfile">
-        <div class="photo-section">
-          <div class="photo-preview-box">
-            <img v-if="photoPreview" :src="photoPreview" alt="Foto de perfil" />
-            <span v-else>Foto</span>
-          </div>
-          <label class="photo-upload">
-            <span>Trocar foto</span>
-            <input type="file" accept="image/*" @change="handlePhotoChange" />
-          </label>
-        </div>
+      <div class="input-group">
+        <label>E-mail</label>
+        <input v-model="form.email" type="email" placeholder="seu@email.com" />
+      </div>
 
-        <label>
-          Nome
-          <input v-model="form.name" placeholder="Seu nome" />
-        </label>
+      <div class="input-group">
+        <label>Telefone</label>
+        <input v-model="form.phone" placeholder="(xx) xxxxx-xxxx" />
+      </div>
 
-        <label>
-          E-mail
-          <input v-model="form.email" type="email" placeholder="seu@email.com" />
-        </label>
+      <div class="input-group">
+        <label>Data de nascimento</label>
+        <input v-model="form.birthDate" type="date" />
+      </div>
 
-        <label>
-          Telefone
-          <input v-model="form.phone" type="tel" placeholder="(xx) xxxxx-xxxx" />
-        </label>
+      <div class="input-group">
+        <label>Bio</label>
+        <textarea v-model="form.bio" placeholder="Fale sobre você..." />
+      </div>
 
-        <label>
-          Data de nascimento
-          <input v-model="form.birthDate" type="date" />
-        </label>
-
-        <label>
-          Bio
-          <textarea v-model="form.bio" rows="4" placeholder="Conte um pouco sobre você" />
-        </label>
-
-        <p v-if="feedback" class="feedback" :class="feedbackType">{{ feedback }}</p>
-
-        <button class="save-button" type="submit" :disabled="isSaving">
-          {{ isSaving ? 'Salvando...' : 'Salvar alterações' }}
-        </button>
-      </form>
+      <p v-if="feedback" class="feedback" :class="feedbackType">
+        {{ feedback }}
+      </p>
     </div>
   </div>
 </template>
 
 <style scoped>
-.edit-profile-page {
+.page {
   min-height: 100vh;
   background: var(--app-bg);
-  padding: 24px 16px 48px;
-  display: flex;
-  justify-content: center;
   font-family: 'Montserrat', sans-serif;
+  display: flex;
+  flex-direction: column;
 }
 
-.edit-profile-card {
-  width: 100%;
-  max-width: 620px;
+/* TOPBAR */
+.topbar {
+  position: sticky;
+  top: 0;
   background: var(--surface-bg);
-  border-radius: 20px;
-  padding: 20px;
-  box-shadow: 0 12px 30px var(--shadow-color);
-}
-
-.header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
+  justify-content: space-between;
+  padding: 14px 16px;
+  box-shadow: 0 2px 10px var(--shadow-color);
+  z-index: 10;
+  padding: 10px 14px;
 }
 
-.back-button {
+.topbar h1 {
+  font-size: 16px;
+  margin: 0;
+}
+
+.topbar button {
+  background: none;
   border: none;
-  background: transparent;
-  color: var(--text-color);
   font-weight: 600;
   cursor: pointer;
 }
 
-h1 {
-  margin: 0;
-  font-size: 20px;
-}
-
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.photo-section {
+.topbar .back {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(6px);
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.25),
+    0 4px 10px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 8px;
+  justify-content: center;
+  transition: all 0.25s ease;
 }
 
-.photo-preview-box {
-  width: 90px;
-  height: 90px;
-  border-radius: 20px;
+.topbar .back:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px var(--shadow-color);
+}
+
+.topbar .back:active {
+  transform: scale(0.92);
+}
+
+.topbar .back svg {
+  width: 20px;
+  height: 20px;
+  color: var(--text-color);
+  transition: transform 0.25s ease;
+}
+
+.topbar .back:hover svg {
+  transform: translateX(-2px);
+}
+
+.topbar .save {
+  background: var(--primary-color);
+  color: black;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+}
+
+.topbar .save:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.topbar .save:active {
+  transform: scale(0.96);
+}
+
+.topbar .save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* FOTO */
+.photo-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 16px;
+}
+
+.photo {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  overflow: hidden;
   background: var(--surface-elevated);
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  font-size: 28px;
   color: var(--text-muted);
-  font-weight: 600;
 }
 
-.photo-preview-box img {
+.photo img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.photo-upload {
+.change-photo {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--primary-color);
   cursor: pointer;
-  color: var(--text-color);
-  font-size: 14px;
 }
 
-.photo-upload input {
+.change-photo input {
   display: none;
+}
+
+/* FORM */
+.form-area {
+  padding: 0 16px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* INPUT CARD */
+.input-group {
+  background: var(--surface-bg);
+  padding: 14px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 6px 15px var(--shadow-color);
+}
+
+.input-group label {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
 }
 
 input,
 textarea {
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  padding: 10px 12px;
-  font: inherit;
-  background: var(--surface-elevated);
+  border: none;
+  background: transparent;
+  font-size: 14px;
   color: var(--text-color);
 }
 
+input:focus,
+textarea:focus {
+  outline: none;
+}
+
 textarea {
-  resize: vertical;
+  resize: none;
+  min-height: 70px;
 }
 
-.save-button {
-  border: none;
-  border-radius: 10px;
-  padding: 12px;
-  background: var(--primary-color, #111);
-  color: #fff;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.save-button:disabled {
-  opacity: 0.7;
-  cursor: wait;
-}
-
+/* FEEDBACK */
 .feedback {
-  font-size: 14px;
-  margin: 0;
+  text-align: center;
+  font-size: 13px;
+  margin-top: 6px;
 }
 
 .feedback.success {
