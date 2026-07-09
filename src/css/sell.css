@@ -24,6 +24,7 @@ body,
   );
 
   padding: 24px 24px 220px;
+  font-family: "Montserrat", sans-serif;
 }
 /*MODAL LOGIN*/
 .overlay {
