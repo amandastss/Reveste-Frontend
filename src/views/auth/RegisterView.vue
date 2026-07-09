@@ -127,6 +127,7 @@ async function register() {
   justify-content: center;
   padding: 24px;
   background: linear-gradient(135deg, #f5f7fb, #e8ecf5);
+  font-family: "Montserrat", sans-serif;
 }
 
 /* CARD */
