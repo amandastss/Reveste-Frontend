@@ -11,9 +11,7 @@ body,
   box-sizing: border-box;
 }
 
-/* ================================
-   PAGE
-================================ */
+/*PAGE*/
 .sell-page {
   width: 100%;
   min-height: 100vh;
@@ -27,9 +25,7 @@ body,
 
   padding: 24px 24px 220px;
 }
-/* ================================
-   MODAL LOGIN
-================================ */
+/*MODAL LOGIN*/
 .overlay {
   position: fixed;
   top: 0;
@@ -75,9 +71,7 @@ body,
   }
 }
 
-/* ================================
-   HEADER
-================================ */
+/*HEADER*/
 .top-bar {
   position: relative;
   display: flex;
@@ -134,9 +128,7 @@ body,
   stroke-width: 2.2;
 }
 
-/* ================================
-   FORM
-================================ */
+/*FORM*/
 .sell-form {
   display: flex;
   flex-direction: column;
@@ -191,9 +183,7 @@ body,
   resize: none;
 }
 
-/* ================================
-   FOTOS
-================================ */
+/*FOTOS*/
 .photos .icon-btn {
   width: 100%;
   margin-top: 12px;
@@ -248,9 +238,7 @@ body,
   display: none;
 }
 
-/* ================================
-   PREVIEW
-================================ */
+/*PREVIEW*/
 .preview-box {
   width: 100%;
   margin-top: 16px;
@@ -268,9 +256,7 @@ body,
   display: block;
 }
 
-/* ================================
-   IA STATUS
-================================ */
+/*IA STATUS*/
 .scanner-status,
 .scanner-result,
 .scanner-error {
@@ -293,9 +279,7 @@ body,
   font-weight: 500;
 }
 
-/* ================================
-   BOTÃO PUBLICAR
-================================ */
+/*BOTÃO PUBLICAR*/
 .publish-wrapper {
   position: fixed;
   left: 0;
@@ -339,9 +323,7 @@ body,
   cursor: not-allowed;
 }
 
-/* ================================
-   DESKTOP
-================================ */
+/*DESKTOP*/
 @media (min-width: 768px) {
   .sell-page {
     padding: 40px 40px 220px;

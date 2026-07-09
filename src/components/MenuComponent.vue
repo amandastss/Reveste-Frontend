@@ -176,8 +176,8 @@ watch(
   max-width: 320px;
   height: 100vh;
 
-  background: #000;
-  color: white;
+  background: var(--surface-elevated);
+  color: var(--text-color);
 
   padding: 20px;
   box-sizing: border-box;
@@ -185,7 +185,7 @@ watch(
   font-family: "Montserrat", sans-serif;
 
   overflow-y: auto;
-  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.25);
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
 
   animation: slideIn 0.25s ease;
 }
@@ -204,7 +204,7 @@ watch(
 .close-button {
   background: transparent;
   border: none;
-  color: white;
+  color: var(--text-color);
   font-size: 24px;
   cursor: pointer;
   margin-bottom: 20px;
@@ -213,7 +213,7 @@ watch(
 /*TEXTOS */
 .menu-title {
   font-size: 13px;
-  color: #888;
+  color: var(--text-muted);
   margin-bottom: 20px;
   text-transform: uppercase;
 }

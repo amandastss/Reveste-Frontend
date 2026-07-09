@@ -133,7 +133,7 @@ function voltar() {
 <style scoped>
 .categoria {
   min-height: 100vh;
-  background: white;
+  background: var(--surface-bg);
   font-family: "Montserrat", sans-serif;
 }
 
@@ -146,7 +146,7 @@ function voltar() {
   border-bottom: 1px solid #eee;
   position: sticky;
   top: 0;
-  background: white;
+  background: var(--surface-bg);
 }
 
 .back {
@@ -181,7 +181,7 @@ function voltar() {
 .resposta {
   margin-top: 8px;
   font-size: 14px;
-  color: #666;
+  color: var(--text-muted);
 }
 
 /* AVALIAÇÃO */
@@ -199,7 +199,7 @@ function voltar() {
 
 .botoes button {
   border: none;
-  background: #f5f5f5;
+  background: var(--surface-elevated);
   border-radius: 50%;
   padding: 8px;
   cursor: pointer;
@@ -225,7 +225,7 @@ function voltar() {
 /* FEEDBACK */
 .feedback {
   margin-top: 15px;
-  background: #f5f5f5;
+  background: var(--surface-elevated);
   padding: 16px;
   border-radius: 16px;
   text-align: center;
@@ -243,6 +243,6 @@ function voltar() {
 
 .feedback span {
   font-size: 13px;
-  color: #666;
+  color: var(--text-muted);
 }
 </style>
