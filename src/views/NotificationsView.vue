@@ -118,6 +118,7 @@ const handleNotificationClick = (notif: Notification) => {
   display: flex;
   flex-direction: column;
   padding: 24px 24px;
+    font-family: "Montserrat", sans-serif;
 }
 
 /* =========================================
