@@ -15,6 +15,7 @@ body {
   display: flex;
   flex-direction: column;
   padding: 24px 24px 230px;
+  font-family: "Montserrat", sans-serif;
 }
 
 /* =========================================

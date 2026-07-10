@@ -31,6 +31,11 @@ export const useCartStore = defineStore('cart', {
         const res = await axios.get('/api/cart/', {
           headers: { Authorization: `Bearer ${token}` },
         })
+
+         console.log('res.data:', res.data)
+    console.log('isArray:', Array.isArray(res.data))
+
+    
         this.items = res.data
       } else {
         // visitante → localStorage
