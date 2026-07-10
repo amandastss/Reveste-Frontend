@@ -103,7 +103,7 @@ function togglePassword() {
 
       <!-- INPUT -->
       <div class="input">
-        <span class="icon">🔒</span>
+        <span class="icon">.</span>
 
         <input
           :type="showPassword ? 'text' : 'password'"
@@ -112,7 +112,7 @@ function togglePassword() {
         />
 
         <span class="eye" @click="togglePassword">
-          {{ showPassword ? '🙈' : '👁' }}
+          {{ showPassword ? '.' : '.' }}
         </span>
       </div>
 
