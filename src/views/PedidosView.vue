@@ -6,7 +6,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const API = import.meta.env.VITE_API_URL
 
-// 🔥 TIPO
+// TIPO
 interface Pedido {
   id: string
   nome: string
@@ -17,7 +17,7 @@ interface Pedido {
   imagem?: string
 }
 
-// 🔥 MOCK (para apresentação)
+// MOCK 
 const pedidosMock: Pedido[] = [
   {
     id: '#111115',
@@ -48,10 +48,10 @@ const pedidosMock: Pedido[] = [
   },
 ]
 
-// 🔥 STATE
+// STATE
 const pedidos = ref<Pedido[]>([])
 
-// 🔥 LOAD
+// LOAD
 async function loadPedidos() {
   try {
     const token = localStorage.getItem('token')
@@ -70,7 +70,6 @@ async function loadPedidos() {
       ? data
       : data.results || data.items || []
 
-    // 👉 se API vazia → usa mock
     if (pedidosAPI.length === 0) {
       pedidos.value = pedidosMock
     } else {
@@ -80,17 +79,16 @@ async function loadPedidos() {
   } catch (error) {
     console.error('Erro ao carregar pedidos:', error)
 
-    // 👉 se erro → usa mock
     pedidos.value = pedidosMock
   }
 }
 
-// 🔥 INIT
+// INIT
 onMounted(() => {
   loadPedidos()
 })
 
-// 🔥 FUNÇÕES
+// FUNÇÕES
 function abrirPedido(id: string) {
   router.push(`/pedido/${id}`)
 }
@@ -123,12 +121,11 @@ function statusClass(status: string) {
       <h2>MEUS PEDIDOS</h2>
     </div>
 
-    <!-- 🔥 SE NÃO TIVER PEDIDOS -->
     <div v-if="pedidos.length === 0" class="empty">
-      Nenhum pedido encontrado 🛍️
+      Nenhum pedido encontrado.
     </div>
 
-    <!-- 🔥 LISTA -->
+    <!-- LISTA -->
     <div
       v-for="pedido in pedidos"
       :key="pedido.id"
