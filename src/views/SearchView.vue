@@ -390,8 +390,8 @@ onMounted(async () => {
     <!-- HEADER -->
     <div class="top-bar">
       <span class="material-symbols-outlined icon-btn" @click="voltar">
-  arrow_back
-</span>
+        arrow_back
+      </span>
 
       <div class="search-bar">
         <div class="search-input-wrapper">
@@ -419,11 +419,13 @@ onMounted(async () => {
       <span class="material-symbols-outlined filter-button" @click="toggleCategorias">
         filter_alt
       </span>
+
       <span class="material-symbols-outlined camera-button" @click="abrirCameraModal">
         photo_camera
       </span>
     </div>
 
+    <!-- CATEGORIAS -->
     <div class="categories-row" v-if="showCategorias && categorias.length">
       <button
         type="button"
@@ -439,7 +441,8 @@ onMounted(async () => {
             @error="onImgError"
           />
         </div>
-        <span>{{ getCategoriaNome(item) || 'Categoria' }}</span>
+
+        <span>{{ getCategoriaNome(item) || "Categoria" }}</span>
       </button>
     </div>
 
@@ -448,7 +451,11 @@ onMounted(async () => {
       <p class="recentes-title">Pesquisas recentes</p>
 
       <div class="recentes-list">
-        <div class="recente-item" v-for="(item, index) in recentes" :key="index">
+        <div
+          class="recente-item"
+          v-for="(item, index) in recentes"
+          :key="index"
+        >
           <span @click="usarRecente(item)">
             {{ item }}
           </span>
@@ -460,13 +467,24 @@ onMounted(async () => {
 
     <!-- RESULTADOS -->
     <div class="results" v-if="filtrados.length">
-      <div class="card" v-for="item in filtrados" :key="item.id" @click="abrirProduto(item.id)">
-        <img :src="item.imagem_url || item.imagem" :alt="item.nome" @error="onImgError" />
+      <div
+        class="card"
+        v-for="item in filtrados"
+        :key="item.id"
+        @click="abrirProduto(item.id)"
+      >
+        <img
+          :src="item.imagem_url || item.imagem"
+          :alt="item.nome"
+          @error="onImgError"
+        />
 
         <div class="info">
           <h3>{{ item.nome }}</h3>
           <p class="marca">{{ item.marca }}</p>
-          <p class="preco">R$ {{ Number(item.preco).toFixed(2) }}</p>
+          <p class="preco">
+            R$ {{ Number(item.preco).toFixed(2) }}
+          </p>
         </div>
       </div>
     </div>
@@ -476,13 +494,27 @@ onMounted(async () => {
       <p>Nenhum resultado encontrado</p>
     </div>
 
+    <!-- OVERLAY -->
+    <div
+      v-if="mostrarModalCamera"
+      class="camera-overlay"
+      @click="fecharModal"
+    ></div>
+
+    <!-- MODAL -->
     <div v-if="mostrarModalCamera" class="camera-sheet">
-      <button @click="irParaCamera('camera')">Tirar foto</button>
-      <button @click="irParaCamera('gallery')">Importar da galeria</button>
-      <button class="cancel" @click="fecharModal">Cancelar</button>
+      <button @click="irParaCamera('camera')">
+        Tirar foto
+      </button>
+
+      <button @click="irParaCamera('gallery')">
+        Importar da galeria
+      </button>
+
+      <button class="cancel" @click="fecharModal">
+        Cancelar
+      </button>
     </div>
   </div>
-  <div v-if="mostrarModalCamera" class="camera-overlay" @click="fecharModal"></div>
-  <div v-if="mostrarModalCamera" class="camera-sheet"></div>
 </template>
 <style scoped src="../css/search.css"></style>
