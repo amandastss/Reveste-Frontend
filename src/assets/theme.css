@@ -1,0 +1,46 @@
+:root {
+  color-scheme: light;
+  --app-bg: #f8fafc;
+  --surface-bg: #ffffff;
+  --surface-elevated: #f1f5f9;
+  --text-color: #0f172a;
+  --text-muted: #475569;
+  --border-color: #e2e8f0;
+  --header-bg: #ffffff;
+  --header-text: #0f172a;
+  --accent: #1f2937;
+  --accent-soft: rgba(15, 23, 42, 0.08);
+  --shadow-color: rgba(15, 23, 42, 0.08);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --app-bg: #090a0f;
+  --surface-bg: #111318;
+  --surface-elevated: #181b22;
+  --text-color: #f8fafc;
+  --text-muted: #cbd5e1;
+  --border-color: rgba(248, 250, 252, 0.12);
+  --header-bg: #111318;
+  --header-text: #f8fafc;
+  --accent: #94a3b8;
+  --accent-soft: rgba(148, 163, 184, 0.12);
+  --shadow-color: rgba(0, 0, 0, 0.35);
+}
+
+body {
+  background: var(--app-bg);
+  color: var(--text-color);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}

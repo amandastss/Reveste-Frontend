@@ -1,69 +1,106 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
 
 interface Produto {
   id: number
+  name: string /* Alterado de 'nome' para 'name' conforme o padrão do seu carrinho se necessário, mas mantido a lógica */
   nome: string
   preco: number
-  descricao?: string
-  marca?: string
-  condicao?: string
-  imagem?: {
-    url: string
-  }
+  imagem_url?: string | null
 }
 
+interface Categoria {
+  id: number
+  nome: string
+  imagem_url: string | null
+  name?: string
+  title?: string
+}
+
+const router = useRouter()
 const produtos = ref<Produto[]>([])
+const categorias = ref<Categoria[]>([])
 
-const categorias = [
-  'Casual',
-  'Streetwear',
-  'Formal',
-  'Plus',
-  'Vintage',
-  'Kids',
-  'Praia',
-  'Esporte',
-  'Verão',
-  'Inverno',
-]
+const goToProduto = (id: number) => {
+  router.push({ name: 'produto-detalhe', params: { id } })
+}
 
+const goToSearch = () => {
+  router.push({ name: 'search' })
+}
+
+const goToCategory = (cat: Categoria) => {
+  router.push({
+    name: 'categoria',
+    params: { id: String(cat.id) }
+  })
+}
+
+const formatMediaUrl = (url?: string | null) => {
+  if (!url) return '/default.png'
+  return url.startsWith('http') ? url : `${import.meta.env.VITE_API_URL}${url}`
+}
+
+// PRODUTOS
 const fetchProdutos = async () => {
   try {
-    const response = await axios.get('http://127.0.0.1:8000/api/produtos/')
-    produtos.value = response.data.results 
-  } catch (error) {
-    console.error('Erro ao buscar produtos:', error)
+    const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/produtos/`)
+    produtos.value = res.data.results
+  } catch (err) {
+    console.error(err)
   }
 }
 
-onMounted(fetchProdutos)
+// CATEGORIAS
+const fetchCategorias = async () => {
+  try {
+    const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/categorias/`)
+    categorias.value = res.data.results
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+onMounted(() => {
+  fetchProdutos()
+  fetchCategorias()
+})
 </script>
 
 <template>
   <div class="home">
+    <!-- Search bar -->
+    <div class="search-bar" @click="goToSearch">
+      <div class="search-input-wrapper">
+        <input type="text" placeholder="Pesquisar itens..." readonly />
+        <span class="search-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+            <path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </span>
+      </div>
+    </div>
     <!-- Banner -->
     <div class="banner">
       <img src="/banner.jpg" alt="Promoção" />
     </div>
 
-    <!-- Categorias -->
     <div class="categories">
-      <div v-for="cat in categorias" :key="cat" class="item">
-        <div class="circle"></div>
-        <span>{{ cat }}</span>
+      <div v-for="cat in categorias" :key="cat.id" class="item" @click="goToCategory(cat)">
+        <img class="circle" :src="formatMediaUrl(cat.imagem_url)" />
+        <span>{{ cat.nome || cat.name || cat.title }}</span>
       </div>
     </div>
 
-    <!-- Produtos -->
     <div class="products">
       <h3>Para você</h3>
 
       <div class="grid">
-        <div class="card" v-for="p in produtos" :key="p.id">
-          <img :src="p.imagem?.url || ''" />
-
+        <div class="card" v-for="p in produtos" :key="p.id" @click="goToProduto(p.id)">
+          <img :src="formatMediaUrl(p.imagem_url)" />
           <p class="name">{{ p.nome }}</p>
           <p class="price">R$ {{ p.preco }}</p>
         </div>
@@ -74,93 +111,192 @@ onMounted(fetchProdutos)
 
 <style scoped>
 .home {
-  max-width: 420px;
-  margin: 0 auto;
-  padding-bottom: 70px; /* espaço pro footer */
-  background: #fff;
+  width: 100%;
+  max-width: none; /* Remove a limitação de 420px mobile */
+  margin: 0;
+  padding: 12px;
+  padding-bottom: 80px;
+  background: var(--surface-bg); /* Corrigido de #f6f6f7 para white para unificar as cores de fundo */
   font-family: 'Montserrat', sans-serif;
 }
-/* Banner */
-.banner {
-  padding: 0 12px;
-  margin-top: 10px;
+/* SEARCH BAR */
+.search-bar {
+  padding: 16px 5%; /* Alinhado com o padrão de margens do seu app */
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  width: 100%;
 }
+
+.search-input-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 320px; /* Tamanho base no mobile */
+}
+
+.search-input-wrapper input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 48px 12px 24px;
+  border-radius: 30px; /* Formato pílula */
+  border: 1px solid transparent;
+  background: var(--surface-elevated); /* Fundo cinza moderno */
+  font-size: 15px;
+  color: var(--text-color);
+  cursor: pointer; /* Mostra a mãozinha de clique */
+  transition: all 0.2s ease-in-out;
+}
+
+/* Como é readonly na Home, o hover imita o focus da outra tela para dar interatividade */
+.search-input-wrapper:hover input {
+  background: var(--surface-bg);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.search-input-wrapper input::placeholder {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.search-icon {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.search-icon svg {
+  width: 100%;
+  height: 100%;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* BANNER */
+.banner {
+  padding: 0;
+  margin-bottom: 16px;
+}
+
 .banner img {
   width: 100%;
-  border-radius: 12px;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
 }
-/* Categorias */
+
+/* CATEGORIAS */
 .categories {
   display: grid;
-  grid-template-columns: repeat(4, 1fr); /* 4 por linha */
-  gap: 12px;
-  padding: 12px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  padding: 12px 0;
 }
-.categories span {
-  color: black;
-}
+
 .item {
   text-align: center;
   font-size: 12px;
-  min-width: 60px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
 }
+
+.item:active {
+  transform: scale(0.95);
+}
+
 .circle {
-  width: 45px;
-  height: 45px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  background: #eee;
-  margin: 0 auto 5px;
+  margin: 0 auto 6px;
+  object-fit: cover;
 }
-/* Produtos */
+
+.categories span {
+  color: #222;
+  font-weight: 500;
+}
+
+/* PRODUTOS */
 .products {
-  padding: 12px;
+  padding: 12px 0;
 }
+
 .products h3 {
-  font-weight: bold;
-  font-size: 16px;
-  margin-bottom: 10px;
-  color: black;
+  font-size: 18px;
+  margin-bottom: 14px;
+  color: var(--text-color);
 }
-/* grid MOBILE */
+
+/* GRID */
 .grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 14px;
 }
-.grid p {
-  color: black;
-}
-/* card */
+
+/* CARD */
 .card {
-  background: #fafafa;
-  border-radius: 12px;
-  padding: 8px;
+  background: var(--surface-bg);
+  border-radius: 16px;
+  padding: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+
+.card:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) {
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+  }
+}
+
 .card img {
   width: 100%;
-  border-radius: 10px;
+  border-radius: 12px;
+  aspect-ratio: 1/1;
+  object-fit: cover;
 }
+
+/* TEXTO */
 .name {
   font-size: 13px;
-  margin-top: 6px;
+  margin-top: 8px;
+  color: #222;
 }
+
 .price {
-  font-size: 13px;
-  font-weight: bold;
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 2px;
+  color: var(--text-color);
 }
+
+/* DESKTOP */
 @media (min-width: 768px) {
   .home {
-    max-width: 1200px;
     padding: 20px;
-    padding-bottom: 20px;
+    padding-bottom: 40px;
   }
 
-  /* banner maior */
   .banner {
-    padding: 0;
+    margin-bottom: 24px;
   }
 
-  /* categorias mais espaçosas */
   .categories {
     grid-template-columns: repeat(6, 1fr);
     gap: 20px;
@@ -168,48 +304,25 @@ onMounted(fetchProdutos)
   }
 
   .circle {
-    width: 60px;
-    height: 60px;
+    width: 65px;
+    height: 65px;
   }
 
   .item {
     font-size: 13px;
   }
 
-  /* produtos */
-  .products {
-    padding: 0;
-  }
-
   .products h3 {
-    font-size: 20px;
+    font-size: 22px;
     margin-bottom: 20px;
   }
 
-  /* grid de produtos maior */
   .grid {
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
   }
-
-  .card {
-    padding: 12px;
-    transition:
-      transform 0.2s ease,
-      box-shadow 0.2s ease;
-  }
-
-  .card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-  }
-
-  .name {
-    font-size: 14px;
-  }
-
-  .price {
-    font-size: 15px;
+  .search-input-wrapper {
+    max-width: 700px;
   }
 }
 </style>

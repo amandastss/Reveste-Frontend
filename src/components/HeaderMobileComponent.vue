@@ -81,8 +81,8 @@ function goHome() {
   justify-content: space-between;
 
   padding: 10px;
-  background: white;
-  border-bottom: 1px solid #eee;
+  background: var(--surface-bg);
+  border-bottom: 1px solid var(--border-color);
 
   position: relative;
 }
@@ -109,15 +109,14 @@ function goHome() {
   font-family: "Playfair Display", serif;
   font-size: 35px;
   font-weight: 540;
-  color: black;
+  color: var(--text-color);
 
-  transition: opacity 0.2s ease,
-              letter-spacing 0.2s ease;
+  transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
-.title-button:hover {
+.title-button:active {
+  transform: translateX(-50%) scale(0.96);
   opacity: 0.7;
-  letter-spacing: 1px;
 }
 
 /*BOTÕES*/
@@ -132,12 +131,12 @@ function goHome() {
 /*ÍCONES*/
 .material-symbols-outlined {
   font-size: 20px;
-  color: black;
+  color: var(--text-color);
 }
 
 .material-symbols-outlined1 {
   font-size: 24px;
-  color: black;
+  color: var(--text-color);
 }
 
 /*DESKTOP*/

@@ -30,27 +30,54 @@ async function login() {
 
     // Login - email já existe
     const res = await authApi.login(email.value, password.value)
+    if (res.data && res.data.access) {
+      try {
+        localStorage.setItem('token', res.data.access)
+      } catch {}
+    }
+    const userData =  await authApi.fetchUserProfile()
     const existingUser = JSON.parse(localStorage.getItem('user') || '{}')
-    const currentEmail = email.value?.toLowerCase() || ''
-    const storedEmail = existingUser.email?.toLowerCase() || ''
+    // const currentEmail = email.value?.toLowerCase() || ''
+    // const storedEmail = existingUser.email?.toLowerCase() || ''
 
-    const mergedUser = storedEmail === currentEmail
-      ? {
-          ...existingUser,
-          ...res.data,
-          email: email.value,
-          name: existingUser.name || res.data.name || res.data.username || res.data.first_name || undefined,
-          phone: existingUser.phone || res.data.phone,
-          photo: existingUser.photo || res.data.photo || res.data.avatar || res.data.image,
-          date_of_birth: existingUser.date_of_birth || res.data.date_of_birth || res.data.birthdate,
-        }
-      : {
-          ...res.data,
-          email: email.value,
-        }
+    // const mergedUser = storedEmail === currentEmail
+    //   ? {
+    //       ...existingUser,
+    //       ...res.data,
+    //       email: email.value,
+    //       name: existingUser.name || res.data.name || res.data.username || res.data.first_name || undefined,
+    //       phone: existingUser.phone || res.data.phone,
+    //       photo: existingUser.photo || res.data.profile_image || res.data.photo || res.data.avatar || res.data.image,
+    //       date_of_birth: existingUser.date_of_birth || res.data.date_of_birth || res.data.birthdate || res.data.birth_date,
+    //     }
+    //   : {
+    //       ...res.data,
+    //       email: email.value,
+    //     }
 
-    localStorage.setItem('user', JSON.stringify(mergedUser))
-    localStorage.setItem('token', res.data.token)
+    localStorage.setItem('user', JSON.stringify(userData))
+    localStorage.setItem('email', email.value)
+
+
+    try {
+      const token = res.data?.token || localStorage.getItem('token')
+      const candidateId = res.data?.user_id || res.data?.user?.id || mergedUser.user_id || mergedUser.id
+      if (token) {
+        const serverUser = await authApi.fetchUserFromCandidates(token, candidateId)
+        if (serverUser) {
+          const enriched = {
+            ...mergedUser,
+            ...serverUser,
+            photo: mergedUser.photo || serverUser.profile_image || serverUser.photo || serverUser.avatar || serverUser.image,
+            date_of_birth: mergedUser.date_of_birth || serverUser.birth_date || serverUser.date_of_birth || serverUser.birthdate,
+          }
+          localStorage.setItem('user', JSON.stringify(enriched))
+        }
+      }
+    } catch (e) {
+      // ignore enrichment errors
+    }
+
     router.push('/')
 
   } catch (err) {
@@ -76,7 +103,7 @@ function togglePassword() {
 
       <!-- INPUT -->
       <div class="input">
-        <span class="icon">🔒</span>
+        <span class="icon">.</span>
 
         <input
           :type="showPassword ? 'text' : 'password'"
@@ -85,7 +112,7 @@ function togglePassword() {
         />
 
         <span class="eye" @click="togglePassword">
-          {{ showPassword ? '🙈' : '👁' }}
+          {{ showPassword ? '.' : '.' }}
         </span>
       </div>
 
@@ -111,7 +138,7 @@ function togglePassword() {
 <style scoped>
 .screen {
   height: 100vh;
-  background: #f7f7f7;
+  background: var(--surface-elevated);
   max-width: 390px;
   margin: 0 auto;
   padding: 24px 20px;
@@ -133,7 +160,7 @@ function togglePassword() {
 
 .email {
   font-size: 14px;
-  color: #888;
+  color: var(--text-muted);
   margin-bottom: 30px;
 }
 
@@ -148,7 +175,7 @@ function togglePassword() {
 }
 
 .icon {
-  color: #999;
+  color: var(--text-muted);
 }
 
 .input input {
@@ -169,7 +196,7 @@ function togglePassword() {
   border-radius: 30px;
   border: none;
   background: #eaeaea;
-  color: #aaa;
+  color: var(--text-muted);
   font-weight: bold;
 }
 

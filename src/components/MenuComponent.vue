@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
 const props = defineProps<{
   isOpen: boolean
 }>()
 
 const emit = defineEmits(['close-menu'])
+const router = useRouter()
 
 const openSections = ref<string[]>([])
 
@@ -21,6 +23,11 @@ function toggleSection(section: string) {
   } else {
     openSections.value.push(section)
   }
+}
+
+function goToLogin() {
+  closeMenu()
+  router.push('/auth/email')
 }
 
 watch(
@@ -56,7 +63,7 @@ watch(
           <p class="menu-title">menu</p>
 
           <div class="menu-content">
-            <p class="login">Entrar</p>
+            <p class="login" @click="goToLogin">Entrar/Cadastrar</p>
 
             <!-- masculino -->
             <div
@@ -169,7 +176,7 @@ watch(
   max-width: 320px;
   height: 100vh;
 
-  background: #000;
+  background: black;
   color: white;
 
   padding: 20px;
@@ -178,7 +185,7 @@ watch(
   font-family: "Montserrat", sans-serif;
 
   overflow-y: auto;
-  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.25);
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
 
   animation: slideIn 0.25s ease;
 }
@@ -206,7 +213,7 @@ watch(
 /*TEXTOS */
 .menu-title {
   font-size: 13px;
-  color: #888;
+  color: var(--text-muted);
   margin-bottom: 20px;
   text-transform: uppercase;
 }

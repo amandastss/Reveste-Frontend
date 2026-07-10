@@ -9,21 +9,22 @@ const email = ref(localStorage.getItem('email') || '')
 const password = ref('')
 const birthdate = ref('')
 const phone = ref('')
-const photo = ref('')
+const photo = ref<File | null>(null)
 const photoPreview = ref('')
 
-function handlePhotoChange(event) {
-  const file = event.target.files?.[0]
+function handlePhotoChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0] || null
+  photo.value = file
+
   if (!file) {
-    photo.value = ''
     photoPreview.value = ''
     return
   }
 
   const reader = new FileReader()
   reader.onload = () => {
-    photo.value = reader.result || ''
-    photoPreview.value = reader.result || ''
+    photoPreview.value = (reader.result as string) || ''
   }
   reader.readAsDataURL(file)
 }
@@ -35,88 +36,142 @@ async function register() {
   }
 
   try {
-    const response = await authApi.register(email.value, name.value, password.value)
+    const response = await authApi.register(
+      email.value,
+      name.value,
+      password.value,
+      'buyer',
+      phone.value,
+      birthdate.value,
+      photo.value ?? undefined,
+      undefined,
+    )
+
+    const responseData = response.data || {}
     const userData = {
-      ...response.data,
+      ...responseData,
       name: name.value,
       email: email.value,
       phone: phone.value,
-      photo: photo.value,
+      photo: photoPreview.value,
       date_of_birth: birthdate.value,
     }
 
-    if (response?.data?.token) {
-      localStorage.setItem('user', JSON.stringify(userData))
-      localStorage.setItem('token', response.data.token)
+    localStorage.setItem('email', email.value)
+    localStorage.setItem('user', JSON.stringify(userData))
+
+    const token = typeof responseData.token === 'string' ? responseData.token : undefined
+    if (token) {
+      localStorage.setItem('token', token)
       localStorage.setItem('isLogin', 'true')
-      router.push('/')
+      router.push('/profile')
       return
     }
 
-    localStorage.setItem('user', JSON.stringify(userData))
     localStorage.setItem('isLogin', 'true')
-    alert('Conta criada com sucesso! Agora faça login.')
     router.push('/auth/password')
-  } catch (err) {
-    console.error('Register error:', err)
-    alert('Erro ao criar conta: ' + (err.response?.data?.message || 'Tente novamente'))
+  } catch (err: unknown) {
+    console.error(err)
+
+    if (err instanceof Error) {
+      alert('Erro: ' + err.message)
+    } else {
+      alert('Erro ao criar conta')
+    }
   }
 }
 </script>
 
 <template>
-  <div class="register">
-    <h1>Criar conta</h1>
-    <input v-model="name" placeholder="Nome completo" />
-    <input v-model="email" placeholder="Email" type="email" />
+  <div class="register-wrapper">
+    <div class="register-card">
+      <h1>Criar conta</h1>
 
-    <div class="field-row">
-      <div class="field-group">
-        <label>Telefone</label>
-        <input v-model="phone" placeholder="(xx) xxxxx-xxxx" type="tel" />
+      <input v-model="name" placeholder="Nome completo" />
+      <input v-model="email" placeholder="Email" type="email" />
+
+      <div class="field-row">
+        <div class="field-group">
+          <label>Telefone</label>
+          <input v-model="phone" placeholder="(xx) xxxxx-xxxx" type="tel" />
+        </div>
+
+        <div class="field-group">
+          <label>Data de nascimento</label>
+          <input v-model="birthdate" type="date" />
+        </div>
       </div>
-      <div class="field-group">
-        <label>Data de nascimento</label>
-        <input v-model="birthdate" type="date" />
+
+      <div class="photo-field">
+        <label>Foto de perfil</label>
+        <input type="file" accept="image/*" @change="handlePhotoChange" />
+
+        <div v-if="photoPreview" class="photo-preview">
+          <img :src="photoPreview" />
+        </div>
       </div>
+
+      <input v-model="password" placeholder="Senha" type="password" />
+
+      <button @click="register">Criar conta</button>
     </div>
-
-    <div class="photo-field">
-      <label>Foto de perfil</label>
-      <input type="file" accept="image/*" @change="handlePhotoChange" />
-      <div v-if="photoPreview" class="photo-preview">
-        <img :src="photoPreview" alt="Foto de perfil" />
-      </div>
-    </div>
-
-    <input v-model="password" placeholder="Senha" type="password" />
-    <button @click="register">Registrar</button>
   </div>
 </template>
 
 <style scoped>
-.register {
-  padding: 20px;
+/* BACKGROUND */
+.register-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #f5f7fb, #e8ecf5);
+  font-family: "Montserrat", sans-serif;
+}
+
+/* CARD */
+.register-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  padding: 28px;
+  border-radius: 20px;
+
+  /* SOMBRA */
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.08),
+    0 2px 10px rgba(0, 0, 0, 0.04);
+
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
 }
 
+/* TITLE */
+.register-card h1 {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+/* INPUTS */
 input {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  font-size: 14px;
+  transition: 0.2s;
 }
 
-button {
-  padding: 10px;
-  background: #000;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+/* FOCUS */
+input:focus {
+  outline: none;
+  border-color: #000;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
 }
 
+/* ROW */
 .field-row {
   display: flex;
   gap: 12px;
@@ -124,37 +179,33 @@ button {
 }
 
 .field-group {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  flex: 1;
 }
 
 .field-group label {
   font-size: 12px;
-  color: #555;
+  color: #666;
 }
 
-.field-group select,
-.field-group input {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
+/* FOTO */
 .photo-field {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 16px;
 }
 
 .photo-preview {
   width: 110px;
   height: 110px;
-  border-radius: 22px;
+  border-radius: 20px;
   overflow: hidden;
-  border: 1px solid #ccc;
+
+  border: 2px solid #eee;
+
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
 }
 
 .photo-preview img {
@@ -163,28 +214,28 @@ button {
   object-fit: cover;
 }
 
-.field-row {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+/* BUTTON */
+button {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: #000;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+
+  transition: 0.2s;
 }
 
-.field-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
+/* HOVER */
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
 }
 
-.field-group label {
-  font-size: 12px;
-  color: #555;
-}
-
-.field-group select,
-.field-group input {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+/* CLICK */
+button:active {
+  transform: scale(0.98);
 }
 </style>

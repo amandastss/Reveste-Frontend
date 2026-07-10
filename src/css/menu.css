@@ -7,7 +7,7 @@
   border: none;
   font-size: 30px;
   cursor: pointer;
-  color: #000;
+  color: var(--text-color);
 }
 
 .overlay {
@@ -23,11 +23,13 @@
   left: -280px;
   width: 280px;
   height: 100vh;
-  background: #000;
+  background: var(--surface-elevated);
+  color: var(--text-color);
   z-index: 999;
   transition: 0.3s ease;
   padding: 30px;
   box-sizing: border-box;
+  border-right: 1px solid var(--border-color);
 }
 
 .sidebar.open {
@@ -39,7 +41,7 @@
 }
 
 .login {
-  color: white;
+  color: var(--text-color);
   font-size: 20px;
   margin-bottom: 50px;
   cursor: pointer;
@@ -49,7 +51,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: white;
+  color: var(--text-color);
   font-size: 20px;
   margin-bottom: 40px;
   cursor: pointer;

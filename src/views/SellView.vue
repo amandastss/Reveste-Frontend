@@ -1,127 +1,190 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import axios from 'axios'
 import '../css/sell.css'
 
-const fileInput = ref<HTMLInputElement | null>(null)
-const preview = ref('')
+const estaLogado = () => {
+  return !!localStorage.getItem('token')
+}
+const mostrarLoginAviso = ref(false)
 
-const form = ref({
+type FormPeca = {
+  titulo: string
+  descricao: string
+  preco: string
+  condicao: string
+  marca: string
+  categoria: string
+  foto: File | null
+}
+
+type ResultadoScanner = {
+  aprovado: boolean
+  condicao: string
+  score: number
+  detalhes: string
+}
+
+const fileInput = ref<HTMLInputElement | null>(null)
+const preview = ref<string>('')
+const analisando = ref(false)
+const categorias = ref<Array<{ id: number; nome?: string; name?: string; title?: string }>>([])
+const podePublicar = ref(false)
+const erroScanner = ref('')
+const resultadoIA = ref<ResultadoScanner | null>(null)
+
+const form = ref<FormPeca>({
   titulo: '',
   descricao: '',
   preco: '',
   condicao: '',
   marca: '',
-  foto: null as File | null,
+  categoria: '',
+  foto: null,
+})
+
+const carregarCategorias = async () => {
+  try {
+    const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/categorias/`)
+    categorias.value = Array.isArray(res.data?.results)
+      ? res.data.results
+      : Array.isArray(res.data)
+        ? res.data
+        : []
+  } catch (error) {
+    console.error('Erro ao carregar categorias:', error)
+    categorias.value = []
+  }
+}
+
+onMounted(() => {
+  carregarCategorias()
 })
 
 const abrirGaleria = () => {
   fileInput.value?.click()
 }
 
-const previewImagem = (event: Event) => {
-  const file = (event.target as HTMLInputElement).files?.[0]
+const previewImagem = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+
   if (!file) return
+
+  erroScanner.value = ''
+  resultadoIA.value = null
+  podePublicar.value = false
 
   form.value.foto = file
   preview.value = URL.createObjectURL(file)
+  await analisarRoupaIA()
+}
+
+const analisarRoupaIA = async () => {
+  analisando.value = true
+
+  setTimeout(() => {
+    const fakeResultado: ResultadoScanner = {
+      aprovado: true,
+      condicao: 'seminovo',
+      score: 85,
+      detalhes: 'Peça em boas condições para venda.',
+    }
+
+    resultadoIA.value = fakeResultado
+    form.value.condicao = fakeResultado.condicao
+    podePublicar.value = true
+    analisando.value = false
+  }, 1500)
 }
 
 const publicarPeca = async () => {
-  if (!form.value.titulo || !form.value.preco || !form.value.condicao) {
-    alert('Preencha os campos obrigatórios')
+  if (!estaLogado()) {
+    mostrarLoginAviso.value = true
+    return
+  }
+
+  if (!podePublicar.value) return
+
+  if (!form.value.categoria) {
+    alert('Selecione uma categoria para publicar o produto.')
     return
   }
 
   try {
-    let imagemUrl = ''
-
-    // Upload da imagem
-    if (form.value.foto) {
-      imagemUrl = await uploadImagem(form.value.foto)
-    }
-
-    // Criar produto
     const formData = new FormData()
 
     formData.append('nome', form.value.titulo)
     formData.append('descricao', form.value.descricao)
     formData.append('preco', form.value.preco)
-    formData.append('condicao', form.value.condicao)
     formData.append('marca', form.value.marca)
+    formData.append('condicao', form.value.condicao)
+    formData.append('categoria', form.value.categoria)
 
-    if (imagemUrl) {
-      formData.append('imagem_url', imagemUrl)
+    if (form.value.foto) {
+      formData.append('imagem', form.value.foto)
     }
 
-    const res = await fetch('http://localhost:8000/api/produtos/', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/produtos/`, {
       method: 'POST',
       body: formData,
     })
 
-    if (!res.ok) {
-      const err = await res.json()
-      console.error('ERRO PRODUTO:', err)
-      throw new Error()
+    if (!response.ok) {
+      throw new Error('Erro ao cadastrar produto')
     }
+
+    const data = await response.json()
+
+    console.log('Produto criado:', data)
 
     alert('Produto publicado com sucesso!')
 
-    // reset
+    // resetar form
     form.value = {
       titulo: '',
       descricao: '',
       preco: '',
       condicao: '',
       marca: '',
+      categoria: '',
       foto: null,
     }
-
     preview.value = ''
-  } catch (e) {
-    console.error(e)
-    alert('Erro ao publicar o produto.')
+    resultadoIA.value = null
+    podePublicar.value = false
+  } catch (error) {
+    console.error(error)
+    alert('Erro ao publicar produto.')
   }
-}
-
-const uploadImagem = async (file: File) => {
-  const formData = new FormData()
-  formData.append('file', file)
-
-  const res = await fetch('http://localhost:8000/api/media/images/', {
-    method: 'POST',
-    body: formData,
-  })
-
-  if (!res.ok) {
-    const err = await res.json()
-    console.error('ERRO UPLOAD:', err)
-    throw new Error('Erro no upload da imagem')
-  }
-
-  const data = await res.json()
-
-  console.log('UPLOAD OK:', data)
-
-  return data.file
 }
 </script>
 
 <template>
   <div class="sell-page">
-    <header class="top-bar">
-      <button class="back-btn" @click="$router.back()">←</button>
-      <h1>VENDER</h1>
+    <div v-if="mostrarLoginAviso" class="overlay">
+  <div class="modal">
+    <h2>Ops!</h2>
+    <p>Você precisa estar logado para vender uma peça.</p>
+    <button @click="$router.push('/auth-email')">
+      Entrar / Criar conta
+    </button>
+  </div>
+</div>
+<header class="top-bar">
+      <button @click="$router.back()" class="back-btn" aria-label="Voltar">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+      </button>
+      <h1>Vender</h1>
     </header>
-
     <form class="sell-form" @submit.prevent="publicarPeca">
       <div class="field-group">
         <label>NOME DO PRODUTO</label>
         <input v-model="form.titulo" type="text" />
-      </div>
-
-      <div class="field-group">
-        <label>MARCA</label>
-        <input v-model="form.marca" type="text" />
       </div>
 
       <div class="field-group">
@@ -131,21 +194,43 @@ const uploadImagem = async (file: File) => {
 
       <div class="field-group">
         <label>PREÇO</label>
-        <input v-model="form.preco" type="number" step="0.01" />
+        <input v-model="form.preco" type="number" min="0" step="0.01" />
+      </div>
+
+      <div class="field-group">
+        <label>MARCA</label>
+        <input v-model="form.marca" type="text" />
+      </div>
+
+      <div class="field-group">
+        <label>CATEGORIA</label>
+        <select v-model="form.categoria">
+          <option value="">Selecione uma categoria</option>
+          <option v-for="categoria in categorias" :key="categoria.id" :value="String(categoria.id)">
+            {{ categoria.nome || categoria.name || categoria.title }}
+          </option>
+        </select>
       </div>
 
       <div class="field-group">
         <label>CONDIÇÃO</label>
-        <select v-model="form.condicao">
-          <option value="">Selecione</option>
-          <option value="novo">Novo</option>
-          <option value="seminovo">Seminovo</option>
-          <option value="usado">Usado</option>
-        </select>
+        <input v-model="form.condicao" type="text" readonly />
       </div>
 
       <div class="field-group photos">
         <label>FOTOS</label>
+
+        <div class="photo-tips">
+          <p>Dicas para melhor avaliação da IA:</p>
+
+          <ul>
+            <li>Prefira a roupa vestida em alguém</li>
+            <li>Use fundo branco ou neutro</li>
+            <li>Boa iluminação</li>
+            <li>Mostre frente, costas e detalhes</li>
+            <li>Evite fotos tremidas</li>
+          </ul>
+        </div>
 
         <button type="button" class="icon-btn" @click="abrirGaleria">Escolher foto</button>
 
@@ -153,6 +238,7 @@ const uploadImagem = async (file: File) => {
           ref="fileInput"
           type="file"
           accept="image/*"
+          capture="environment"
           class="hidden-input"
           @change="previewImagem"
         />
@@ -160,9 +246,36 @@ const uploadImagem = async (file: File) => {
         <div v-if="preview" class="preview-box">
           <img :src="preview" alt="Preview" />
         </div>
-      </div>
 
-      <button class="publish-btn" type="submit">Publicar</button>
+        <div v-if="analisando" class="scanner-status">🔍 Analisando imagem...</div>
+
+        <div v-if="resultadoIA" class="scanner-result">
+          <p>
+            <strong>Condição:</strong>
+            {{ resultadoIA.condicao }}
+          </p>
+
+          <p>
+            <strong>Score:</strong>
+            {{ resultadoIA.score }}%
+          </p>
+
+          <p>{{ resultadoIA.detalhes }}</p>
+        </div>
+
+        <div v-if="erroScanner" class="scanner-error">
+          {{ erroScanner }}
+        </div>
+      </div>
+      <p v-if="resultadoIA && !podePublicar" class="scanner-error">
+        A peça não atingiu a qualidade mínima para venda.
+      </p>
+
+      <div class="publish-wrapper">
+        <button class="publish-btn" type="submit" :disabled="!podePublicar || analisando">
+          Publicar
+        </button>
+      </div>
     </form>
   </div>
 </template>

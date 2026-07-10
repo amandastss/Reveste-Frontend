@@ -3,7 +3,6 @@ import { useRouter } from 'vue-router';
 import { ref } from 'vue';
 
 const router = useRouter();
-const searchQuery = ref('');
 const showMenu = ref(false);
 
 interface NavItem {
@@ -37,16 +36,11 @@ function goToSell() {
   showMenu.value = false;
 }
 
-function handleSearch() {
-  if (searchQuery.value.trim()) {
-    router.push({ path: '/search', query: { q: searchQuery.value } });
-  }
-}
 </script>
 
 <template>
   <header class="header-desktop">
-    
+
     <div class="header-inner">
 
       <!-- MENU -->
@@ -70,20 +64,6 @@ function handleSearch() {
         </button>
       </nav>
 
-      <!-- CENTRO (BUSCA) -->
-      <div class="search-container">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Pesquisar..."
-          class="search-input"
-          @keyup.enter="handleSearch"
-        />
-        <button class="search-button" @click="handleSearch">
-          <span class="material-symbols-outlined">search</span>
-        </button>
-      </div>
-
       <!-- DIREITA -->
       <div class="right">
         <button
@@ -101,27 +81,23 @@ function handleSearch() {
 
   </header>
 </template>
-
 <style scoped>
 /* HEADER */
 .header-desktop {
   width: 100%;
-  background: white;
-  border-bottom: 1px solid #eee;
+  background: var(--surface-bg);
+  border-bottom: 1px solid var(--border-color);
   position: relative;
 }
 
 /* CONTAINER CENTRAL */
 .header-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 12px 24px;
-
+  width: 100%;
+  padding: 12px 5%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 40px;
-
   position: relative;
 }
 
@@ -134,14 +110,14 @@ function handleSearch() {
 }
 
 .sell-button {
-  background: black;
-  color: white;
+  background: var(--accent);
+  color: var(--surface-bg);
   border: none;
   padding: 10px 18px;
   border-radius: 20px;
   font-size: 14px;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
 }
 
 /* ANIMAÇÃO */
@@ -176,7 +152,7 @@ function handleSearch() {
 }
 
 .nav-button:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: rgba(15, 23, 42, 0.06);
 }
 
 .nav-text {
@@ -192,10 +168,10 @@ function handleSearch() {
   display: flex;
   align-items: center;
 
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border-color);
   border-radius: 24px;
   padding: 8px 16px;
-  background: #f5f5f5;
+  background: var(--surface-elevated);
 }
 
 .search-input {
@@ -234,13 +210,13 @@ function handleSearch() {
 }
 
 .headerdesktop-button:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: rgba(15, 23, 42, 0.06);
 }
 
 /* ÍCONES */
 .material-symbols-outlined {
   font-size: 24px;
-  color: black;
+  color: var(--text-color);
 }
 
 @media (max-width: 767px) {
