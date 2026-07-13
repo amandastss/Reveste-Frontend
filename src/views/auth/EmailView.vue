@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import authApi from '../../api/authApi'
 
 import { faEnvelope } from '@fortawesome/free-regular-svg-icons'
+import reveste from '@/assets/reveste.png'
 
 const email = ref('')
 const router = useRouter()
@@ -29,7 +30,8 @@ async function next() {
   } catch (err) {
     console.error('Erro ao verificar email:', err)
     const existingUser = JSON.parse(localStorage.getItem('user') || '{}')
-    const emailKnown = existingUser.email && existingUser.email.toLowerCase() === email.value.toLowerCase()
+    const emailKnown =
+      existingUser.email && existingUser.email.toLowerCase() === email.value.toLowerCase()
     localStorage.setItem('isLogin', emailKnown ? 'true' : 'false')
     router.push(emailKnown ? '/auth/password' : '/auth/register')
   }
@@ -37,32 +39,41 @@ async function next() {
 </script>
 <template>
   <div class="screen">
-    <div>
-      <div class="back" @click="goHome">←</div>
-
-      <h1 class="title">
-        Insira seu email para<br />
-        entrar ou se cadastrar:
-      </h1>
-
-      <div class="input">
-        <span class="icon">
-          <font-awesome-icon :icon="faEnvelope" />
-        </span>
-
-        <input v-model="email" type="email" placeholder="seu e-mail" />
+    <div class="desktop-layout">
+      <div class="branding">
+        <img :src="reveste" class="reveste" />
+        <p>Seu brechó digital</p>
       </div>
 
-      <button class="button" :class="{ active: isValid }" :disabled="!isValid" @click="next">
-        CONTINUE
-      </button>
+      <div class="form-wrapper">
+        <div class="form-content">
+          <div class="back" @click="goHome">←</div>
+
+          <h1 class="title">
+            Insira seu email para<br />
+            entrar ou se cadastrar:
+          </h1>
+
+          <div class="input">
+            <span class="icon">
+              <font-awesome-icon :icon="faEnvelope" />
+            </span>
+
+            <input v-model="email" type="email" placeholder="seu e-mail" />
+          </div>
+
+          <button class="button" :class="{ active: isValid }" :disabled="!isValid" @click="next">
+            CONTINUE
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 <style scoped>
 .screen {
   height: 100vh;
-  background: var(--surface-elevated);
+  background: white;
   max-width: 390px;
   margin: 0 auto;
   padding: 24px 20px;
@@ -172,16 +183,37 @@ async function next() {
   background: #000;
 }
 
+.reveste {
+  width: 100%;
+  max-width: 120px;
+  height: auto;
+  display: block;
+  margin: 0 0 0;
+}
+
+.branding {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* DESKTOP LOGO */
+@media (min-width: 1024px) {
+  .reveste {
+    max-width: 600px;
+    margin-bottom: 24px;
+  }
+}
+
 /* TABLET E DESKTOP */
 @media (min-width: 768px) {
   .screen {
     max-width: 100%;
     margin: 0;
     padding: 40px 24px;
-  }
-  .screen > div {
-    max-width: 420px;
-    margin: 0 auto;
   }
 }
 
@@ -194,9 +226,56 @@ async function next() {
   .screen {
     padding: 60px 20px;
   }
+}
 
-  .screen > div {
-    max-width: 420px;
+/* DESKTOP */
+@media (min-width: 1024px) {
+  .screen {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+  }
+
+  .desktop-layout {
+    display: flex;
+    height: 100%;
+  }
+
+  /* lado esquerdo (branding) */
+  .branding {
+    flex: 1;
+    background: #ffffff;
+    color: rgb(0, 0, 0);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .branding p {
+    font-size: 28px;
+    opacity: 0.9;
+  }
+
+  /* lado direito (form) */
+  .form-wrapper {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #000000;
+  }
+
+  /* card */
+  .form-wrapper > div {
+    width: 100%;
+    max-width: 400px;
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   }
 }
 </style>
