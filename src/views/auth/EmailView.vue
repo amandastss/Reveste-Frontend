@@ -47,7 +47,18 @@ async function next() {
 
       <div class="form-wrapper">
         <div class="form-content">
-          <div class="back" @click="goHome">←</div>
+          <button class="back" @click="goHome">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
 
           <h1 class="title">
             Insira seu email para<br />
@@ -83,10 +94,17 @@ async function next() {
   font-family: 'Montserrat', sans-serif;
 }
 .back {
-  font-size: 20px;
-  color: var(--text-color);
-  margin-bottom: 24px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .title {
   font-size: 26px;
@@ -187,16 +205,13 @@ async function next() {
   width: 100%;
   max-width: 120px;
   height: auto;
-  display: block;
-  margin: 0 0 0;
 }
 
 .branding {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
+  gap: 10px;
   margin-bottom: 20px;
 }
 
