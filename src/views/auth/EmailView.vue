@@ -41,8 +41,8 @@ async function next() {
       <div class="back" @click="goHome">←</div>
 
       <h1 class="title">
-        Insira o seu email para<br />
-        entrar ou se cadastrar
+        Insira seu email para<br />
+        entrar ou se cadastrar:
       </h1>
 
       <div class="input">
@@ -54,7 +54,7 @@ async function next() {
       </div>
 
       <button class="button" :class="{ active: isValid }" :disabled="!isValid" @click="next">
-        CONTINUE...
+        CONTINUE
       </button>
     </div>
   </div>
@@ -69,7 +69,7 @@ async function next() {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
 }
 .back {
   font-size: 20px;
@@ -170,5 +170,33 @@ async function next() {
 }
 .apple {
   background: #000;
+}
+
+/* TABLET E DESKTOP */
+@media (min-width: 768px) {
+  .screen {
+    max-width: 100%;
+    margin: 0;
+    padding: 40px 24px;
+  }
+  .screen > div {
+    max-width: 420px;
+    margin: 0 auto;
+  }
+}
+
+/* DESKTOP GRANDE */
+@media (min-width: 1024px) {
+  body {
+    background: #f5f5f5;
+  }
+
+  .screen {
+    padding: 60px 20px;
+  }
+
+  .screen > div {
+    max-width: 420px;
+  }
 }
 </style>
