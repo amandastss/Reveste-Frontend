@@ -223,6 +223,7 @@ function togglePassword() {
   font-size: 22px;
   font-weight: 600;
   margin-top: 40px;
+  margin-bottom: 2px;
 }
 
 /* EMAIL */
@@ -230,6 +231,7 @@ function togglePassword() {
   font-size: 13px;
   color: #777;
   margin-bottom: 10px;
+  margin-top: 0;
 }
 
 /* INPUT */
