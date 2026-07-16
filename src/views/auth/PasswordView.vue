@@ -35,7 +35,7 @@ async function login() {
         localStorage.setItem('token', res.data.access)
       } catch {}
     }
-    const userData =  await authApi.fetchUserProfile()
+    const userData = await authApi.fetchUserProfile()
     const existingUser = JSON.parse(localStorage.getItem('user') || '{}')
     // const currentEmail = email.value?.toLowerCase() || ''
     // const storedEmail = existingUser.email?.toLowerCase() || ''
@@ -58,18 +58,27 @@ async function login() {
     localStorage.setItem('user', JSON.stringify(userData))
     localStorage.setItem('email', email.value)
 
-
     try {
       const token = res.data?.token || localStorage.getItem('token')
-      const candidateId = res.data?.user_id || res.data?.user?.id || mergedUser.user_id || mergedUser.id
+      const candidateId =
+        res.data?.user_id || res.data?.user?.id || mergedUser.user_id || mergedUser.id
       if (token) {
         const serverUser = await authApi.fetchUserFromCandidates(token, candidateId)
         if (serverUser) {
           const enriched = {
             ...mergedUser,
             ...serverUser,
-            photo: mergedUser.photo || serverUser.profile_image || serverUser.photo || serverUser.avatar || serverUser.image,
-            date_of_birth: mergedUser.date_of_birth || serverUser.birth_date || serverUser.date_of_birth || serverUser.birthdate,
+            photo:
+              mergedUser.photo ||
+              serverUser.profile_image ||
+              serverUser.photo ||
+              serverUser.avatar ||
+              serverUser.image,
+            date_of_birth:
+              mergedUser.date_of_birth ||
+              serverUser.birth_date ||
+              serverUser.date_of_birth ||
+              serverUser.birthdate,
           }
           localStorage.setItem('user', JSON.stringify(enriched))
         }
@@ -79,7 +88,6 @@ async function login() {
     }
 
     router.push('/')
-
   } catch (err) {
     alert('Erro ao autenticar: ' + (err.response?.data?.message || 'Tente novamente'))
   }
@@ -91,126 +99,211 @@ function togglePassword() {
 </script>
 
 <template>
-  <div class="screen">
-
-    <div>
+  <div class="auth-wrapper">
+    <div class="auth-card">
       <!-- VOLTAR -->
-      <div class="back" @click="router.back()">←</div>
+      <button class="back" @click="router.back()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
 
-      <!-- TÍTULO -->
-      <h1 class="title">{{ isLogin ? 'Insira a sua senha!' : 'Crie uma senha!' }}</h1>
+      <h1>
+        {{ isLogin ? 'Entrar' : 'Criar senha' }}
+      </h1>
+
       <p class="email">{{ email }}</p>
 
-      <!-- INPUT -->
-      <div class="input">
-        <span class="icon">.</span>
-
-        <input
-          :type="showPassword ? 'text' : 'password'"
-          v-model="password"
-          placeholder="Senha"
-        />
+      <!-- INPUT SENHA -->
+      <div class="input-group">
+        <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="Senha" />
 
         <span class="eye" @click="togglePassword">
-          {{ showPassword ? '.' : '.' }}
+          <!-- olho aberto -->
+          <svg
+            v-if="!showPassword"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+
+          <!-- olho fechado -->
+          <svg
+            v-else
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.77 21.77 0 0 1 5.06-6.94"
+            />
+            <path d="M1 1l22 22" />
+          </svg>
         </span>
       </div>
 
       <!-- BOTÃO -->
-      <button
-        class="button"
-        :class="{ active: password.length > 0 }"
-        :disabled="!password"
-        @click="login"
-      >
-        {{ isLogin ? 'ENTRAR' : 'REGISTRAR' }}
+      <button class="main-button" :disabled="!password" @click="login">
+        {{ isLogin ? 'Entrar' : 'Registrar' }}
       </button>
 
       <!-- ESQUECI -->
-      <p v-if="isLogin" class="forgot" @click="router.push('/auth/forgot')">
-        ESQUECEU DA SUA SENHA?
-      </p>
+      <p v-if="isLogin" class="forgot" @click="router.push('/auth/forgot')">Esqueceu sua senha?</p>
     </div>
-
   </div>
 </template>
 
 <style scoped>
-.screen {
-  height: 100vh;
-  background: var(--surface-elevated);
-  max-width: 390px;
-  margin: 0 auto;
-  padding: 24px 20px;
-  font-family: 'Inter', sans-serif;
+.auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+
+  background: linear-gradient(135deg, #f5f7fb, #e8ecf5);
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* CARD */
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  padding: 28px;
+  border-radius: 20px;
+
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.08),
+    0 2px 10px rgba(0, 0, 0, 0.04);
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
 }
 
 /* VOLTAR */
 .back {
-  font-size: 20px;
-  margin-bottom: 24px;
+  position: absolute;
+  top: 16px;
+  left: 16px;
+
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: #f3f3f3;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   cursor: pointer;
 }
 
-/* TEXTO */
-.title {
-  font-size: 26px;
-  margin-bottom: 8px;
+.back {
+  background: #f5f5f5;
+  transition: 0.2s;
 }
 
+.back:hover {
+  background: #eaeaea;
+}
+
+/* TITLE */
+.auth-card h1 {
+  font-size: 22px;
+  font-weight: 600;
+  margin-top: 40px;
+}
+
+/* EMAIL */
 .email {
-  font-size: 14px;
-  color: var(--text-muted);
-  margin-bottom: 30px;
+  font-size: 13px;
+  color: #777;
+  margin-bottom: 10px;
 }
 
 /* INPUT */
-.input {
+.input-group {
   display: flex;
   align-items: center;
-  border-bottom: 1px solid #ccc;
-  padding-bottom: 10px;
-  gap: 10px;
-  margin-bottom: 30px;
+  position: relative;
 }
 
-.icon {
-  color: var(--text-muted);
+.input-group input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  font-size: 14px;
+  transition: 0.2s;
 }
 
-.input input {
-  flex: 1;
-  border: none;
+.input-group input:focus {
   outline: none;
-  background: transparent;
+  border-color: #000;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
 }
 
+/* OLHO */
 .eye {
+  position: absolute;
+  right: 12px;
   cursor: pointer;
+  font-size: 14px;
+}
+
+.eye svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* BOTÃO */
-.button {
-  width: 100%;
-  height: 50px;
-  border-radius: 30px;
+.main-button {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 12px;
   border: none;
-  background: #eaeaea;
-  color: var(--text-muted);
-  font-weight: bold;
+  background: #000;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s;
 }
 
-.button.active {
-  background: black;
-  color: white;
+/* HOVER */
+.main-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+}
+
+/* DISABLED */
+.main-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* CLICK */
+.main-button:active {
+  transform: scale(0.98);
 }
 
 /* ESQUECI */
 .forgot {
   text-align: center;
-  margin-top: 20px;
-  font-size: 12px;
-  letter-spacing: 1px;
+  font-size: 13px;
+  color: #666;
+  margin-top: 10px;
   cursor: pointer;
 }
 </style>
