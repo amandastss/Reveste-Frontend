@@ -1,28 +1,88 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 const router = useRouter()
 
 const imagem = ref<string | null>(null)
 
-const produtos = ref([
-  {
-    id: 1,
-    nome: 'Calça Jeans Skinny',
-    preco: 76.44,
-    imagem: '/src/assets/roupas/calcajeansskinny.png'
-  },
-  {
-    id: 2,
-    nome: 'Blusa Laranja Básica',
-    preco: 50,
-    imagem: '/src/assets/roupas/blusalaranjabasica.png'
-  }
-])
+interface Produto {
+  id: number
+  nome: string
+  preco: number
+  imagem_url?: string
+  imagem?: string
+}
 
-onMounted(() => {
+const produtos = ref<Produto[]>([])
+const API_BASE = import.meta.env.VITE_API_URL
+
+
+async function buscarProdutos() {
+
+  if (!imagem.value) return
+
+
+  try {
+
+    const blob = await fetch(imagem.value)
+      .then(res => res.blob())
+
+
+    const arquivo = new File(
+      [blob],
+      "imagem-pesquisa.webp",
+      {
+        type: blob.type
+      }
+    )
+
+
+    const formData = new FormData()
+
+    formData.append(
+      "imagem",
+      arquivo
+    )
+
+
+    const response = await axios.post(
+      `${API_BASE}/api/pesquisa-imagem/`,
+      formData,
+      {
+        headers:{
+          "Content-Type":"multipart/form-data"
+        }
+      }
+    )
+
+
+    console.log(
+      "Produtos recebidos:",
+      response.data
+    )
+
+
+    produtos.value = response.data
+
+
+  } catch(error){
+
+    console.error(
+      "Erro na busca por imagem:",
+      error
+    )
+
+  }
+
+}
+onMounted(async () => {
+
   imagem.value = sessionStorage.getItem('camera-image')
+
+  await buscarProdutos()
+
 })
 
 function voltar() {
