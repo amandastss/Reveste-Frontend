@@ -15,6 +15,7 @@ body {
   display: flex;
   flex-direction: column;
   padding: 24px 24px 230px;
+  font-family: "Montserrat", sans-serif;
 }
 
 /* =========================================
@@ -145,6 +146,26 @@ body {
 .quantity-controls span {
   font-size: 16px;
   font-weight: 600;
+}
+
+.empty-cart {
+  text-align: center;
+  margin-top: 60px;
+  color: #777;
+}
+
+.empty-cart p {
+  font-size: 18px;
+  margin-bottom: 16px;
+}
+
+.back-shopping {
+  background: #3b773b;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
 }
 
 /* =========================================

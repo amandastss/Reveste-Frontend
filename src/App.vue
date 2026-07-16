@@ -1,13 +1,21 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRoute } from 'vue-router'
 
 import HeaderMobile from './components/HeaderMobileComponent.vue'
 import HeaderDesktop from './components/HeaderDesktopComponent.vue'
 import FooterMobile from './components/FooterMobileComponent.vue'
 import MenuComponent from './components/MenuComponent.vue'
 
+const route = useRoute()
+
 /* controla abrir e fechar o menu lateral */
 const isMenuOpen = ref(false)
+
+/* verifica se deve esconder o footer */
+const shouldHideFooter = () => {
+  return route.path.startsWith('/auth/')
+}
 
 function openMenu() {
   isMenuOpen.value = true
@@ -33,11 +41,11 @@ function closeMenu() {
       <router-view />
     </main>
 
-    <FooterMobile />
+    <FooterMobile v-if="!shouldHideFooter()" />
   </div>
 </template>
 
-<style scoped>
+<style>
 /* esconder header mobile no desktop */
 @media (min-width: 768px) {
   :deep(.header-mobile) {

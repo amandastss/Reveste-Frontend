@@ -8,30 +8,53 @@ import axios from 'axios'
 
 const router = useRouter()
 const route = useRoute()
+const API_BASE = import.meta.env.VITE_API_URL ?? ''
+
+interface Categoria {
+  id: number
+  nome?: string
+  name?: string
+  title?: string
+  imagem_url?: string | null
+}
 
 interface Produto {
   id: number
   nome: string
+  name?: string
   preco: number
-  marca: string
-  categoria: string
-  genero: string
-  imagem: string
+  marca?: string
+  imagem_url?: string | null
+  imagem?: string
+  categoria?: string | number | { id?: number; nome?: string; name?: string; title?: string }
+  category?: string | number | { id?: number; nome?: string; name?: string; title?: string }
+  categoria_id?: number | string
+  category_id?: number | string
   categoria_nome?: string
   categoriaNome?: string
   categoria_name?: string
+  genero?: string
   tipo?: string
 }
 
 const search = ref('')
-const categoria = ref('')
-const categoriaFiltro = ref('')
+const categorias = ref<Categoria[]>([])
+const categoriaSelecionada = ref<Categoria | null>(null)
+const showCategorias = ref(false)
 const produtos = ref<Produto[]>([])
 const recentes = ref<string[]>([])
 
 const RECENTES_KEY = 'recent_searches_v1'
 const LEGACY_KEYS = ['recent_searches', 'recentSearches', 'recent_searches_v1']
 const DEFAULT_RECENTES = ['Calças', 'Blusas', 'Sapatos', 'Jaqueta']
+
+const fallbackCategorias: Categoria[] = [
+  { id: 1, nome: 'Casual', imagem_url: 'https://placehold.co/80x80?text=Casual' },
+  { id: 2, nome: 'Streetwear', imagem_url: 'https://placehold.co/80x80?text=Street' },
+  { id: 3, nome: 'Formal', imagem_url: 'https://placehold.co/80x80?text=Formal' },
+  { id: 4, nome: 'Vintage', imagem_url: 'https://placehold.co/80x80?text=Vintage' },
+  { id: 5, nome: 'Praia', imagem_url: 'https://placehold.co/80x80?text=Praia' },
+]
 
 const parseRecentes = (raw: string | null): string[] | null => {
   if (!raw) return null
@@ -70,7 +93,7 @@ const salvarRecentesNoStorage = () => {
   }
 }
 
-const mock: Produto[] = [
+const mockProdutos: Produto[] = [
   {
     id: 1,
     nome: 'Blusa Laranja Básica',
@@ -100,26 +123,116 @@ const mock: Produto[] = [
   },
 ]
 
-const fetchProdutos = async (q?: string) => {
+const normalizeText = (texto: string) =>
+  texto
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+
+const formatMediaUrl = (url?: string | null) => {
+  if (!url) return 'https://placehold.co/100x100?text=Foto'
+  return url.startsWith('http') ? url : `${API_BASE}${url}`
+}
+
+const getCategoriaNome = (item: Categoria | null) => {
+  if (!item) return ''
+  return item.nome || item.name || item.title || ''
+}
+
+const getResponseList = <T>(data: unknown): T[] => {
+  if (!data || typeof data !== 'object') {
+    return []
+  }
+
+  const response = data as { results?: unknown }
+  if (Array.isArray(response.results)) {
+    return response.results as T[]
+  }
+
+  if (Array.isArray(data)) {
+    return data as T[]
+  }
+
+  return []
+}
+
+const produtoPertenceCategoria = (produto: Produto, categoriaSelecionada: Categoria | null) => {
+  if (!categoriaSelecionada) return false
+
+  const idCategoria = Number(categoriaSelecionada.id)
+  const candidatos = [
+    produto.categoria_id,
+    produto.category_id,
+    typeof produto.categoria === 'object' && produto.categoria ? produto.categoria.id : produto.categoria,
+    typeof produto.category === 'object' && produto.category ? produto.category.id : produto.category,
+    produto.categoria_nome,
+    produto.categoriaNome,
+    produto.categoria_name,
+    typeof produto.categoria === 'string' ? produto.categoria : undefined,
+    typeof produto.category === 'string' ? produto.category : undefined,
+  ]
+
+  if (candidatos.some((valor) => Number(valor) === idCategoria && Number.isFinite(Number(valor)))) {
+    return true
+  }
+
+  const nomeCategoria = normalizeText(getCategoriaNome(categoriaSelecionada))
+  const nomeProduto = normalizeText(
+    [
+      typeof produto.categoria === 'string' ? produto.categoria : '',
+      typeof produto.category === 'string' ? produto.category : '',
+      produto.categoria_nome || '',
+      produto.categoriaNome || '',
+      produto.categoria_name || '',
+      produto.nome || produto.name || '',
+    ].join(' '),
+  )
+
+  return nomeCategoria ? nomeProduto.includes(nomeCategoria) : false
+}
+
+const carregarCategorias = async () => {
+  try {
+    const res = await axios.get(`${API_BASE}/api/categorias/`)
+    categorias.value = getResponseList<Categoria>(res.data)
+  } catch (error) {
+    console.warn('Erro ao carregar categorias:', error)
+    categorias.value = []
+  }
+
+  if (!categorias.value.length) {
+    categorias.value = fallbackCategorias
+  }
+}
+
+const carregarProdutos = async (q?: string) => {
   try {
     const params = q ? { search: q } : {}
-
-    const res = await axios.get('/api/produtos/', {
-      params,
-    })
-
-    produtos.value = Array.isArray(res.data) ? res.data : res.data.results || []
-
-    console.log('Produtos carregados:', produtos.value)
+    const res = await axios.get(`${API_BASE}/api/produtos/`, { params })
+    produtos.value = getResponseList(res.data)
   } catch (error) {
     console.warn('API indisponível. Usando mock.', error)
-    produtos.value = mock
+    produtos.value = mockProdutos
   }
+}
+
+function onImgError(e: Event) {
+  const img = e.target as HTMLImageElement | null
+  if (img) img.src = 'https://placehold.co/300x300?text=Foto'
 }
 
 const aplicarCategoriaDaRota = () => {
   const valorCategoria = typeof route.query.categoria === 'string' ? route.query.categoria : ''
-  categoriaFiltro.value = valorCategoria
+  if (!valorCategoria || !categorias.value.length) {
+    return
+  }
+
+  const categoriaId = Number(valorCategoria)
+  categoriaSelecionada.value =
+    categorias.value.find((item) => Number(item.id) === categoriaId) ||
+    categorias.value.find((item) => normalizeText(getCategoriaNome(item)) === normalizeText(valorCategoria)) ||
+    null
 }
 
 watch(
@@ -130,41 +243,33 @@ watch(
   { immediate: true },
 )
 
-onMounted(() => {
-  carregarRecentes()
-  fetchProdutos()
-  aplicarCategoriaDaRota()
-})
-
-function onImgError(e: Event) {
-  const img = e.target as HTMLImageElement | null
-  if (img) img.src = 'https://placehold.co/300x300?text=Produto'
-}
-
-function normalizar(texto: string) {
-  return texto
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-}
-
 const filtrados = computed(() => {
-  const busca = normalizar(search.value)
-  const filtroCategoria = normalizar(categoriaFiltro.value)
+  const busca = normalizeText(search.value)
+  const categoriaAtiva = categoriaSelecionada.value
 
   return produtos.value.filter((p) => {
-    const texto = normalizar(
-      `${p.nome} ${p.marca} ${p.categoria || ''} ${p.genero || ''} ${p.categoria_nome || ''} ${p.categoriaNome || ''} ${p.categoria_name || ''} ${p.tipo || ''}`,
+    const texto = normalizeText(
+      [
+        p.nome || p.name || '',
+        p.marca || '',
+        typeof p.categoria === 'string' ? p.categoria : '',
+        typeof p.category === 'string' ? p.category : '',
+        p.categoria_nome || '',
+        p.categoriaNome || '',
+        p.categoria_name || '',
+        p.genero || '',
+        p.tipo || '',
+      ].join(' '),
     )
 
     const matchBusca = !busca || texto.includes(busca)
-    const matchCategoria = !filtroCategoria || texto.includes(filtroCategoria)
-    const matchGenero = !categoria.value || p.genero === categoria.value
+    const matchCategoria = !categoriaAtiva || produtoPertenceCategoria(p, categoriaAtiva)
 
-    return matchBusca && matchCategoria && matchGenero
+    return matchBusca && matchCategoria
   })
 })
+
+const showHistorico = computed(() => !search.value.trim() && !categoriaSelecionada.value)
 
 // salvar no histórico
 function salvarRecente(valor: string) {
@@ -182,9 +287,10 @@ function salvarRecente(valor: string) {
 
 // quando digita e dá enter
 function pesquisar() {
-  if (!search.value) return
+  if (!search.value.trim()) return
+
   salvarRecente(search.value)
-  fetchProdutos(search.value)
+  carregarProdutos(search.value)
 }
 
 // clicar recente
@@ -199,17 +305,30 @@ function removerRecente(index: number) {
   salvarRecentesNoStorage()
 }
 
-// voltar
+function selecionarCategoria(item: Categoria) {
+  if (categoriaSelecionada.value?.id === item.id) {
+    categoriaSelecionada.value = null
+  } else {
+    categoriaSelecionada.value = item
+  }
+}
+
+function categoriaAtiva(item: Categoria) {
+  return categoriaSelecionada.value?.id === item.id
+}
+
+function toggleCategorias() {
+  showCategorias.value = !showCategorias.value
+}
+
 function voltar() {
   router.back()
 }
 
-// abrir produto
 function abrirProduto(id: number) {
   router.push(`/produto/${id}`)
 }
 
-// abrir camera modal
 const mostrarModalCamera = ref(false)
 
 function abrirCameraModal() {
@@ -224,7 +343,6 @@ async function irParaCamera(tipo: 'camera' | 'gallery') {
   fecharModal()
 
   if (tipo === 'gallery') {
-    // abrir seletor de arquivos, ler imagem e enviar para a página de pesquisa
     return new Promise<void>((resolve) => {
       const input = document.createElement('input')
       input.type = 'file'
@@ -258,15 +376,22 @@ async function irParaCamera(tipo: 'camera' | 'gallery') {
     })
   }
 
-  // para câmera, navega normalmente
   router.push({ name: 'camera-search', query: { tipo } })
 }
+
+onMounted(async () => {
+  carregarRecentes()
+  await Promise.all([carregarCategorias(), carregarProdutos()])
+  aplicarCategoriaDaRota()
+})
 </script>
 <template>
   <div class="search-page">
     <!-- HEADER -->
     <div class="top-bar">
-      <span class="icon-btn" @click="voltar"></span>
+      <span class="material-symbols-outlined icon-btn" @click="voltar">
+        arrow_back
+      </span>
 
       <div class="search-bar">
         <div class="search-input-wrapper">
@@ -291,38 +416,46 @@ async function irParaCamera(tipo: 'camera' | 'gallery') {
         </div>
       </div>
 
-      <span class="material-symbols-outlined" @click="abrirCameraModal"> photo_camera </span>
+      <span class="material-symbols-outlined filter-button" @click="toggleCategorias">
+        filter_alt
+      </span>
+
+      <span class="material-symbols-outlined camera-button" @click="abrirCameraModal">
+        photo_camera
+      </span>
     </div>
 
-    <!-- CONTADOR TEMPORÁRIO PARA TESTE -->
-    <p style="padding: 10px; font-size: 14px">
-      Produtos: {{ produtos.length }} | Filtrados: {{ filtrados.length }}
-    </p>
+    <!-- CATEGORIAS -->
+    <div class="categories-row" v-if="showCategorias && categorias.length">
+      <button
+        type="button"
+        v-for="item in categorias"
+        :key="item.id"
+        :class="['category-chip', { active: categoriaAtiva(item) }]"
+        @click="selecionarCategoria(item)"
+      >
+        <div class="category-image">
+          <img
+            :src="formatMediaUrl(item.imagem_url)"
+            :alt="getCategoriaNome(item) || 'Categoria'"
+            @error="onImgError"
+          />
+        </div>
 
-    <!-- FILTROS -->
-    <div class="filters">
-      <button :class="{ active: categoria === 'feminino' }" @click="categoria = 'feminino'">
-        <div class="icon-circle"></div>
-        <span>Feminino</span>
-      </button>
-
-      <button :class="{ active: categoria === 'masculino' }" @click="categoria = 'masculino'">
-        <div class="icon-circle"></div>
-        <span>Masculino</span>
-      </button>
-
-      <button :class="{ active: categoria === 'infantil' }" @click="categoria = 'infantil'">
-        <div class="icon-circle"></div>
-        <span>Infantil</span>
+        <span>{{ getCategoriaNome(item) || "Categoria" }}</span>
       </button>
     </div>
 
     <!-- RECENTES -->
-    <div v-if="!search.trim()" class="recentes">
+    <div v-if="showHistorico" class="recentes">
       <p class="recentes-title">Pesquisas recentes</p>
 
       <div class="recentes-list">
-        <div class="recente-item" v-for="(item, index) in recentes" :key="index">
+        <div
+          class="recente-item"
+          v-for="(item, index) in recentes"
+          :key="index"
+        >
           <span @click="usarRecente(item)">
             {{ item }}
           </span>
@@ -334,29 +467,54 @@ async function irParaCamera(tipo: 'camera' | 'gallery') {
 
     <!-- RESULTADOS -->
     <div class="results" v-if="filtrados.length">
-      <div class="card" v-for="item in filtrados" :key="item.id" @click="abrirProduto(item.id)">
-        <img :src="item.imagem" :alt="item.nome" @error="onImgError" />
+      <div
+        class="card"
+        v-for="item in filtrados"
+        :key="item.id"
+        @click="abrirProduto(item.id)"
+      >
+        <img
+          :src="item.imagem_url || item.imagem"
+          :alt="item.nome"
+          @error="onImgError"
+        />
 
         <div class="info">
           <h3>{{ item.nome }}</h3>
           <p class="marca">{{ item.marca }}</p>
-          <p class="preco">R$ {{ Number(item.preco).toFixed(2) }}</p>
+          <p class="preco">
+            R$ {{ Number(item.preco).toFixed(2) }}
+          </p>
         </div>
       </div>
     </div>
 
     <!-- EMPTY -->
-    <div v-if="search.trim() && !filtrados.length" class="empty">
+    <div v-if="!filtrados.length" class="empty">
       <p>Nenhum resultado encontrado</p>
     </div>
 
+    <!-- OVERLAY -->
+    <div
+      v-if="mostrarModalCamera"
+      class="camera-overlay"
+      @click="fecharModal"
+    ></div>
+
+    <!-- MODAL -->
     <div v-if="mostrarModalCamera" class="camera-sheet">
-      <button @click="irParaCamera('camera')">Tirar foto</button>
-      <button @click="irParaCamera('gallery')">Importar da galeria</button>
-      <button class="cancel" @click="fecharModal">Cancelar</button>
+      <button @click="irParaCamera('camera')">
+        Tirar foto
+      </button>
+
+      <button @click="irParaCamera('gallery')">
+        Importar da galeria
+      </button>
+
+      <button class="cancel" @click="fecharModal">
+        Cancelar
+      </button>
     </div>
   </div>
-  <div v-if="mostrarModalCamera" class="camera-overlay" @click="fecharModal"></div>
-  <div v-if="mostrarModalCamera" class="camera-sheet"></div>
 </template>
 <style scoped src="../css/search.css"></style>
