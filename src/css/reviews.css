@@ -7,7 +7,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  font-family: Arial, sans-serif;
+  font-family: 'Montserrat', sans-serif;
   color: var(--text-color);
   box-sizing: border-box;
 }
