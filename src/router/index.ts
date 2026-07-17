@@ -24,6 +24,7 @@ import AppearanceView from '../views/AppearanceView.vue'
 import NotificationsView from '../views/NotificationsView.vue'
 import CategoriaView from '../views/CategoriaView.vue'
 import EditProfileView from '../views/EditProfileView.vue'
+import CategoriaSuporteView from '../views/CategoriaSuporteView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -136,10 +137,10 @@ const router = createRouter({
     },
 
     {
-      path: '/suporte/categoria',
-      name: 'categoria-suporte',
-      component: () => import('@/views/CategoriaSuporteView.vue'),
+      path: '/suporte/categoria/:tipo',
+      component: CategoriaSuporteView
     },
+
     {
       path: '/suporte',
       name: 'suporte',
