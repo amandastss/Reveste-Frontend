@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import reviewsApi from '@/stores/reviewsApi'
 
 const router = useRouter()
+const route = useRoute()
 const getPreview = (file: File) => {
   return URL.createObjectURL(file)
 }
@@ -24,7 +25,8 @@ const selectedReview = ref<Review | null>(null)
 
 // LISTA
 const reviewsList = ref<Review[]>([])
-const produtoId = 1
+const produtoId = Number(route.params.id)
+console.log('Produto ID:', produtoId)
 
 interface ApiImage {
   image: string
@@ -41,6 +43,11 @@ interface ApiReview {
 }
 
 async function fetchReviews() {
+  if (!produtoId) {
+    console.error('Produto ID inválido')
+    return
+  }
+
   try {
     const res = await reviewsApi.getReviews(produtoId)
 
@@ -54,7 +61,7 @@ async function fetchReviews() {
       images: r.images?.map((img) => img.image),
     }))
   } catch (err) {
-    console.error(err)
+    console.error('Erro ao buscar reviews:', err)
   }
 }
 
