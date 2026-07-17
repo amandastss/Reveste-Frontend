@@ -364,6 +364,7 @@ async function irParaCamera(tipo: 'camera' | 'gallery') {
             document.body.removeChild(input)
             router.push('/pesquisa-camera')
             resolve()
+            console.log("IMAGEM SALVA:", data.substring(0, 50))
           }
           reader.readAsDataURL(file)
         } else {
@@ -384,6 +385,7 @@ onMounted(async () => {
   await Promise.all([carregarCategorias(), carregarProdutos()])
   aplicarCategoriaDaRota()
 })
+
 </script>
 <template>
   <div class="search-page">
