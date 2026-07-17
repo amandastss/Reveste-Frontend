@@ -1,139 +1,164 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import reviewsApi from '@/stores/reviewsApi'
 
-const router = useRouter();
-
-interface Review {
-  id: number;
-  userName: string;
-  userAvatar: string;
-  stars: number;
-  date: string;
-  text: string;
-  images?: string[];
+const router = useRouter()
+const getPreview = (file: File) => {
+  return URL.createObjectURL(file)
 }
 
-// Estados de Navegação
-const isAddingReview = ref<boolean>(false);
-const selectedReview = ref<Review | null>(null); // Guarda a avaliação que o usuário clicou
+interface Review {
+  id: number
+  userName: string
+  userAvatar: string
+  stars: number
+  date: string
+  text: string
+  images?: string[]
+}
 
-const reviewsList = ref<Review[]>([
-  {
-    id: 1,
-    userName: 'Miracle Baptista',
-    userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80',
-    stars: 4,
-    date: 'Nov 10th, 2021',
-    text: 'Gostei.',
-    images: [
-      'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=150&q=80',
-      'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=150&q=80',
-      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=150&q=80'
-    ]
-  },
-  {
-    id: 2,
-    userName: 'Talan Aminoff',
-    userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80',
-    stars: 4,
-    date: 'Nov 10th, 2021',
-    text: 'Peguem tamanho maior pq encolheu na máquina!!!!!',
-    images: ['https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=150&q=80']
+// NAV
+const isAddingReview = ref(false)
+const selectedReview = ref<Review | null>(null)
+
+// LISTA
+const reviewsList = ref<Review[]>([])
+const produtoId = 1
+
+interface ApiImage {
+  image: string
+}
+
+interface ApiReview {
+  id: number
+  userName: string
+  userAvatar: string
+  stars: number
+  text: string
+  created_at: string
+  images?: ApiImage[]
+}
+
+async function fetchReviews() {
+  try {
+    const res = await reviewsApi.getReviews(produtoId)
+
+    reviewsList.value = res.data.map((r: ApiReview) => ({
+      id: r.id,
+      userName: r.userName,
+      userAvatar: r.userAvatar,
+      stars: r.stars,
+      date: new Date(r.created_at).toLocaleDateString(),
+      text: r.text,
+      images: r.images?.map((img) => img.image),
+    }))
+  } catch (err) {
+    console.error(err)
   }
-]);
+}
 
-const totalReviews = computed(() => reviewsList.value.length);
+onMounted(fetchReviews)
 
-// --- ESTADOS DO FORMULÁRIO ---
-const newStars = ref<number>(5);
-const newText = ref<string>('');
-const uploadedImages = ref<string[]>([]);
-const fileInputRef = ref<HTMLInputElement | null>(null); // Referência para o input oculto
+const totalReviews = computed(() => reviewsList.value.length)
+
+// FORM
+const newStars = ref(5)
+const newText = ref('')
+
+const uploadedImages = ref<File[]>([])
+
+const fileInputRef = ref<HTMLInputElement | null>(null)
 
 const setRating = (rating: number) => {
-  newStars.value = rating;
-};
+  newStars.value = rating
+}
 
-// Abre uma avaliação existente para ver detalhes
 const openReview = (review: Review) => {
-  selectedReview.value = review;
-};
+  selectedReview.value = review
+}
 
-// Aciona o clique no input de arquivo escondido
 const triggerPhotoUpload = () => {
   if (uploadedImages.value.length >= 5) {
-    alert('Você pode adicionar no máximo 5 fotos.');
-    return;
+    alert('Máximo 5 fotos')
+    return
   }
-  fileInputRef.value?.click();
-};
+  fileInputRef.value?.click()
+}
 
-// Lê a foto escolhida do celular/computador e cria uma URL temporária para mostrar na tela
 const handleFileSelected = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  const files = target.files;
+  const target = event.target as HTMLInputElement
+  const files = target.files
 
-  if (!files) return;
+  if (!files) return
 
   for (let i = 0; i < files.length; i++) {
-    if (uploadedImages.value.length >= 5) break; 
-    const file = files[i];
+    if (uploadedImages.value.length >= 5) break
 
-    // CORREÇÃO: Verifica se o arquivo realmente existe para acalmar o TypeScript
+    const file = files[i]
     if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      uploadedImages.value.push(imageUrl);
+      uploadedImages.value.push(file)
     }
   }
 
-  target.value = '';
-};
+  target.value = ''
+}
 
 const handleBackAction = () => {
   if (selectedReview.value) {
-    selectedReview.value = null;
+    selectedReview.value = null
   } else if (isAddingReview.value) {
-    isAddingReview.value = false;
+    isAddingReview.value = false
   } else {
-    router.back();
+    router.back()
   }
-};
+}
 
-const submitReview = () => {
+//  SUBMIT
+async function submitReview() {
   if (!newText.value.trim()) {
-    alert('Por favor, escreva seu comentário.');
-    return;
+    alert('Escreva algo')
+    return
   }
 
-  reviewsList.value.unshift({
-    id: Date.now(),
-    userName: 'Você',
-    userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80',
-    stars: newStars.value,
-    date: 'Agora',
-    text: newText.value,
-    images: uploadedImages.value.length > 0 ? [...uploadedImages.value] : undefined
-  });
+  try {
+    const formData = new FormData()
+    formData.append('stars', String(newStars.value))
+    formData.append('text', newText.value)
 
-  newText.value = '';
-  newStars.value = 5;
-  uploadedImages.value = [];
-  isAddingReview.value = false;
-};
+    uploadedImages.value.forEach((file) => {
+      formData.append('images', file)
+    })
+
+    await reviewsApi.createReview(produtoId, formData)
+
+    await fetchReviews()
+
+    newText.value = ''
+    newStars.value = 5
+    uploadedImages.value = []
+    isAddingReview.value = false
+  } catch (err) {
+    console.error(err)
+    alert('Erro ao enviar avaliação')
+  }
+}
 </script>
 
 <template>
   <div class="reviews-page-container">
-
+    
+    <!-- DETALHE -->
     <template v-if="selectedReview">
       <header class="reviews-header">
         <button class="btn-back" @click="handleBackAction">←</button>
         <h1>DETALHES DA AVALIAÇÃO</h1>
-        <div style="width: 40px;"></div> </header>
+        <div style="width: 40px"></div>
+      </header>
 
       <main class="reviews-content">
         <div class="form-container-desktop single-review-container">
+          
           <div class="review-user-row">
             <img :src="selectedReview.userAvatar" class="user-avatar" />
             <div class="user-meta">
@@ -142,19 +167,32 @@ const submitReview = () => {
             </div>
           </div>
 
-          <div class="stars-display" style="margin-top: 12px;">
-            <span v-for="n in 5" :key="n">{{ n <= selectedReview.stars ? '★' : '☆' }}</span>
+          <div class="stars-display" style="margin-top: 12px">
+            <span v-for="n in 5" :key="n">
+              {{ n <= selectedReview.stars ? '★' : '☆' }}
+            </span>
           </div>
 
           <p class="review-text">{{ selectedReview.text }}</p>
 
-          <div v-if="selectedReview.images?.length" class="single-review-images">
-            <img v-for="(img, idx) in selectedReview.images" :key="idx" :src="img" class="single-review-large-img" />
+          <!-- ✅ IMAGENS DO BACKEND -->
+          <div
+            v-if="selectedReview.images && selectedReview.images.length"
+            class="single-review-images"
+          >
+            <img
+              v-for="(img, idx) in selectedReview.images"
+              :key="idx"
+              :src="img"
+              class="single-review-large-img"
+            />
           </div>
+
         </div>
       </main>
     </template>
 
+    <!-- FORM -->
     <template v-else-if="isAddingReview">
       <header class="reviews-header">
         <button class="btn-back" @click="handleBackAction">✕</button>
@@ -168,13 +206,27 @@ const submitReview = () => {
           <div class="form-group">
             <label class="form-label">Estrelas</label>
             <div class="interactive-stars">
-              <span v-for="star in 5" :key="star" class="star" :class="{ active: star <= newStars }" @click="setRating(star)">★</span>
+              <span
+                v-for="star in 5"
+                :key="star"
+                class="star"
+                :class="{ active: star <= newStars }"
+                @click="setRating(star)"
+              >
+                ★
+              </span>
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Your review <span class="required">*</span></label>
-            <textarea v-model="newText" placeholder="O que você achou sobre o produto..." class="review-textarea"></textarea>
+            <label class="form-label">
+              Your review <span class="required">*</span>
+            </label>
+            <textarea
+              v-model="newText"
+              placeholder="O que você achou sobre o produto..."
+              class="review-textarea"
+            ></textarea>
           </div>
 
           <div class="form-group">
@@ -192,26 +244,40 @@ const submitReview = () => {
             <button class="btn-attach-photo" @click="triggerPhotoUpload">
               ADICIONE SUA FOTO
             </button>
-            <span class="attach-subtext">You can add up to 5 files</span>
 
-            <div v-if="uploadedImages.length > 0" class="form-images-preview">
-              <img v-for="(preview, index) in uploadedImages" :key="index" :src="preview" class="preview-thumb" />
+            <span class="attach-subtext">
+              You can add up to 5 files
+            </span>
+
+            <!-- ✅ PREVIEW LOCAL -->
+            <div v-if="uploadedImages.length" class="form-images-preview">
+              <img
+                v-for="(file, index) in uploadedImages"
+                :key="index"
+                :src="getPreview(file)"
+                class="preview-thumb"
+              />
             </div>
-          </div>
 
+          </div>
         </div>
       </main>
     </template>
 
+    <!-- LISTA -->
     <template v-else>
       <header class="reviews-header">
         <button class="btn-back" @click="handleBackAction">←</button>
         <h1>AVALIAÇÃO</h1>
-        <button class="btn-action" @click="isAddingReview = true">ADD</button>
+        <button class="btn-action" @click="isAddingReview = true">
+          ADD
+        </button>
       </header>
 
       <main class="reviews-content">
-        <h2 class="reviews-count-title">{{ totalReviews }} reviews</h2>
+        <h2 class="reviews-count-title">
+          {{ totalReviews }} reviews
+        </h2>
 
         <div class="reviews-list">
           <div
@@ -220,7 +286,7 @@ const submitReview = () => {
             class="review-item clickable-review"
             @click="openReview(review)"
           >
-
+            
             <div class="review-user-row">
               <img :src="review.userAvatar" class="user-avatar" />
               <div class="user-meta">
@@ -230,13 +296,24 @@ const submitReview = () => {
             </div>
 
             <div class="stars-display">
-              <span v-for="n in 5" :key="n">{{ n <= review.stars ? '★' : '☆' }}</span>
+              <span v-for="n in 5" :key="n">
+                {{ n <= review.stars ? '★' : '☆' }}
+              </span>
             </div>
 
             <p class="review-text">{{ review.text }}</p>
 
-            <div v-if="review.images && review.images.length > 0" class="review-images-grid">
-              <img v-for="(img, idx) in review.images" :key="idx" :src="img" class="attached-review-img" />
+            <!-- ✅ IMAGENS DA LISTA -->
+            <div
+              v-if="review.images && review.images.length"
+              class="review-images-grid"
+            >
+              <img
+                v-for="(img, idx) in review.images"
+                :key="idx"
+                :src="img"
+                class="attached-review-img"
+              />
             </div>
 
           </div>
@@ -247,6 +324,6 @@ const submitReview = () => {
   </div>
 </template>
 
-<style scoped>
-@import '../css/reviews.css';
-</style>
+    <style scoped>
+      @import '../css/reviews.css';
+    </style>
