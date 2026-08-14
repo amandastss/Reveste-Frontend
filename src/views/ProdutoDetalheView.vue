@@ -54,7 +54,7 @@ const toggleFavorite = () => {
   if (productId) {
     localStorage.setItem(`favorite-${productId}`, String(isFavorite.value))
   }
-  
+
   // Animação de pulsação
   isAnimating.value = true
   setTimeout(() => {
@@ -180,8 +180,8 @@ onMounted(() => {
       <!-- IMAGEM COM BOTÃO DE FAVORITO -->
       <div class="image-wrapper">
         <img :src="mainImage" class="main-product-image" />
-        <button 
-          class="back-btn" 
+        <button
+          class="back-btn"
           @click="goBack"
           title="Voltar"
         >
@@ -189,8 +189,8 @@ onMounted(() => {
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
         </button>
-        <button 
-          class="favorite-btn" 
+        <button
+          class="favorite-btn"
           :class="{ 'is-favorite': isFavorite, 'is-animating': isAnimating }"
           @click="toggleFavorite"
           title="Adicionar aos favoritos"
@@ -247,8 +247,18 @@ onMounted(() => {
 
         <!-- AVALIAÇÕES -->
         <div class="reviews-card" @click="openReviews">
-          <span>Ver avaliações</span>
-          <span>→</span>
+          <div class="reviews-header">
+            <div>
+              <h2>Avaliações</h2>
+              <p class="reviews-score">4,9 · 128 avaliações</p>
+            </div>
+            <span class="reviews-arrow">→</span>
+          </div>
+
+          <div class="reviews-preview">
+            <div class="review-pill">★★★★★</div>
+            <span>Excelente qualidade e acabamento.</span>
+          </div>
         </div>
       </div>
     </main>

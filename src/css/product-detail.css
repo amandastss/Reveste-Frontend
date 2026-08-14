@@ -1,9 +1,11 @@
 .product-page-container {
-  max-width: 430px;
+  width: 100%;
+  max-width: 1280px;
   margin: 0 auto;
-  background: #fff;
+  background: var(--app-bg);
   min-height: 100vh;
   font-family: 'Montserrat', sans-serif;
+  color: var(--text-color);
 }
 
 /* HEADER */
@@ -11,7 +13,7 @@
   position: fixed;
   top: 0;
   width: 100%;
-  max-width: 430px;
+  max-width: 1280px;
   display: flex;
   justify-content: space-between;
   padding: 14px 16px;
@@ -38,30 +40,42 @@
   width: 100%;
   height: 420px;
   object-fit: cover;
+  display: block;
+  background: var(--surface-elevated);
 }
 
 /* CONTENT */
 .content {
   padding: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 24px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
 }
 
 .product-title {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 4px;
+  color: var(--text-color);
 }
 
 .product-price {
   font-size: 14px;
-  font-weight: bold;
+  font-weight: 800;
   margin-bottom: 8px;
+  color: var(--text-color);
 }
 
 .category-badge {
   font-size: 11px;
   color: #777;
-  display: block;
+  display: inline-flex;
   margin-bottom: 16px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  padding: 6px 10px;
 }
 
 /* TEXT */
@@ -109,23 +123,80 @@ p {
   left: 0;
   right: 0;
   width: 100%;
-  max-width: 430px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 16px;
-  background: white;
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 -6px 18px rgba(15, 23, 42, 0.08);
   z-index: 999;
 }
 
 .buy-btn {
-  width: 100%;
+  width: min(100%, 420px);
+  display: block;
+  margin: 0 auto;
   padding: 14px;
   border-radius: 30px;
-  background: black;
+  background: #111827;
   color: white;
   font-size: 13px;
   font-weight: 600;
   border: none;
+  box-shadow: 0 14px 28px rgba(17, 24, 39, 0.18);
+}
+
+/* REVIEWS */
+.reviews-card {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 18px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+}
+
+.reviews-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.reviews-header h2 {
+  margin-bottom: 4px;
+}
+
+.reviews-score {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.reviews-arrow {
+  font-size: 20px;
+  color: var(--text-color);
+}
+
+.reviews-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  color: var(--text-color);
+  font-size: 12px;
+}
+
+.review-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(250, 204, 21, 0.15);
+  color: #a16207;
+  font-weight: 700;
+  letter-spacing: 0.06em;
 }
 
 /* MODAL */
@@ -192,13 +263,18 @@ p {
 }
 
 .scrollable-content {
-  padding-bottom: 100px;
+  padding: 72px 16px 100px;
 }
 
 /* BOTÃO DE FAVORITOS */
 .image-wrapper {
   position: relative;
   width: 100%;
+  overflow: hidden;
+  border-radius: 24px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
 }
 
 /* BOTÃO DE VOLTAR */
@@ -307,6 +383,56 @@ p {
   }
   100% {
     transform: scale(1);
+  }
+}
+
+@media (min-width: 900px) {
+  .scrollable-content {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 32px;
+    align-items: start;
+    padding: 96px 32px 120px;
+  }
+
+  .main-product-image {
+    height: min(70vh, 760px);
+  }
+
+  .content {
+    padding: 28px;
+    margin-top: 0;
+  }
+
+  .product-title {
+    font-size: 2rem;
+    margin-bottom: 8px;
+  }
+
+  .product-price {
+    font-size: 1.6rem;
+    margin-bottom: 12px;
+  }
+
+  .category-badge {
+    margin-bottom: 20px;
+    font-size: 12px;
+  }
+
+  .info-row {
+    margin-top: 18px;
+  }
+
+  h2 {
+    font-size: 12px;
+  }
+
+  p {
+    font-size: 15px;
+  }
+
+  .reviews-card {
+    margin-top: 24px;
   }
 }
 
