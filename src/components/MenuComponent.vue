@@ -176,8 +176,8 @@ watch(
   max-width: 320px;
   height: 100vh;
 
-  background: var(--surface-elevated);
-  color: var(--text-color);
+  background: black;
+  color: white;
 
   padding: 20px;
   box-sizing: border-box;
@@ -204,7 +204,7 @@ watch(
 .close-button {
   background: transparent;
   border: none;
-  color: var(--text-color);
+  color: white;
   font-size: 24px;
   cursor: pointer;
   margin-bottom: 20px;

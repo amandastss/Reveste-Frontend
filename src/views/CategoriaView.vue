@@ -60,8 +60,12 @@ const produtoPertenceCategoria = (produto: Produto, categoriaSelecionada: Catego
   const candidatos = [
     produto.categoria_id,
     produto.category_id,
-    typeof produto.categoria === 'object' && produto.categoria ? produto.categoria.id : produto.categoria,
-    typeof produto.category === 'object' && produto.category ? produto.category.id : produto.category,
+    typeof produto.categoria === 'object' && produto.categoria
+      ? produto.categoria.id
+      : produto.categoria,
+    typeof produto.category === 'object' && produto.category
+      ? produto.category.id
+      : produto.category,
     produto.categoria_nome,
     produto.categoriaNome,
     produto.categoria_name,
@@ -83,7 +87,7 @@ const produtoPertenceCategoria = (produto: Produto, categoriaSelecionada: Catego
       produto.categoria_name || '',
       produto.nome || '',
       produto.name || '',
-    ].join(' ')
+    ].join(' '),
   )
 
   if (!nomeCategoria) return false
@@ -112,9 +116,12 @@ const carregarCategoria = async () => {
         : []
 
     const categoriaId = Number(route.params.id)
-    categoria.value = categoriasApi.find((item: Categoria) => Number(item.id) === categoriaId) || null
+    categoria.value =
+      categoriasApi.find((item: Categoria) => Number(item.id) === categoriaId) || null
 
-    produtos.value = produtosApi.filter((produto: Produto) => produtoPertenceCategoria(produto, categoria.value))
+    produtos.value = produtosApi.filter((produto: Produto) =>
+      produtoPertenceCategoria(produto, categoria.value),
+    )
   } catch (error) {
     console.error('Erro ao carregar categoria:', error)
     produtos.value = []
@@ -139,7 +146,11 @@ onMounted(() => {
 <template>
   <div class="categoria-page">
     <div class="header">
-      <button class="back" @click="voltar">←</button>
+      <button class="back" @click="voltar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
       <h2>{{ tituloCategoria || 'Categoria' }}</h2>
     </div>
 
@@ -150,8 +161,16 @@ onMounted(() => {
     </div>
 
     <div v-else class="products">
-      <div v-for="produto in produtos" :key="produto.id" class="card" @click="abrirProduto(produto.id)">
-        <img :src="formatMediaUrl(produto.imagem_url || produto.imagem)" :alt="produto.nome || produto.name" />
+      <div
+        v-for="produto in produtos"
+        :key="produto.id"
+        class="card"
+        @click="abrirProduto(produto.id)"
+      >
+        <img
+          :src="formatMediaUrl(produto.imagem_url || produto.imagem)"
+          :alt="produto.nome || produto.name"
+        />
         <div class="info">
           <h3>{{ produto.nome || produto.name }}</h3>
           <p class="price">R$ {{ Number(produto.preco).toFixed(2) }}</p>
@@ -163,79 +182,141 @@ onMounted(() => {
 
 <style scoped>
 .categoria-page {
-  padding: 16px 12px 80px;
-  background: var(--surface-bg);
+  max-width: 430px;
+  margin: 0 auto;
+  background: #fff;
+  min-height: 100vh;
+  font-family: 'Montserrat', sans-serif;
 }
 
+/* HEADER */
 .header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
+  gap: 12px;
+  padding: 14px 16px;
 }
 
 .back {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
   border: none;
-  background: var(--surface-elevated);
-  border-radius: 999px;
-  width: 36px;
-  height: 36px;
-  font-size: 18px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  font-size: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
 }
 
-h2 {
+.back:hover {
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  transform: scale(1.05);
+}
+
+.back:active {
+  transform: scale(0.95);
+}
+
+.back svg {
+  width: 24px;
+  height: 24px;
+  color: #333;
+  transition: all 0.3s ease;
+}
+
+.back:hover svg {
+  transform: translateX(-2px);
+}
+
+.header h2 {
+  font-size: 16px;
+  font-weight: 600;
   margin: 0;
-  font-size: 18px;
+  max-width: calc(100% - 54px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+/* ESTADOS */
 .status,
 .empty {
-  color: var(--text-muted);
   text-align: center;
-  padding: 24px 0;
+  font-size: 13px;
+  color: #888;
+  padding: 40px 20px;
 }
 
+/* GRID */
 .products {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
+  padding: 0 16px 20px;
 }
 
+/* CARD */
 .card {
-  border: 1px solid var(--border-color);
   border-radius: 14px;
   overflow: hidden;
-  background: var(--surface-bg);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
+.card:active {
+  transform: scale(0.97);
+}
+
+/* IMAGE */
 .card img {
   width: 100%;
-  height: 160px;
+  height: 170px;
   object-fit: cover;
-  display: block;
-  background: var(--surface-elevated);
+  background: #f8f8f8;
 }
 
+/* INFO */
 .info {
   padding: 10px;
 }
 
 .info h3 {
-  font-size: 14px;
-  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 500;
+  margin: 0 0 4px;
+  color: #333;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .price {
+  font-size: 13px;
+  font-weight: 700;
   margin: 0;
-  font-weight: 600;
-  color: var(--text-color);
+  color: #000;
 }
 
-@media (max-width: 480px) {
+/* RESPONSIVO */
+@media (max-width: 380px) {
   .products {
-    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .card img {
+    height: 150px;
   }
 }
 </style>

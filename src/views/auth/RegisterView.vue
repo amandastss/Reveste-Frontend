@@ -44,7 +44,7 @@ async function register() {
       phone.value,
       birthdate.value,
       photo.value ?? undefined,
-      undefined
+      undefined,
     )
 
     const responseData = response.data || {}
@@ -62,109 +62,115 @@ async function register() {
 
     const token = typeof responseData.token === 'string' ? responseData.token : undefined
     if (token) {
-      try { localStorage.setItem('token', token) } catch {}
-      try { localStorage.setItem('isLogin', 'true') } catch {}
-
-      try {
-        function extractCandidateId(obj: unknown): string | number | undefined {
-          if (!obj || typeof obj !== 'object') return undefined
-          const o = obj as Record<string, unknown>
-          const uid = o.user_id ?? (o.user && (o.user as Record<string, unknown>).id)
-          if (typeof uid === 'string' || typeof uid === 'number') return uid
-          return undefined
-        }
-
-        const candidateId = extractCandidateId(responseData)
-        const serverUser = await authApi.fetchUserFromCandidates(token, candidateId)
-        if (serverUser) {
-          const enriched = {
-            ...userData,
-            ...serverUser,
-            photo: userData.photo || serverUser.profile_image || serverUser.photo || serverUser.avatar || serverUser.image,
-            date_of_birth: userData.date_of_birth || serverUser.birth_date || serverUser.date_of_birth || serverUser.birthdate,
-          }
-          try { localStorage.setItem('user', JSON.stringify(enriched)) } catch {}
-        }
-      } catch {}
-
+      localStorage.setItem('token', token)
+      localStorage.setItem('isLogin', 'true')
       router.push('/profile')
       return
     }
 
-    try { localStorage.setItem('isLogin', 'true') } catch {}
-    alert('Conta criada com sucesso! Agora faça login.')
+    localStorage.setItem('isLogin', 'true')
     router.push('/auth/password')
   } catch (err: unknown) {
-    console.error('Register error:', err)
-    const msg = (() => {
-      if (typeof err === 'object' && err !== null && 'response' in err) {
-        try {
-          const e = err as Record<string, unknown>
-          const resp = e.response as Record<string, unknown> | undefined
-          const data = resp?.data as Record<string, unknown> | undefined
-          if (data && typeof data.message === 'string') return data.message
-        } catch {}
-      }
-      return 'Tente novamente'
-    })()
-    alert('Erro ao criar conta: ' + msg)
+    console.error(err)
+
+    if (err instanceof Error) {
+      alert('Erro: ' + err.message)
+    } else {
+      alert('Erro ao criar conta')
+    }
   }
 }
 </script>
 
 <template>
-  <div class="register">
-    <h1>Criar conta</h1>
-    <input v-model="name" placeholder="Nome completo" />
-    <input v-model="email" placeholder="Email" type="email" />
+  <div class="register-wrapper">
+    <div class="register-card">
+      <h1>Criar conta</h1>
 
-    <div class="field-row">
-      <div class="field-group">
-        <label>Telefone</label>
-        <input v-model="phone" placeholder="(xx) xxxxx-xxxx" type="tel" />
+      <input v-model="name" placeholder="Nome completo" />
+      <input v-model="email" placeholder="Email" type="email" />
+
+      <div class="field-row">
+        <div class="field-group">
+          <label>Telefone</label>
+          <input v-model="phone" placeholder="(xx) xxxxx-xxxx" type="tel" />
+        </div>
+
+        <div class="field-group">
+          <label>Data de nascimento</label>
+          <input v-model="birthdate" type="date" />
+        </div>
       </div>
-      <div class="field-group">
-        <label>Data de nascimento</label>
-        <input v-model="birthdate" type="date" />
+
+      <div class="photo-field">
+        <label>Foto de perfil</label>
+        <input type="file" accept="image/*" @change="handlePhotoChange" />
+
+        <div v-if="photoPreview" class="photo-preview">
+          <img :src="photoPreview" />
+        </div>
       </div>
+
+      <input v-model="password" placeholder="Senha" type="password" />
+
+      <button @click="register">Criar conta</button>
     </div>
-
-    <div class="photo-field">
-      <label>Foto de perfil</label>
-      <input type="file" accept="image/*" @change="handlePhotoChange" />
-      <div v-if="photoPreview" class="photo-preview">
-        <img :src="photoPreview" alt="Foto de perfil" />
-      </div>
-    </div>
-
-    <input v-model="password" placeholder="Senha" type="password" />
-    <button @click="register">Registrar</button>
   </div>
 </template>
 
 <style scoped>
-.register {
-  padding: 20px;
+/* BACKGROUND */
+.register-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #f5f7fb, #e8ecf5);
+}
+
+/* CARD */
+.register-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  padding: 28px;
+  border-radius: 20px;
+
+  /* SOMBRA */
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.08),
+    0 2px 10px rgba(0, 0, 0, 0.04);
+
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
 }
 
+/* TITLE */
+.register-card h1 {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+/* INPUTS */
 input {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  font-size: 14px;
+  transition: 0.2s;
 }
 
-button {
-  padding: 10px;
-  background: #000;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+/* FOCUS */
+input:focus {
+  outline: none;
+  border-color: #000;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
 }
 
+/* ROW */
 .field-row {
   display: flex;
   gap: 12px;
@@ -172,37 +178,33 @@ button {
 }
 
 .field-group {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  flex: 1;
 }
 
 .field-group label {
   font-size: 12px;
-  color: var(--text-muted);
+  color: #666;
 }
 
-.field-group select,
-.field-group input {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
+/* FOTO */
 .photo-field {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 16px;
 }
 
 .photo-preview {
   width: 110px;
   height: 110px;
-  border-radius: 22px;
+  border-radius: 20px;
   overflow: hidden;
-  border: 1px solid #ccc;
+
+  border: 2px solid #eee;
+
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
 }
 
 .photo-preview img {
@@ -211,28 +213,28 @@ button {
   object-fit: cover;
 }
 
-.field-row {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+/* BUTTON */
+button {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: #000;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+
+  transition: 0.2s;
 }
 
-.field-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
+/* HOVER */
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
 }
 
-.field-group label {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.field-group select,
-.field-group input {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+/* CLICK */
+button:active {
+  transform: scale(0.98);
 }
 </style>

@@ -1,51 +1,24 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useCartStore } from '@/stores/cart'
 import EditItemModal from './EditItemModal.vue'
 
 interface CartItem {
   id: number
   name: string
-  color: string
-  size: string
+  image: string
   price: number
   quantity: number
-  image: string
+  size?: string
+  color?: string
 }
 
-const cartItems = ref<CartItem[]>([
-  {
-    id: 1,
-    name: 'The Joni High Rise Loose 29L',
-    color: 'Preto',
-    size: 'M',
-    price: 100,
-    quantity: 2,
-    image:
-      'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=400&auto=format&fit=crop'
-  },
-  {
-    id: 2,
-    name: 'Graydon Button-Up',
-    color: 'Azul Claro',
-    size: 'G',
-    price: 159,
-    quantity: 2,
-    image:
-      'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=400&auto=format&fit=crop'
-  },
-  {
-    id: 3,
-    name: 'Desire Vest',
-    color: 'Rosa',
-    size: 'M',
-    price: 85,
-    quantity: 2,
-    image:
-      'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?q=80&w=400&auto=format&fit=crop'
-  }
-])
+const cartStore = useCartStore()
 
-// ── Modal de edição ───────────────────────────────────────────────────────────
+const cartItems = computed(() => cartStore.items)
+const subtotal = computed(() => cartStore.subtotal)
+
+// modal
 const editModalVisible = ref(false)
 const itemBeingEdited = ref<CartItem | null>(null)
 
@@ -61,26 +34,28 @@ function onItemUpdated(data: { size: string; color: string }) {
   }
 }
 
-// ── Carrinho ──────────────────────────────────────────────────────────────────
-const subtotal = computed(() =>
-  cartItems.value.reduce((total, item) => total + item.price * item.quantity, 0)
-)
-
+// ações
 function goBack() {
   window.history.back()
 }
 
 function decreaseQuantity(item: CartItem) {
-  if (item.quantity > 1) item.quantity--
+  if (item.quantity > 1) {
+    cartStore.updateQuantity(item.id, item.quantity - 1)
+  }
 }
 
 function increaseQuantity(item: CartItem) {
-  item.quantity++
+  cartStore.updateQuantity(item.id, item.quantity + 1)
 }
 
 function checkout() {
-  alert('Página de pagamento ainda não criada.')
+  alert('Pagamento ainda não implementado')
 }
+
+onMounted(() => {
+  cartStore.loadCart()
+})
 </script>
 
 <template>
@@ -135,8 +110,13 @@ function checkout() {
       </button>
     </footer>
 
-    <EditItemModal :item="itemBeingEdited" :visible="editModalVisible" @close="editModalVisible = false"
-      @update="onItemUpdated" />
+    <EditItemModal 
+  v-if="itemBeingEdited"
+  :item="itemBeingEdited as any"
+  :visible="editModalVisible"
+  @close="editModalVisible = false"
+  @update="onItemUpdated"
+/>
   </div>
 </template>
 
