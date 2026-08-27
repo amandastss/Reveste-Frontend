@@ -3,6 +3,7 @@ import axios from 'axios'
 
 export interface CartItem {
   id: number
+  produto: number
   name: string
   price: number
   quantity: number
@@ -11,207 +12,127 @@ export interface CartItem {
   size?: string
 }
 
+interface CarrinhoProduto {
+  id: number
+  produto: number
+  nome: string
+  preco: string | number
+  imagem_url: string
+  cor?: string
+  tamanho?: string
+}
+
 const API_URL = import.meta.env.VITE_API_URL
+
+function getHeaders() {
+  const token = localStorage.getItem('token')
+
+  return {
+    Authorization: `Bearer ${token}`,
+  }
+}
 
 export const useCartStore = defineStore('cart', {
   state: () => ({
     items: [] as CartItem[],
+    pedidoId: null as number | null,
+    status: null as string | null,
   }),
 
   getters: {
-    subtotal: (state) =>
-      state.items.reduce(
-        (total, item) => total + item.price * item.quantity,
-        0
-      ),
+    subtotal: (state) => state.items.reduce((total, item) => total + Number(item.price), 0),
   },
 
   actions: {
-
-    // 🔹 CARREGAR CARRINHO
     async loadCart() {
       const token = localStorage.getItem('token')
 
-      if (token) {
-        try {
-          const res = await axios.get(
-            `${API_URL}/api/cart/`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          )
-
-          console.log('CARRINHO - resposta:', res.data)
-
-          this.items = Array.isArray(res.data)
-            ? res.data
-            : res.data.results || []
-
-        } catch (error) {
-          console.error(
-            'Erro ao carregar carrinho:',
-            error
-          )
-
-          this.items = []
-        }
-
-      } else {
-        const saved = localStorage.getItem('cart')
-
-        try {
-          this.items = saved
-            ? JSON.parse(saved)
-            : []
-
-          if (!Array.isArray(this.items)) {
-            this.items = []
-          }
-
-        } catch (error) {
-          console.error(
-            'Erro ao ler carrinho local:',
-            error
-          )
-
-          this.items = []
-        }
+      if (!token) {
+        this.items = []
+        this.pedidoId = null
+        this.status = null
+        return
       }
-    },
 
-
-    // 🔹 ADICIONAR ITEM
-    async addItem(item: CartItem) {
-      const token = localStorage.getItem('token')
-
-      const existing = this.items.find(
-        (i) => i.id === item.id
-      )
-
-      // Atualiza visualmente primeiro
-      if (existing) {
-        existing.quantity++
-      } else {
-        this.items.push({
-          ...item,
-          quantity: 1,
+      try {
+        const response = await axios.get(`${API_URL}/api/carrinho/`, {
+          headers: getHeaders(),
         })
-      }
 
-      // Usuário logado → backend
-      if (token) {
-        try {
-          await axios.post(
-            `${API_URL}/api/cart/`,
-            item,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          )
+        const data = response.data
 
-          console.log(
-            'Produto enviado para o backend'
-          )
+        this.pedidoId = data.pedido_id
+        this.status = data.status
 
-        } catch (error) {
-          console.error(
-            'Erro ao salvar carrinho no backend:',
-            error
-          )
-        }
+        this.items = (data.itens || []).map((item: CarrinhoProduto) => ({
+          id: item.id,
+          produto: item.produto,
+          name: item.nome,
+          price: Number(item.preco),
+          quantity: 1,
+          image: item.imagem_url,
+          color: item.cor,
+          size: item.tamanho,
+        }))
+      } catch (error) {
+        console.error('Erro ao carregar carrinho:', error)
 
-      } else {
-        // Visitante → localStorage
-        localStorage.setItem(
-          'cart',
-          JSON.stringify(this.items)
-        )
+        this.items = []
+        this.pedidoId = null
+        this.status = null
+
+        throw error
       }
     },
 
-
-    // 🔹 ATUALIZAR QUANTIDADE
-    async updateQuantity(
-      id: number,
-      quantity: number
-    ) {
-      const item = this.items.find(
-        (i) => i.id === id
-      )
-
-      if (!item) return
-
-      item.quantity = quantity
-
+    async addItem(productId: number) {
       const token = localStorage.getItem('token')
 
-      if (token) {
-        try {
-          await axios.patch(
-            `${API_URL}/api/cart/${id}/`,
-            {
-              quantity,
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          )
+      if (!token) {
+        throw new Error('Você precisa estar logado para adicionar produtos ao carrinho.')
+      }
 
-        } catch (error) {
-          console.error(
-            'Erro ao atualizar quantidade:',
-            error
-          )
-        }
-
-      } else {
-        localStorage.setItem(
-          'cart',
-          JSON.stringify(this.items)
+      try {
+        await axios.post(
+          `${API_URL}/api/carrinho/`,
+          {
+            productId,
+          },
+          {
+            headers: getHeaders(),
+          },
         )
+
+        await this.loadCart()
+      } catch (error) {
+        console.error('Erro ao adicionar produto ao carrinho:', error)
+
+        throw error
       }
     },
 
+    async removeItem(productId: number) {
+      try {
+        await axios.delete(`${API_URL}/api/carrinho/`, {
+          headers: getHeaders(),
 
-    // 🔹 REMOVER ITEM
-    async removeItem(id: number) {
-      const token = localStorage.getItem('token')
+          data: {
+            productId,
+          },
+        })
 
-      // Remove visualmente
-      this.items = this.items.filter(
-        (item) => item.id !== id
-      )
+        this.items = this.items.filter((item) => item.produto !== productId)
+      } catch (error) {
+        console.error('Erro ao remover produto:', error)
 
-      if (token) {
-        try {
-          await axios.delete(
-            `${API_URL}/api/cart/${id}/`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          )
-
-        } catch (error) {
-          console.error(
-            'Erro ao remover produto:',
-            error
-          )
-        }
-
-      } else {
-        localStorage.setItem(
-          'cart',
-          JSON.stringify(this.items)
-        )
+        throw error
       }
+    },
+
+    clearCart() {
+      this.items = []
+      this.pedidoId = null
+      this.status = null
     },
   },
 })
