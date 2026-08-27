@@ -1,93 +1,61 @@
-```vue
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
-import { criarCheckout } from '@/api/pagamentosApi'
 
-interface CartItem {
-  id: number
-  name: string
-  image: string
-  price: number
-  quantity: number
-  size?: string
-  color?: string
-}
-
+const router = useRouter()
 const cartStore = useCartStore()
 
-const carregandoPagamento = ref(false)
 const mensagemErro = ref('')
+const carregando = ref(true)
 
 const cartItems = computed(() => cartStore.items)
-
 const subtotal = computed(() => cartStore.subtotal)
 
-const isEmpty = computed(() => {
-  return Array.isArray(cartItems.value) && cartItems.value.length === 0
-})
+const isEmpty = computed(() => cartItems.value.length === 0)
 
 function goBack() {
-  window.history.back()
+  router.back()
 }
 
-async function removeItem(item: CartItem) {
-  const confirmar = confirm(`Deseja remover "${item.name}" do carrinho?`)
-
-  if (!confirmar) {
-    return
-  }
-
+async function removeItem(productId: number) {
   mensagemErro.value = ''
 
   try {
-    await cartStore.removeItem(item.id)
-  } catch (erro) {
-    console.error('Erro ao remover produto:', erro)
-
-    mensagemErro.value = 'Não foi possível remover o produto do carrinho.'
+    await cartStore.removeItem(productId)
+  } catch (error: unknown) {
+    let mensagem = 'Não foi possível remover o produto do carrinho.'
+    if (typeof error === 'object' && error !== null && 'response' in error) {
+      const axiosError = error as { response?: { data?: { detail?: string } } }
+      mensagem = axiosError.response?.data?.detail || mensagem
+    }
+    mensagemErro.value = mensagem
   }
 }
 
-async function checkout() {
+function irParaPagamento() {
   if (isEmpty.value) {
     return
   }
 
-  mensagemErro.value = ''
-  carregandoPagamento.value = true
-
-  try {
-    const resposta = await criarCheckout()
-
-    if (!resposta.checkout_url) {
-      throw new Error('O link de pagamento não foi retornado.')
-    }
-
-    window.location.href = resposta.checkout_url
-  } catch (erro: unknown) {
-    console.error('Erro ao iniciar pagamento:', erro)
-
-    let mensagem = 'Não foi possível iniciar o pagamento. Tente novamente.'
-
-    if (typeof erro === 'object' && erro !== null && 'response' in erro) {
-      const axiosError = erro as { response?: { data?: { detail?: string } } }
-      mensagem = axiosError.response?.data?.detail || mensagem
-    }
-
-    mensagemErro.value = mensagem
-  } finally {
-    carregandoPagamento.value = false
-  }
+  router.push('/checkout')
 }
 
 onMounted(async () => {
+  carregando.value = true
+  mensagemErro.value = ''
+
   try {
     await cartStore.loadCart()
-  } catch (erro) {
-    console.error('Erro ao carregar carrinho:', erro)
-
-    mensagemErro.value = 'Não foi possível carregar o carrinho.'
+  } catch (error: unknown) {
+    let mensagem = 'Não foi possível carregar o carrinho.'
+    if (typeof error === 'object' && error !== null && 'response' in error) {
+      const axiosError = error as { response?: { data?: { detail?: string } } }
+      mensagem = axiosError.response?.data?.detail || mensagem
+    }
+    mensagemErro.value = mensagem
+  } finally {
+    carregando.value = false
   }
 })
 </script>
@@ -95,89 +63,65 @@ onMounted(async () => {
 <template>
   <div class="cart-page">
     <header class="cart-header">
-      <button @click="goBack" class="back-btn" aria-label="Voltar">
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <line x1="19" y1="12" x2="5" y2="12" />
-
-          <polyline points="12 19 5 12 12 5" />
-        </svg>
-      </button>
+      <button @click="goBack" class="back-btn" aria-label="Voltar">←</button>
 
       <h1>Seu Carrinho</h1>
     </header>
 
-    <section class="cart-items">
-      <!-- ERRO -->
-      <div v-if="mensagemErro" class="cart-error">
+    <main class="cart-content">
+      <div v-if="carregando" class="loading">Carregando carrinho...</div>
+
+      <div v-else-if="mensagemErro" class="cart-error">
         {{ mensagemErro }}
       </div>
 
-      <!-- CARRINHO VAZIO -->
-      <div v-if="isEmpty" class="empty-cart">
-        <p>Seu carrinho está vazio.</p>
+      <div v-else-if="isEmpty" class="empty-cart">
+        <h2>Seu carrinho está vazio</h2>
+
+        <p>Adicione uma peça para continuar.</p>
+
+        <button class="continue-btn" @click="router.push('/')">CONTINUAR COMPRANDO</button>
       </div>
 
-      <!-- ITENS -->
-      <div v-else>
-        <div v-for="item in cartItems" :key="item.id" class="cart-item">
-          <img :src="item.image" :alt="item.name" class="item-image" />
+      <section v-else class="cart-items">
+        <article v-for="item in cartItems" :key="item.id" class="cart-item">
+          <img v-if="item.image" :src="item.image" :alt="item.name" class="item-image" />
 
           <div class="item-info">
-            <div class="top-info">
-              <div>
-                <h2>
-                  {{ item.name }}
-                </h2>
+            <h2>{{ item.name }}</h2>
 
-                <div class="details">
-                  <span v-if="item.color">
-                    {{ item.color }}
-                  </span>
+            <div class="details">
+              <span v-if="item.color">
+                {{ item.color }}
+              </span>
 
-                  <span v-if="item.color && item.size"> | </span>
+              <span v-if="item.color && item.size"> · </span>
 
-                  <span v-if="item.size">
-                    {{ item.size }}
-                  </span>
-                </div>
-              </div>
-
-              <p class="price">R$ {{ Number(item.price).toFixed(2) }}</p>
+              <span v-if="item.size">
+                {{ item.size }}
+              </span>
             </div>
 
-            <div class="item-actions">
-              <span class="unique-item"> Peça única </span>
+            <span class="unique-item"> Peça única </span>
 
-              <button class="remove-btn" @click="removeItem(item)">REMOVER</button>
-            </div>
+            <strong class="price"> R$ {{ item.price.toFixed(2) }} </strong>
+
+            <button class="remove-btn" @click="removeItem(item.produto)">REMOVER</button>
           </div>
-        </div>
+        </article>
+      </section>
+    </main>
+
+    <footer v-if="!carregando && !isEmpty" class="cart-footer">
+      <div class="total">
+        <span>Total</span>
+
+        <strong> R$ {{ subtotal.toFixed(2) }} </strong>
       </div>
-    </section>
 
-    <!-- FOOTER -->
-    <footer v-if="!isEmpty" class="cart-footer">
-      <div class="subtotal">
-        <span> Subtotal </span>
-
-        <span> R$ {{ Number(subtotal).toFixed(2) }} </span>
-      </div>
-
-      <button class="checkout-btn" @click="checkout" :disabled="carregandoPagamento">
-        {{ carregandoPagamento ? 'REDIRECIONANDO...' : 'SEGUIR PARA PAGAMENTO' }}
-      </button>
+      <button class="checkout-btn" @click="irParaPagamento">SEGUIR PARA PAGAMENTO</button>
     </footer>
   </div>
 </template>
 
 <style scoped src="/src/css/cart.css"></style>
-```
