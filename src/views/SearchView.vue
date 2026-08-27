@@ -348,7 +348,11 @@ function fecharModal() {
   mostrarModalCamera.value = false
 }
 
-function abrirSeletorImagem(tipo: 'camera' | 'gallery') {
+function limparBusca() {
+  search.value = ''
+}
+
+function irParaCamera(tipo: 'camera' | 'gallery') {
   fecharModal()
 
   if (tipo === 'gallery') {
