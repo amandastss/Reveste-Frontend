@@ -11,6 +11,8 @@ export interface CartItem {
   size?: string
 }
 
+const API_URL = import.meta.env.VITE_API_URL
+
 export const useCartStore = defineStore('cart', {
   state: () => ({
     items: [] as CartItem[],
@@ -18,56 +20,129 @@ export const useCartStore = defineStore('cart', {
 
   getters: {
     subtotal: (state) =>
-      state.items.reduce((t, i) => t + i.price * i.quantity, 0),
+      state.items.reduce(
+        (total, item) => total + item.price * item.quantity,
+        0
+      ),
   },
 
   actions: {
+
     // 🔹 CARREGAR CARRINHO
     async loadCart() {
       const token = localStorage.getItem('token')
 
       if (token) {
-        // usuário logado → backend
-        const res = await axios.get('/api/cart/', {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+        try {
+          const res = await axios.get(
+            `${API_URL}/api/cart/`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          )
 
-         console.log('res.data:', res.data)
-    console.log('isArray:', Array.isArray(res.data))
+          console.log('CARRINHO - resposta:', res.data)
 
-    
-        this.items = res.data
+          this.items = Array.isArray(res.data)
+            ? res.data
+            : res.data.results || []
+
+        } catch (error) {
+          console.error(
+            'Erro ao carregar carrinho:',
+            error
+          )
+
+          this.items = []
+        }
+
       } else {
-        // visitante → localStorage
         const saved = localStorage.getItem('cart')
-        this.items = saved ? JSON.parse(saved) : []
+
+        try {
+          this.items = saved
+            ? JSON.parse(saved)
+            : []
+
+          if (!Array.isArray(this.items)) {
+            this.items = []
+          }
+
+        } catch (error) {
+          console.error(
+            'Erro ao ler carrinho local:',
+            error
+          )
+
+          this.items = []
+        }
       }
     },
+
 
     // 🔹 ADICIONAR ITEM
     async addItem(item: CartItem) {
       const token = localStorage.getItem('token')
 
-      const existing = this.items.find((i) => i.id === item.id)
+      const existing = this.items.find(
+        (i) => i.id === item.id
+      )
 
+      // Atualiza visualmente primeiro
       if (existing) {
         existing.quantity++
       } else {
-        this.items.push({ ...item, quantity: 1 })
+        this.items.push({
+          ...item,
+          quantity: 1,
+        })
       }
 
+      // Usuário logado → backend
       if (token) {
-        await axios.post('/api/cart/', item, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+        try {
+          await axios.post(
+            `${API_URL}/api/cart/`,
+            item,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          )
+
+          console.log(
+            'Produto enviado para o backend'
+          )
+
+        } catch (error) {
+          console.error(
+            'Erro ao salvar carrinho no backend:',
+            error
+          )
+        }
+
       } else {
-        localStorage.setItem('cart', JSON.stringify(this.items))
+        // Visitante → localStorage
+        localStorage.setItem(
+          'cart',
+          JSON.stringify(this.items)
+        )
       }
     },
 
-    // 🔹 ATUALIZAR QTD
-    async updateQuantity(id: number, quantity: number) {
-      const item = this.items.find((i) => i.id === id)
+
+    // 🔹 ATUALIZAR QUANTIDADE
+    async updateQuantity(
+      id: number,
+      quantity: number
+    ) {
+      const item = this.items.find(
+        (i) => i.id === id
+      )
+
       if (!item) return
 
       item.quantity = quantity
@@ -75,26 +150,67 @@ export const useCartStore = defineStore('cart', {
       const token = localStorage.getItem('token')
 
       if (token) {
-        await axios.patch(`/api/cart/${id}/`, { quantity }, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+        try {
+          await axios.patch(
+            `${API_URL}/api/cart/${id}/`,
+            {
+              quantity,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          )
+
+        } catch (error) {
+          console.error(
+            'Erro ao atualizar quantidade:',
+            error
+          )
+        }
+
       } else {
-        localStorage.setItem('cart', JSON.stringify(this.items))
+        localStorage.setItem(
+          'cart',
+          JSON.stringify(this.items)
+        )
       }
     },
 
-    // 🔹 REMOVER
-    async removeItem(id: number) {
-      this.items = this.items.filter((i) => i.id !== id)
 
+    // 🔹 REMOVER ITEM
+    async removeItem(id: number) {
       const token = localStorage.getItem('token')
 
+      // Remove visualmente
+      this.items = this.items.filter(
+        (item) => item.id !== id
+      )
+
       if (token) {
-        await axios.delete(`/api/cart/${id}/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+        try {
+          await axios.delete(
+            `${API_URL}/api/cart/${id}/`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          )
+
+        } catch (error) {
+          console.error(
+            'Erro ao remover produto:',
+            error
+          )
+        }
+
       } else {
-        localStorage.setItem('cart', JSON.stringify(this.items))
+        localStorage.setItem(
+          'cart',
+          JSON.stringify(this.items)
+        )
       }
     },
   },
