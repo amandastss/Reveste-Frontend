@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
-
 import { useRouter } from 'vue-router'
 import { loadMercadoPago } from '@mercadopago/sdk-js'
-
 import { useCartStore } from '@/stores/cart'
 
-// Extend Window interface para MercadoPago
 declare global {
   interface Window {
     MercadoPago: new (
@@ -18,7 +15,9 @@ declare global {
           type: string,
           containerId: string,
           settings: Record<string, unknown>,
-        ) => Promise<{ unmount: () => Promise<void> }>
+        ) => Promise<{
+          unmount: () => Promise<void>
+        }>
       }
     }
   }
@@ -33,7 +32,11 @@ interface FormDataPayment {
 interface PaymentResponse {
   status: string
   status_detail?: string
-  total?: number
+  [key: string]: unknown
+}
+
+interface CheckoutResponse {
+  total: number
   preference_id?: string
   [key: string]: unknown
 }
@@ -46,19 +49,25 @@ const mensagemErro = ref('')
 const pagamentoConcluido = ref(false)
 const pagamentoPendente = ref(false)
 
-let paymentBrickController: { unmount: () => Promise<void> } | null = null
+let paymentBrickController: {
+  unmount: () => Promise<void>
+} | null = null
 
-const API_URL = import.meta.env.VITE_API_URL
+const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 
-const PUBLIC_KEY = import.meta.env.VITE_MERCADO_PAGO_PUBLIC_KEY
+const PUBLIC_KEY =
+  import.meta.env.VITE_MERCADO_PAGO_PUBLIC_KEY || ''
 
 function getHeaders() {
   const token = localStorage.getItem('token')
 
   return {
     'Content-Type': 'application/json',
-
-    Authorization: `Bearer ${token}`,
+    ...(token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : {}),
   }
 }
 
@@ -66,35 +75,149 @@ function voltarParaCarrinho() {
   router.push('/carrinho')
 }
 
-async function criarCheckout() {
-  const response = await fetch(`${API_URL}/api/pagamentos/criar-checkout/`, {
+async function lerResposta(response: Response): Promise<unknown> {
+  const contentType =
+    response.headers.get('content-type') || ''
+
+  if (contentType.includes('application/json')) {
+    return await response.json()
+  }
+
+  const texto = await response.text()
+
+  console.error(
+    'Resposta não JSON recebida do backend:',
+    texto,
+  )
+
+  throw new Error(
+    `O servidor retornou uma resposta inesperada. Status: ${response.status}`,
+  )
+}
+
+function obterMensagemErro(
+  data: unknown,
+  mensagemPadrao: string,
+): string {
+  if (
+    typeof data === 'object' &&
+    data !== null
+  ) {
+    const erro = data as Record<string, unknown>
+
+    return (
+      String(
+        erro.detail ||
+          erro.message ||
+          erro.erro ||
+          mensagemPadrao,
+      )
+    )
+  }
+
+  return mensagemPadrao
+}
+
+async function criarCheckout(): Promise<CheckoutResponse> {
+  const checkoutUrl =
+    `${API_URL}/api/pagamentos/criar-checkout/`
+
+  console.log(
+    'URL FINAL DO CHECKOUT:',
+    checkoutUrl,
+  )
+
+  const response = await fetch(checkoutUrl, {
     method: 'POST',
     headers: getHeaders(),
   })
 
-  const data = await response.json()
+  console.log(
+    'STATUS DO CHECKOUT:',
+    response.status,
+  )
 
-  if (!response.ok) {
-    throw new Error(data.detail || 'Não foi possível iniciar o pagamento.')
+  const contentType =
+    response.headers.get('content-type') || ''
+
+  let data: unknown
+
+  if (contentType.includes('application/json')) {
+    data = await response.json()
+  } else {
+    const texto = await response.text()
+
+    console.error(
+      'Resposta recebida do checkout:',
+      texto,
+    )
+
+    throw new Error(
+      `Erro inesperado ao criar checkout. Status: ${response.status}`,
+    )
   }
 
-  return data
+  if (!response.ok) {
+    console.error(
+      'Erro retornado pelo backend no checkout:',
+      data,
+    )
+
+    throw new Error(
+      obterMensagemErro(
+        data,
+        `Não foi possível criar o checkout. Status: ${response.status}`,
+      ),
+    )
+  }
+
+  console.log(
+    'Checkout criado com sucesso:',
+    data,
+  )
+
+  return data as CheckoutResponse
 }
 
-async function processarPagamento(formData: FormDataPayment): Promise<PaymentResponse> {
-  const response = await fetch(`${API_URL}/api/pagamentos/processar/`, {
+async function processarPagamento(
+  formData: FormDataPayment,
+): Promise<PaymentResponse> {
+  const pagamentoUrl =
+    `${API_URL}/api/pagamentos/processar/`
+
+  console.log(
+    'URL FINAL DO PAGAMENTO:',
+    pagamentoUrl,
+  )
+
+  const response = await fetch(pagamentoUrl, {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify(formData),
   })
 
-  const data = await response.json()
+  console.log(
+    'STATUS DO PAGAMENTO:',
+    response.status,
+  )
+
+  const data = await lerResposta(response)
 
   if (!response.ok) {
-    throw new Error(data.detail || 'Não foi possível processar o pagamento.')
+    console.error(
+      'Erro retornado pelo backend:',
+      data,
+    )
+
+    throw new Error(
+      obterMensagemErro(
+        data,
+        'Não foi possível processar o pagamento.',
+      ),
+    )
   }
 
-  return data
+  return data as PaymentResponse
 }
 
 async function renderizarPaymentBrick() {
@@ -102,15 +225,29 @@ async function renderizarPaymentBrick() {
     carregando.value = true
     mensagemErro.value = ''
 
-    if (!PUBLIC_KEY) {
-      throw new Error('A Public Key do Mercado Pago não foi encontrada.')
+    if (!API_URL) {
+      throw new Error(
+        'A URL da API não foi encontrada no arquivo .env.',
+      )
     }
+
+    if (!PUBLIC_KEY) {
+      throw new Error(
+        'A Public Key do Mercado Pago não foi encontrada no arquivo .env.',
+      )
+    }
+
+    console.log('API URL:', API_URL)
 
     await cartStore.loadCart()
 
+    console.log(
+      'Itens do carrinho:',
+      cartStore.items,
+    )
+
     if (cartStore.items.length === 0) {
       router.push('/carrinho')
-
       return
     }
 
@@ -118,113 +255,206 @@ async function renderizarPaymentBrick() {
 
     const total = Number(checkout.total)
 
-    const preferenceId = checkout.preference_id
+    console.log(
+      'Total recebido do checkout:',
+      total,
+    )
+
+    if (!total || total <= 0) {
+      throw new Error(
+        'O valor total do pedido é inválido.',
+      )
+    }
 
     await loadMercadoPago()
 
-    const mp = new window.MercadoPago(PUBLIC_KEY, {
-      locale: 'pt-BR',
-    })
+    const mp = new window.MercadoPago(
+      PUBLIC_KEY,
+      {
+        locale: 'pt-BR',
+      },
+    )
 
     const bricksBuilder = mp.bricks()
 
     const settings = {
       initialization: {
         amount: total,
-        preferenceId: preferenceId,
+
+        ...(checkout.preference_id
+          ? {
+              preferenceId:
+                checkout.preference_id,
+            }
+          : {}),
       },
 
       customization: {
         paymentMethods: {
           creditCard: 'all',
-
           debitCard: 'all',
-
           prepaidCard: 'all',
-
           bankTransfer: 'all',
         },
       },
 
       callbacks: {
         onReady: () => {
+          console.log(
+            'Payment Brick carregado com sucesso',
+          )
+
           carregando.value = false
         },
 
-        onSubmit: ({ formData }: { formData: FormDataPayment }) => {
-          return new Promise<void>((resolve, reject) => {
-            ;(async () => {
-              mensagemErro.value = ''
+        onSubmit: ({
+          formData,
+        }: {
+          formData: FormDataPayment
+        }) => {
+          return new Promise<void>(
+            (resolve, reject) => {
+              ;(async () => {
+                mensagemErro.value = ''
 
-              try {
-                const resultado = await processarPagamento(formData)
+                try {
+                  console.log(
+                    'Dados enviados para pagamento:',
+                    formData,
+                  )
 
-                if (resultado.status === 'approved') {
-                  pagamentoConcluido.value = true
+                  const resultado =
+                    await processarPagamento(
+                      formData,
+                    )
 
-                  await cartStore.loadCart()
+                  console.log(
+                    'Resultado do pagamento:',
+                    resultado,
+                  )
 
-                  resolve()
+                  if (
+                    resultado.status ===
+                    'approved'
+                  ) {
+                    pagamentoConcluido.value = true
 
-                  setTimeout(() => {
-                    router.push('/pedidos')
-                  }, 2500)
+                    await cartStore.loadCart()
 
-                  return
+                    resolve()
+
+                    setTimeout(() => {
+                      router.push('/pedidos')
+                    }, 2500)
+
+                    return
+                  }
+
+                  if (
+                    resultado.status ===
+                      'pending' ||
+                    resultado.status ===
+                      'in_process'
+                  ) {
+                    pagamentoPendente.value =
+                      true
+
+                    resolve()
+
+                    return
+                  }
+
+                  mensagemErro.value =
+                    resultado.status_detail ||
+                    'O pagamento não foi aprovado.'
+
+                  reject(
+                    new Error(
+                      mensagemErro.value,
+                    ),
+                  )
+                } catch (
+                  error: unknown
+                ) {
+                  console.error(
+                    'Erro ao processar pagamento:',
+                    error,
+                  )
+
+                  let mensagem =
+                    'Não foi possível processar o pagamento.'
+
+                  if (
+                    typeof error ===
+                      'object' &&
+                    error !== null &&
+                    'message' in error
+                  ) {
+                    const err = error as {
+                      message?: string
+                    }
+
+                    mensagem =
+                      err.message ||
+                      mensagem
+                  }
+
+                  mensagemErro.value =
+                    mensagem
+
+                  reject(error)
                 }
-
-                if (resultado.status === 'pending' || resultado.status === 'in_process') {
-                  pagamentoPendente.value = true
-
-                  resolve()
-
-                  return
-                }
-
-                mensagemErro.value = resultado.status_detail || 'O pagamento não foi aprovado.'
-
-                reject(new Error(mensagemErro.value))
-              } catch (error: unknown) {
-                console.error('Erro ao processar pagamento:', error)
-
-                let mensagem = 'Não foi possível processar o pagamento.'
-                if (typeof error === 'object' && error !== null && 'message' in error) {
-                  const err = error as { message?: string }
-                  mensagem = err.message || mensagem
-                }
-                mensagemErro.value = mensagem
-
-                reject(error)
-              }
-            })()
-          })
+              })()
+            },
+          )
         },
 
-        onError: (error: unknown) => {
-          console.error('Erro no Mercado Pago:', error)
+        onError: (
+          error: unknown,
+        ) => {
+          console.error(
+            'Erro no Mercado Pago:',
+            error,
+          )
 
-          mensagemErro.value = 'Ocorreu um erro ao carregar o pagamento.'
+          mensagemErro.value =
+            'Ocorreu um erro ao carregar o pagamento.'
 
           carregando.value = false
         },
       },
     }
 
-    paymentBrickController = await bricksBuilder.create(
-      'payment',
-      'paymentBrick_container',
-      settings,
-    )
+    paymentBrickController =
+      await bricksBuilder.create(
+        'payment',
+        'paymentBrick_container',
+        settings,
+      )
   } catch (error: unknown) {
-    console.error('Erro ao iniciar checkout:', error)
+    console.error(
+      'Erro ao iniciar checkout:',
+      error,
+    )
 
     carregando.value = false
 
-    let mensagem = 'Não foi possível carregar o checkout.'
-    if (typeof error === 'object' && error !== null && 'message' in error) {
-      const err = error as { message?: string }
-      mensagem = err.message || mensagem
+    let mensagem =
+      'Não foi possível carregar o checkout.'
+
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'message' in error
+    ) {
+      const err = error as {
+        message?: string
+      }
+
+      mensagem =
+        err.message || mensagem
     }
+
     mensagemErro.value = mensagem
   }
 }
@@ -238,7 +468,10 @@ onBeforeUnmount(async () => {
     try {
       await paymentBrickController.unmount()
     } catch (error) {
-      console.error('Erro ao remover Payment Brick:', error)
+      console.error(
+        'Erro ao remover Payment Brick:',
+        error,
+      )
     }
   }
 })
@@ -247,43 +480,72 @@ onBeforeUnmount(async () => {
 <template>
   <main class="checkout-page">
     <header class="checkout-header">
-      <button class="back-button" @click="voltarParaCarrinho">← Voltar ao carrinho</button>
+      <button
+        class="back-button"
+        @click="voltarParaCarrinho"
+      >
+        ← Voltar ao carrinho
+      </button>
 
       <h1>Finalizar compra</h1>
     </header>
 
-    <!-- PAGAMENTO APROVADO -->
-
-    <section v-if="pagamentoConcluido" class="payment-result success">
+    <section
+      v-if="pagamentoConcluido"
+      class="payment-result success"
+    >
       <h2>Pagamento aprovado! 🎉</h2>
 
-      <p>Sua compra foi realizada com sucesso.</p>
+      <p>
+        Sua compra foi realizada com sucesso.
+      </p>
 
-      <p>Você será redirecionado para seus pedidos.</p>
+      <p>
+        Você será redirecionado para seus pedidos.
+      </p>
     </section>
 
-    <!-- PAGAMENTO PENDENTE -->
+    <section
+      v-else-if="pagamentoPendente"
+      class="payment-result pending"
+    >
+      <h2>
+        Pagamento em processamento
+      </h2>
 
-    <section v-else-if="pagamentoPendente" class="payment-result pending">
-      <h2>Pagamento em processamento</h2>
+      <p>
+        Estamos aguardando a confirmação do pagamento.
+      </p>
 
-      <p>Estamos aguardando a confirmação do pagamento.</p>
+      <p>
+        Assim que o pagamento for confirmado,
+        seu pedido será atualizado.
+      </p>
 
-      <p>Assim que o Mercado Pago confirmar o pagamento, o pedido será atualizado.</p>
-
-      <button @click="router.push('/pedidos')">VER MEUS PEDIDOS</button>
+      <button
+        @click="router.push('/pedidos')"
+      >
+        VER MEUS PEDIDOS
+      </button>
     </section>
 
-    <!-- CHECKOUT -->
-
-    <section v-else class="checkout-content">
-      <!-- RESUMO -->
-
+    <section
+      v-else
+      class="checkout-content"
+    >
       <div class="checkout-summary">
         <h2>Resumo do pedido</h2>
 
-        <div v-for="item in cartStore.items" :key="item.id" class="summary-item">
-          <img v-if="item.image" :src="item.image" :alt="item.name" />
+        <div
+          v-for="item in cartStore.items"
+          :key="item.id"
+          class="summary-item"
+        >
+          <img
+            v-if="item.image"
+            :src="item.image"
+            :alt="item.name"
+          />
 
           <div>
             <h3>
@@ -300,39 +562,48 @@ onBeforeUnmount(async () => {
 
           <strong>
             R$
-
-            {{ Number(item.price).toFixed(2).replace('.', ',') }}
+            {{
+              Number(item.price)
+                .toFixed(2)
+                .replace('.', ',')
+            }}
           </strong>
         </div>
 
         <div class="checkout-total">
-          <span> Total </span>
+          <span>Total</span>
 
           <strong>
             R$
-
-            {{ Number(cartStore.subtotal).toFixed(2).replace('.', ',') }}
+            {{
+              Number(cartStore.totalPrice)
+                .toFixed(2)
+                .replace('.', ',')
+            }}
           </strong>
         </div>
       </div>
 
-      <!-- PAGAMENTO -->
-
       <div class="payment-section">
         <h2>Pagamento</h2>
 
-        <div v-if="carregando" class="loading">Carregando formas de pagamento...</div>
+        <div
+          v-if="carregando"
+          class="loading"
+        >
+          Carregando formas de pagamento...
+        </div>
 
-        <div v-if="mensagemErro" class="checkout-error">
+        <div
+          v-if="mensagemErro"
+          class="checkout-error"
+        >
           {{ mensagemErro }}
         </div>
 
-        <!--
-          Deve existir somente UM container
-          com esse ID.
-        -->
-
-        <div id="paymentBrick_container"></div>
+        <div
+          id="paymentBrick_container"
+        ></div>
       </div>
     </section>
   </main>
@@ -359,6 +630,7 @@ onBeforeUnmount(async () => {
   background: transparent;
   cursor: pointer;
   font-size: 16px;
+  padding: 0;
 }
 
 .checkout-content {
@@ -380,10 +652,7 @@ onBeforeUnmount(async () => {
 
 .summary-item {
   display: grid;
-  grid-template-columns:
-    70px
-    1fr
-    auto;
+  grid-template-columns: 70px 1fr auto;
   gap: 16px;
   align-items: center;
   padding: 16px 0;
@@ -424,6 +693,7 @@ onBeforeUnmount(async () => {
   padding: 14px;
   border-radius: 8px;
   background: #fff0f0;
+  color: #a00000;
 }
 
 .payment-result {

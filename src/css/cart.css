@@ -15,7 +15,7 @@ body {
   display: flex;
   flex-direction: column;
   padding: 24px 24px 230px;
-  font-family: "Montserrat", sans-serif;
+  font-family: 'Montserrat', sans-serif;
 }
 
 /* =========================================
@@ -32,11 +32,11 @@ body {
 }
 
 .cart-header h1 {
-    font-size: 1.6rem;
-    font-weight: 500;
-    margin: 0;
-    color: var(--text-color);
-    letter-spacing: -0.5px;
+  font-size: 1.6rem;
+  font-weight: 500;
+  margin: 0;
+  color: var(--text-color);
+  letter-spacing: -0.5px;
 }
 
 .back-btn {
@@ -203,6 +203,125 @@ body {
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
+}
+
+.empty-cart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 60vh;
+
+  text-align: center;
+
+  padding: 24px;
+}
+
+.empty-cart h2 {
+  margin: 0 0 8px;
+
+  font-size: 24px;
+  font-weight: 600;
+
+  color: #333;
+}
+
+.empty-cart p {
+  margin: 0 0 24px;
+
+  color: #777;
+
+  font-size: 16px;
+}
+
+.continue-btn {
+  min-width: 220px;
+  height: 48px;
+
+  padding: 0 24px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #000000;
+  color: white;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  letter-spacing: 0.3px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.continue-btn:hover {
+  background: #3d178e;
+  transform: translateY(-2px);
+}
+
+.continue-btn:active {
+  transform: translateY(0);
+}
+
+/* =========================================
+   REMOVE BUTTON
+   ========================================= */
+
+.remove-btn {
+  align-self: flex-start;
+
+  min-width: 100px;
+  height: 36px;
+
+  padding: 0 16px;
+
+  border: none;
+  border-radius: 6px;
+
+  background: #f0f0f0;
+  color: #333;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  letter-spacing: 0.3px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.remove-btn:hover {
+  background: #e0e0e0;
+  color: #000;
+  transform: translateY(-1px);
+}
+
+.remove-btn:active {
+  transform: translateY(0);
+}
+
+.total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #222;
+}
+
+.cart-footer .total strong {
+  font-size: 22px;
+  font-weight: 700;
 }
 
 /* =========================================
