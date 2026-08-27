@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 import { useRouter } from 'vue-router'
 import { loadMercadoPago } from '@mercadopago/sdk-js'
+
 import { useCartStore } from '@/stores/cart'
 
 // Extend Window interface para MercadoPago
@@ -32,6 +33,8 @@ interface FormDataPayment {
 interface PaymentResponse {
   status: string
   status_detail?: string
+  total?: number
+  preference_id?: string
   [key: string]: unknown
 }
 
@@ -39,7 +42,6 @@ const router = useRouter()
 const cartStore = useCartStore()
 
 const carregando = ref(true)
-const brickPronto = ref(false)
 const mensagemErro = ref('')
 const pagamentoConcluido = ref(false)
 const pagamentoPendente = ref(false)
@@ -47,6 +49,7 @@ const pagamentoPendente = ref(false)
 let paymentBrickController: { unmount: () => Promise<void> } | null = null
 
 const API_URL = import.meta.env.VITE_API_URL
+
 const PUBLIC_KEY = import.meta.env.VITE_MERCADO_PAGO_PUBLIC_KEY
 
 function getHeaders() {
@@ -54,6 +57,7 @@ function getHeaders() {
 
   return {
     'Content-Type': 'application/json',
+
     Authorization: `Bearer ${token}`,
   }
 }
@@ -95,6 +99,9 @@ async function processarPagamento(formData: FormDataPayment): Promise<PaymentRes
 
 async function renderizarPaymentBrick() {
   try {
+    carregando.value = true
+    mensagemErro.value = ''
+
     if (!PUBLIC_KEY) {
       throw new Error('A Public Key do Mercado Pago não foi encontrada.')
     }
@@ -103,12 +110,14 @@ async function renderizarPaymentBrick() {
 
     if (cartStore.items.length === 0) {
       router.push('/carrinho')
+
       return
     }
 
     const checkout = await criarCheckout()
 
     const total = Number(checkout.total)
+
     const preferenceId = checkout.preference_id
 
     await loadMercadoPago()
@@ -128,40 +137,32 @@ async function renderizarPaymentBrick() {
       customization: {
         paymentMethods: {
           creditCard: 'all',
+
           debitCard: 'all',
+
           prepaidCard: 'all',
+
           bankTransfer: 'all',
-        },
-
-        visual: {
-          style: {
-            theme: 'default',
-          },
-
-          texts: {
-            formTitle: 'Como você quer pagar?',
-            formSubmit: 'PAGAR AGORA',
-          },
         },
       },
 
       callbacks: {
         onReady: () => {
           carregando.value = false
-          brickPronto.value = true
         },
 
         onSubmit: ({ formData }: { formData: FormDataPayment }) => {
           return new Promise<void>((resolve, reject) => {
-            mensagemErro.value = ''
             ;(async () => {
+              mensagemErro.value = ''
+
               try {
                 const resultado = await processarPagamento(formData)
 
                 if (resultado.status === 'approved') {
                   pagamentoConcluido.value = true
 
-                  cartStore.clearCart()
+                  await cartStore.loadCart()
 
                   resolve()
 
@@ -203,6 +204,8 @@ async function renderizarPaymentBrick() {
           console.error('Erro no Mercado Pago:', error)
 
           mensagemErro.value = 'Ocorreu um erro ao carregar o pagamento.'
+
+          carregando.value = false
         },
       },
     }
@@ -249,7 +252,7 @@ onBeforeUnmount(async () => {
       <h1>Finalizar compra</h1>
     </header>
 
-    <!-- COMPRA APROVADA -->
+    <!-- PAGAMENTO APROVADO -->
 
     <section v-if="pagamentoConcluido" class="payment-result success">
       <h2>Pagamento aprovado! 🎉</h2>
@@ -266,7 +269,7 @@ onBeforeUnmount(async () => {
 
       <p>Estamos aguardando a confirmação do pagamento.</p>
 
-      <p>Quando o pagamento for confirmado, seu pedido será atualizado.</p>
+      <p>Assim que o Mercado Pago confirmar o pagamento, o pedido será atualizado.</p>
 
       <button @click="router.push('/pedidos')">VER MEUS PEDIDOS</button>
     </section>
@@ -274,6 +277,8 @@ onBeforeUnmount(async () => {
     <!-- CHECKOUT -->
 
     <section v-else class="checkout-content">
+      <!-- RESUMO -->
+
       <div class="checkout-summary">
         <h2>Resumo do pedido</h2>
 
@@ -285,26 +290,33 @@ onBeforeUnmount(async () => {
               {{ item.name }}
             </h3>
 
-            <p v-if="item.size">Tamanho: {{ item.size }}</p>
+            <p v-if="item.size">
+              Tamanho:
+              {{ item.size }}
+            </p>
 
             <p>Peça única</p>
           </div>
 
           <strong>
             R$
+
             {{ Number(item.price).toFixed(2).replace('.', ',') }}
           </strong>
         </div>
 
         <div class="checkout-total">
-          <span>Total</span>
+          <span> Total </span>
 
           <strong>
             R$
+
             {{ Number(cartStore.subtotal).toFixed(2).replace('.', ',') }}
           </strong>
         </div>
       </div>
+
+      <!-- PAGAMENTO -->
 
       <div class="payment-section">
         <h2>Pagamento</h2>
@@ -314,6 +326,11 @@ onBeforeUnmount(async () => {
         <div v-if="mensagemErro" class="checkout-error">
           {{ mensagemErro }}
         </div>
+
+        <!--
+          Deve existir somente UM container
+          com esse ID.
+        -->
 
         <div id="paymentBrick_container"></div>
       </div>
@@ -346,7 +363,9 @@ onBeforeUnmount(async () => {
 
 .checkout-content {
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(400px, 1.5fr);
+  grid-template-columns:
+    minmax(280px, 1fr)
+    minmax(400px, 1.5fr);
   gap: 32px;
   align-items: start;
 }
@@ -361,7 +380,10 @@ onBeforeUnmount(async () => {
 
 .summary-item {
   display: grid;
-  grid-template-columns: 70px 1fr auto;
+  grid-template-columns:
+    70px
+    1fr
+    auto;
   gap: 16px;
   align-items: center;
   padding: 16px 0;
