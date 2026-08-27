@@ -76,7 +76,7 @@ const confirmAddToCart = async () => {
   addToCartError.value = ''
 
   try {
-await cartStore.addItem(productData.value.id)
+    await cartStore.addItem(productData.value.id)
 
     closeAddToCartConfirm()
     handleAddToCartSuccess()
@@ -152,6 +152,33 @@ onMounted(() => {
   loadFavoriteState()
   fetchProduct()
 })
+
+const buyNow = async () => {
+  if (!productData.value) return
+
+  isAddingToCart.value = true
+  addToCartError.value = ''
+
+  try {
+    // Verificar se o produto já está no carrinho
+    // Como é peça única, não duplicar
+    const produtoJaNoCarrinho = cartStore.items.some((item) => item.id === productData.value!.id)
+
+    // Se não está no carrinho, adicionar
+    if (!produtoJaNoCarrinho) {
+      await cartStore.addItem(productData.value.id)
+    }
+
+    // Redirecionar direto para checkout (não para carrinho)
+    await router.push('/checkout')
+  } catch (error) {
+    console.error('Erro ao iniciar compra:', error)
+
+    addToCartError.value = 'Não foi possível iniciar a compra. Tente novamente.'
+  } finally {
+    isAddingToCart.value = false
+  }
+}
 </script>
 
 <template>
@@ -172,12 +199,15 @@ onMounted(() => {
       <!-- IMAGEM COM BOTÃO DE FAVORITO -->
       <div class="image-wrapper">
         <img :src="mainImage" class="main-product-image" />
-        <button
-          class="back-btn"
-          @click="goBack"
-          title="Voltar"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button class="back-btn" @click="goBack" title="Voltar">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
         </button>
@@ -187,11 +217,23 @@ onMounted(() => {
           @click="toggleFavorite"
           title="Adicionar aos favoritos"
         >
-          <svg v-if="!isFavorite" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          <svg
+            v-if="!isFavorite"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+            ></path>
           </svg>
           <svg v-else viewBox="0 0 24 24" fill="currentColor">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            <path
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+            ></path>
           </svg>
         </button>
       </div>
@@ -247,7 +289,18 @@ onMounted(() => {
 
     <!-- BOTÃO FIXO (ÚNICO!) -->
     <div class="bottom-bar">
-      <button class="buy-btn" @click="openAddToCartConfirm">Adicionar ao carrinho</button>
+      <button
+        class="cart-btn"
+        :disabled="isAddingToCart || !productData"
+        @click="openAddToCartConfirm"
+      >
+        Adicionar ao carrinho
+      </button>
+
+      <button class="buy-now-btn" :disabled="isAddingToCart || !productData" @click="buyNow">
+        <span v-if="isAddingToCart">Processando...</span>
+        <span v-else>Comprar agora</span>
+      </button>
     </div>
 
     <!-- MODAL -->

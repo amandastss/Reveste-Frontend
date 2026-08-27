@@ -1,107 +1,135 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import api from '@/api/config'
 
 export interface CartItem {
   id: number
-  produto: number
+  itemPedidoId: number
   name: string
+  color: string
+  size: string
   price: number
   quantity: number
   image: string
-  color?: string
-  size?: string
 }
 
-interface CarrinhoProduto {
+interface BackendCartItem {
   id: number
+  quantidade: number
+  preco: string
+  nome: string | null
+  cor: string | null
+  tamanho: string | null
+  imagem_url: string | null
+  pedido: number
   produto: number
-  nome: string
-  preco: string | number
-  imagem_url: string
-  cor?: string
-  tamanho?: string
-}
-
-const API_URL = import.meta.env.VITE_API_URL
-
-function getHeaders() {
-  const token = localStorage.getItem('token')
-
-  return {
-    Authorization: `Bearer ${token}`,
-  }
 }
 
 export const useCartStore = defineStore('cart', {
   state: () => ({
     items: [] as CartItem[],
-    pedidoId: null as number | null,
-    status: null as string | null,
+    loading: false,
   }),
 
   getters: {
-    subtotal: (state) => state.items.reduce((total, item) => total + Number(item.price), 0),
+    totalItems: (state) => {
+      return state.items.reduce(
+        (total, item) => total + item.quantity,
+        0,
+      )
+    },
+
+    totalPrice: (state) => {
+      return state.items.reduce(
+        (total, item) => total + item.price * item.quantity,
+        0,
+      )
+    },
   },
 
   actions: {
     async loadCart() {
-      const token = localStorage.getItem('token')
-
-      if (!token) {
-        this.items = []
-        this.pedidoId = null
-        this.status = null
-        return
-      }
+      this.loading = true
 
       try {
-        const response = await axios.get(`${API_URL}/api/carrinho/`, {
-          headers: getHeaders(),
-        })
+        const response = await api.get<BackendCartItem[]>('/carrinho/')
 
-        const data = response.data
+        const cartItems = response.data
 
-        this.pedidoId = data.pedido_id
-        this.status = data.status
+        const itemsWithProductData = await Promise.all(
+          cartItems.map(async (item) => {
+            try {
+              const productResponse = await api.get(
+                `/produtos/${item.produto}/`,
+              )
 
-        this.items = (data.itens || []).map((item: CarrinhoProduto) => ({
-          id: item.id,
-          produto: item.produto,
-          name: item.nome,
-          price: Number(item.preco),
-          quantity: 1,
-          image: item.imagem_url,
-          color: item.cor,
-          size: item.tamanho,
-        }))
+              const produto = productResponse.data
+
+              return {
+                id: produto.id,
+                itemPedidoId: item.id,
+
+                name:
+                  item.nome ??
+                  produto.nome ??
+                  produto.titulo ??
+                  'Produto',
+
+                color:
+                  item.cor ??
+                  produto.cor ??
+                  '',
+
+                size:
+                  item.tamanho ??
+                  produto.tamanho ??
+                  '',
+
+                price: Number(item.preco),
+
+                quantity: item.quantidade,
+
+                image:
+                  item.imagem_url ??
+                  produto.imagem_url ??
+                  produto.imagem ??
+                  produto.foto ??
+                  '',
+              }
+            } catch (error) {
+              console.error(
+                `Erro ao carregar produto ${item.produto}:`,
+                error,
+              )
+
+              return {
+                id: item.produto,
+                itemPedidoId: item.id,
+                name: item.nome ?? 'Produto',
+                color: item.cor ?? '',
+                size: item.tamanho ?? '',
+                price: Number(item.preco),
+                quantity: item.quantidade,
+                image: item.imagem_url ?? '',
+              }
+            }
+          }),
+        )
+
+        this.items = itemsWithProductData
       } catch (error) {
         console.error('Erro ao carregar carrinho:', error)
 
         this.items = []
-        this.pedidoId = null
-        this.status = null
-
-        throw error
+      } finally {
+        this.loading = false
       }
     },
 
     async addItem(productId: number) {
-      const token = localStorage.getItem('token')
-
-      if (!token) {
-        throw new Error('Você precisa estar logado para adicionar produtos ao carrinho.')
-      }
-
       try {
-        await axios.post(
-          `${API_URL}/api/carrinho/`,
-          {
-            productId,
-          },
-          {
-            headers: getHeaders(),
-          },
-        )
+        await api.post('/carrinho/', {
+          productId,
+        })
 
         await this.loadCart()
       } catch (error) {
@@ -111,19 +139,33 @@ export const useCartStore = defineStore('cart', {
       }
     },
 
-    async removeItem(productId: number) {
+    async removeItem(itemPedidoId: number) {
       try {
-        await axios.delete(`${API_URL}/api/carrinho/`, {
-          headers: getHeaders(),
+        await api.delete(`/carrinho/${itemPedidoId}/`)
 
-          data: {
-            productId,
-          },
+        await this.loadCart()
+      } catch (error) {
+        console.error('Erro ao remover item do carrinho:', error)
+
+        throw error
+      }
+    },
+
+    async updateQuantity(
+      itemPedidoId: number,
+      quantity: number,
+    ) {
+      try {
+        await api.patch(`/carrinho/${itemPedidoId}/`, {
+          quantidade: quantity,
         })
 
-        this.items = this.items.filter((item) => item.produto !== productId)
+        await this.loadCart()
       } catch (error) {
-        console.error('Erro ao remover produto:', error)
+        console.error(
+          'Erro ao atualizar quantidade do carrinho:',
+          error,
+        )
 
         throw error
       }
@@ -131,8 +173,6 @@ export const useCartStore = defineStore('cart', {
 
     clearCart() {
       this.items = []
-      this.pedidoId = null
-      this.status = null
     },
   },
 })
