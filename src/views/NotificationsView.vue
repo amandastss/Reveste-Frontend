@@ -1,152 +1,319 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-interface Notification {
-  id: number;
-  type: 'promo' | 'delivery' | 'stock';
-  title: string;
-  message: string;
-  time: string;
-  read: boolean;
-  route?: string;
-}
+import {
+  buscarNotificacoes,
+  marcarNotificacaoComoLida,
+  type Notificacao
+} from '@/services/notificacoesApi'
 
 const router = useRouter()
 
-const notifications = ref<Notification[]>([
-  {
-    id: 1,
-    type: 'promo',
-    title: '20% OFF na Coleção Vintage!',
-    message: 'Use o código VINTAGE20 e aproveite descontos exclusivos.',
-    time: 'Há 2 horas',
-    read: false,
-    route: '/search'
-  },
-  {
-    id: 2,
-    type: 'delivery',
-    title: 'Pedido saiu para entrega',
-    message: 'Seu casaco de moletom preto está a caminho e chega hoje!',
-    time: 'Há 5 horas',
-    read: false,
-    route: '/pedidos'
-  },
-  {
-    id: 3,
-    type: 'stock',
-    title: 'Um item do seu carrinho esgotou',
-    message: 'A "Camiseta Básica polo branca" foi vendida.',
-    time: 'Ontem',
-    read: true,
-    route: '/cart'
-  },
-  {
-    id: 4,
-    type: 'delivery',
-    title: 'Pedido entregue!',
-    message: 'Seu pedido #8472 foi entregue com sucesso.',
-    time: '23/06/2026',
-    read: true,
-    route: '/reviews'
+const notifications = ref<Notificacao[]>([])
+const loading = ref(true)
+const error = ref(false)
+
+const unreadCount = computed(() => {
+  return notifications.value.filter(
+    notification => !notification.lida
+  ).length
+})
+
+async function carregarNotificacoes() {
+  loading.value = true
+  error.value = false
+
+  try {
+    const resultado = await buscarNotificacoes()
+
+    notifications.value = Array.isArray(resultado)
+      ? resultado
+      : []
+
+    console.log(
+      'Notificações carregadas:',
+      notifications.value
+    )
+
+  } catch (err) {
+    console.error(
+      'Erro ao carregar notificações:',
+      err
+    )
+
+    error.value = true
+  } finally {
+    loading.value = false
   }
-])
-
-const goBack = () => {
-  router.go(-1)
 }
 
-const handleNotificationClick = (notif: Notification) => {
-  notif.read = true
-  if (notif.route) router.push(notif.route)
+async function handleNotificationClick(
+  notification: Notificacao
+) {
+  if (notification.lida) {
+    return
+  }
+
+  // muda imediatamente na tela
+  notification.lida = true
+
+  try {
+    await marcarNotificacaoComoLida(
+      notification.id
+    )
+
+  } catch (err) {
+    console.error(
+      'Erro ao marcar notificação como lida:',
+      err
+    )
+
+    // desfaz caso dê erro
+    notification.lida = false
+  }
 }
+
+async function marcarTodasComoLidas() {
+  const naoLidas = notifications.value.filter(
+    notification => !notification.lida
+  )
+
+  for (const notification of naoLidas) {
+    try {
+      await marcarNotificacaoComoLida(
+        notification.id
+      )
+
+      notification.lida = true
+
+    } catch (err) {
+      console.error(
+        'Erro ao marcar notificação:',
+        notification.id,
+        err
+      )
+    }
+  }
+}
+
+function goBack() {
+  router.back()
+}
+
+onMounted(() => {
+  carregarNotificacoes()
+})
 </script>
+
 <template>
   <div class="notifications-page">
+
+    <!-- HEADER -->
     <header class="notifications-header">
-      <button @click="goBack" class="back-btn" aria-label="Voltar">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-          stroke-linecap="round" stroke-linejoin="round">
-          <line x1="19" y1="12" x2="5" y2="12"></line>
-          <polyline points="12 19 5 12 12 5"></polyline>
-        </svg>
+
+      <button
+        @click="goBack"
+        class="back-btn"
+        aria-label="Voltar"
+      >
+        <span class="material-symbols-outlined">
+          arrow_back
+        </span>
       </button>
 
-      <h1 class="page-title">Notificações</h1>
+      <div class="header-title">
+
+        <h1 class="page-title">
+          Notificações
+        </h1>
+
+        <span
+          v-if="unreadCount > 0"
+          class="unread-count"
+        >
+          {{ unreadCount }}
+          não lida{{ unreadCount > 1 ? 's' : '' }}
+        </span>
+
+      </div>
+
     </header>
 
-    <main class="notifications-list">
-      <div v-for="notif in notifications" :key="notif.id" :class="['notification-card', { 'unread': !notif.read }]"
-        @click="handleNotificationClick(notif)">
-        <div :class="['icon-wrapper', notif.type]">
-          <svg v-if="notif.type === 'promo'" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="1.5">
-            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-            <line x1="7" y1="7" x2="7.01" y2="7"></line>
-          </svg>
-          <svg v-if="notif.type === 'delivery'" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="1.5">
-            <rect x="1" y="3" width="15" height="13"></rect>
-            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-            <circle cx="5.5" cy="18.5" r="2.5"></circle>
-            <circle cx="18.5" cy="18.5" r="2.5"></circle>
-          </svg>
-          <svg v-if="notif.type === 'stock'" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="1.5">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="12"></line>
-            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-          </svg>
-        </div>
+    <!-- CARREGANDO -->
+    <div
+      v-if="loading"
+      class="state-message"
+    >
+      <span class="material-symbols-outlined loading-icon">
+        progress_activity
+      </span>
 
-        <div class="notification-content">
-          <h3>{{ notif.title }}</h3>
-          <p>{{ notif.message }}</p>
-          <span class="time-ago">{{ notif.time }}</span>
-        </div>
+      <p>
+        Carregando notificações...
+      </p>
+    </div>
 
-        <div v-if="!notif.read" class="unread-dot"></div>
+    <!-- ERRO -->
+    <div
+      v-else-if="error"
+      class="state-message"
+    >
+      <span class="material-symbols-outlined">
+        error_outline
+      </span>
+
+      <p>
+        Não foi possível carregar as notificações.
+      </p>
+
+      <button
+        class="retry-btn"
+        @click="carregarNotificacoes"
+      >
+        Tentar novamente
+      </button>
+    </div>
+
+    <!-- VAZIO -->
+    <div
+      v-else-if="notifications.length === 0"
+      class="empty-state"
+    >
+      <span class="material-symbols-outlined empty-icon">
+        notifications_none
+      </span>
+
+      <h2>
+        Nenhuma notificação
+      </h2>
+
+      <p>
+        Quando houver novidades sobre seus pedidos,
+        ofertas ou sua conta, elas aparecerão aqui.
+      </p>
+    </div>
+
+    <!-- LISTA -->
+    <main
+      v-else
+      class="notifications-list"
+    >
+
+      <!-- MARCAR TODAS -->
+      <div
+        v-if="unreadCount > 0"
+        class="mark-all-container"
+      >
+        <button
+          class="mark-all-btn"
+          @click="marcarTodasComoLidas"
+        >
+          Marcar todas como lidas
+        </button>
       </div>
+
+      <!-- NOTIFICAÇÃO -->
+      <div
+        v-for="notification in notifications"
+        :key="notification.id"
+        :class="[
+          'notification-card',
+          {
+            unread: !notification.lida
+          }
+        ]"
+        @click="handleNotificationClick(notification)"
+      >
+
+        <!-- ÍCONE -->
+        <div
+          :class="[
+            'icon-wrapper',
+            {
+              'unread-icon': !notification.lida
+            }
+          ]"
+        >
+          <span class="material-symbols-outlined">
+            notifications
+          </span>
+        </div>
+
+        <!-- CONTEÚDO -->
+        <div class="notification-content">
+
+          <h3>
+            {{ notification.mensagem }}
+          </h3>
+
+          <span class="time-ago">
+            {{
+              new Date(
+                notification.data_envio
+              ).toLocaleString('pt-BR')
+            }}
+          </span>
+
+        </div>
+
+        <!-- BOLINHA -->
+        <div
+          v-if="!notification.lida"
+          class="unread-dot"
+        ></div>
+
+      </div>
+
     </main>
+
   </div>
 </template>
+
 <style scoped>
 .notifications-page {
   background-color: var(--surface-bg);
   min-height: 100vh;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  padding: 24px 24px;
+  padding: 24px;
+  font-family: "Montserrat", sans-serif;
+  box-sizing: border-box;
 }
 
-/* =========================================
-   HEADER (PADRONIZADO COM O CARRINHO)
-   ========================================= */
 .notifications-header {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 35px;
+  margin-bottom: 30px;
+  min-height: 42px;
 }
 
 .back-btn {
   position: absolute;
   left: 0;
+  width: 40px;
+  height: 40px;
   border: none;
   background: transparent;
-  font-size: 28px;
-  cursor: pointer;
+  color: var(--text-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.2s;
-  color: var(--text-color);
+  cursor: pointer;
+  border-radius: 50%;
 }
 
 .back-btn:hover {
-  opacity: 0.6;
+  background: var(--surface-elevated);
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .page-title {
@@ -154,108 +321,179 @@ const handleNotificationClick = (notif: Notification) => {
   font-weight: 500;
   margin: 0;
   color: var(--text-color);
-  letter-spacing: -0.5px;
 }
 
-/* =========================================
-   LISTA DE NOTIFICAÇÕES
-   ========================================= */
+.unread-count {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
 .notifications-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+}
+
+.mark-all-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}
+
+.mark-all-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-color);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
 }
 
 .notification-card {
+  position: relative;
   display: flex;
   align-items: flex-start;
   padding: 18px;
   background-color: var(--surface-bg);
-  border: 1px solid #eeeeee;
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   cursor: pointer;
-  transition: all 0.25s ease;
-  position: relative;
+  transition: 0.2s ease;
 }
 
 .notification-card.unread {
-  border-color: var(--border-color);
-  background-color: var(--surface-bg);
+  background-color: var(--surface-elevated);
 }
 
 .icon-wrapper {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 14px;
+  background-color: var(--surface-elevated);
+  color: var(--text-muted);
 }
 
-.icon-wrapper.promo { background-color: var(--text-color); color: #fff; }
-.icon-wrapper.delivery { background-color: var(--surface-elevated); color: var(--text-color); }
-.icon-wrapper.stock { background-color: var(--surface-elevated); color: var(--text-color); }
+.icon-wrapper.unread-icon {
+  background-color: var(--text-color);
+  color: var(--surface-bg);
+}
+
+.notification-content {
+  flex: 1;
+  padding-right: 15px;
+}
 
 .notification-content h3 {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 600;
-  margin: 0 0 4px 0;
-}
-
-.notification-content p {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin: 0 0 6px 0;
+  margin: 0 0 7px;
+  color: var(--text-color);
   line-height: 1.4;
 }
 
 .time-ago {
-  font-size: 0.75rem;
-  color: #b0b0b0;
+  font-size: 0.72rem;
+  color: var(--text-muted);
 }
 
 .unread-dot {
+  position: absolute;
+  top: 20px;
+  right: 18px;
   width: 7px;
   height: 7px;
   background-color: var(--text-color);
   border-radius: 50%;
-  position: absolute;
-  top: 22px;
-  right: 18px;
 }
 
-/* =========================================
-   MOBILE E DESKTOP (Responsividade)
-   ========================================= */
+.state-message,
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 50px 20px;
+  color: var(--text-muted);
+}
+
+.state-message .material-symbols-outlined,
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.state-message p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.empty-state h2 {
+  color: var(--text-color);
+  font-size: 18px;
+  margin: 10px 0 6px;
+}
+
+.empty-state p {
+  max-width: 330px;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.loading-icon {
+  animation: spin 1s linear infinite;
+}
+
+.retry-btn {
+  margin-top: 15px;
+  border: none;
+  background: var(--text-color);
+  color: var(--surface-bg);
+  border-radius: 20px;
+  padding: 10px 18px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+@media (min-width: 1024px) {
+  .notifications-page {
+    padding: 30px 40px;
+  }
+
+  .notification-card:hover {
+    transform: translateY(-2px);
+  }
+}
+
 @media (max-width: 768px) {
   .notifications-page {
     padding: 20px 18px;
   }
 
-  .notifications-header {
-    margin-bottom: 28px;
+  .page-title {
+    font-size: 1.4rem;
   }
 
-  .back-btn {
-    font-size: 24px;
+  .notification-card {
+    padding: 15px;
   }
 }
 
-.notifications-page {
-  background-color: var(--surface-bg);
-  min-height: 100vh;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: 24px 24px;
-}
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
 
-@media (min-width: 1024px) {
-  .notification-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.04);
+  to {
+    transform: rotate(360deg);
   }
 }
 </style>

@@ -45,7 +45,7 @@ function closeMenu() {
   </div>
 </template>
 
-<style scoped>
+<style>
 /* esconder header mobile no desktop */
 @media (min-width: 768px) {
   :deep(.header-mobile) {

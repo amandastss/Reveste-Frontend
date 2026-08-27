@@ -98,7 +98,7 @@ function handleClick(item: FooterItem, index: number) {
 
 /* BOTÃO DO MEIO (VENDER) */
 .footer-button:nth-child(2) {
-  background: var(--accent);
+  background: black;
 }
 
 .footer-button:nth-child(2) .material-symbols-outlined {

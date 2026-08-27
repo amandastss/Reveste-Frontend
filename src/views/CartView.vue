@@ -18,6 +18,10 @@ const cartStore = useCartStore()
 const cartItems = computed(() => cartStore.items)
 const subtotal = computed(() => cartStore.subtotal)
 
+const isEmpty = computed(() => 
+  Array.isArray(cartItems.value) && cartItems.value.length === 0
+)
+
 // modal
 const editModalVisible = ref(false)
 const itemBeingEdited = ref<CartItem | null>(null)
@@ -42,8 +46,15 @@ function goBack() {
 function decreaseQuantity(item: CartItem) {
   if (item.quantity > 1) {
     cartStore.updateQuantity(item.id, item.quantity - 1)
+  } else {
+    const confirmRemove = confirm('Deseja remover este item do carrinho?')
+
+    if (confirmRemove) {
+      cartStore.removeItem(item.id)
+    }
   }
 }
+
 
 function increaseQuantity(item: CartItem) {
   cartStore.updateQuantity(item.id, item.quantity + 1)
@@ -62,8 +73,8 @@ onMounted(() => {
   <div class="cart-page">
     <header class="cart-header">
       <button @click="goBack" class="back-btn" aria-label="Voltar">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-          stroke-linecap="round" stroke-linejoin="round">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <line x1="19" y1="12" x2="5" y2="12"></line>
           <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
@@ -72,34 +83,43 @@ onMounted(() => {
     </header>
 
     <section class="cart-items">
-      <div v-for="item in cartItems" :key="item.id" class="cart-item">
-        <img :src="item.image" :alt="item.name" class="item-image" />
+      <!-- CARRINHO VAZIO -->
+      <div v-if="isEmpty" class="empty-cart">
+        <p>Seu carrinho está vazio.</p>
+      </div>
 
-        <div class="item-info">
-          <div class="top-info">
-            <div>
-              <h2>{{ item.name }}</h2>
-              <div class="details">
-                <span>{{ item.color }}</span>
-                <span>|</span>
-                <span>{{ item.size }}</span>
+      <!-- ITENS -->
+      <div v-else>
+        <div v-for="item in cartItems" :key="item.id" class="cart-item">
+          <img :src="item.image" :alt="item.name" class="item-image" />
+
+          <div class="item-info">
+            <div class="top-info">
+              <div>
+                <h2>{{ item.name }}</h2>
+                <div class="details">
+                  <span>{{ item.color }}</span>
+                  <span>|</span>
+                  <span>{{ item.size }}</span>
+                </div>
               </div>
+              <p class="price">${{ item.price * item.quantity }}</p>
             </div>
-            <p class="price">${{ item.price * item.quantity }}</p>
-          </div>
 
-          <button class="edit-btn" @click="editItem(item)">EDIT</button>
+            <button class="edit-btn" @click="editItem(item)">EDIT</button>
 
-          <div class="quantity-controls">
-            <button @click="decreaseQuantity(item)">−</button>
-            <span>{{ item.quantity }}</span>
-            <button @click="increaseQuantity(item)">+</button>
+            <div class="quantity-controls">
+              <button @click="decreaseQuantity(item)">−</button>
+              <span>{{ item.quantity }}</span>
+              <button @click="increaseQuantity(item)">+</button>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <footer class="cart-footer">
+    <!-- FOOTER (só aparece se tiver item) -->
+    <footer v-if="!isEmpty" class="cart-footer">
       <div class="subtotal">
         <span>Sub total</span>
         <span>${{ subtotal }}</span>
@@ -110,13 +130,14 @@ onMounted(() => {
       </button>
     </footer>
 
+    <!-- MODAL -->
     <EditItemModal 
-  v-if="itemBeingEdited"
-  :item="itemBeingEdited as any"
-  :visible="editModalVisible"
-  @close="editModalVisible = false"
-  @update="onItemUpdated"
-/>
+      v-if="itemBeingEdited"
+      :item="itemBeingEdited as any"
+      :visible="editModalVisible"
+      @close="editModalVisible = false"
+      @update="onItemUpdated"
+    />
   </div>
 </template>
 

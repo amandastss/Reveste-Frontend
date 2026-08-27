@@ -1,72 +1,183 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 const router = useRouter()
 
 const imagem = ref<string | null>(null)
+const produtos = ref<Produto[]>([])
+const loading = ref(false)
 
-const produtos = ref([
-  {
-    id: 1,
-    nome: 'Calça Jeans Skinny',
-    preco: 76.44,
-    imagem: '/src/assets/roupas/calcajeansskinny.png'
-  },
-  {
-    id: 2,
-    nome: 'Blusa Laranja Básica',
-    preco: 50,
-    imagem: '/src/assets/roupas/blusalaranjabasica.png'
+const API_BASE = import.meta.env.VITE_API_URL
+
+interface Produto {
+  id: number
+  nome: string
+  preco: number
+  imagem_url?: string
+  imagem?: string
+}
+
+async function buscarProdutos() {
+  if (!imagem.value) return
+
+  loading.value = true
+
+  try {
+    const blob = await fetch(imagem.value).then(res => res.blob())
+
+    const arquivo = new File(
+      [blob],
+      "imagem-pesquisa.webp",
+      {
+        type: blob.type
+      }
+    )
+
+    const formData = new FormData()
+
+    formData.append(
+      "imagem",
+      arquivo
+    )
+
+    const response = await axios.post(
+      `${API_BASE}/api/pesquisa-imagem/`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
+      }
+    )
+
+    console.log(
+      "Produtos recebidos:",
+      response.data
+    )
+
+    produtos.value = response.data
+
+  } catch (error) {
+
+    console.error(
+      "Erro na busca por imagem:",
+      error
+    )
+
+  } finally {
+    loading.value = false
   }
-])
+}
 
-onMounted(() => {
+
+onMounted(async () => {
+
   imagem.value = sessionStorage.getItem('camera-image')
+
+  sessionStorage.removeItem('camera-image')
+
+  await buscarProdutos()
+
 })
+
 
 function voltar() {
   router.back()
 }
+
+function formatPreco(valor: number) {
+  return Number(valor).toFixed(2)
+}
+
+function formatImagem(item: Produto) {
+  return item.imagem_url || item.imagem || 'https://placehold.co/300x300?text=Sem+foto'
+}
+
 </script>
+
 
 <template>
   <div class="page">
 
     <div class="top-bar">
-      <span class="material-symbols-outlined" @click="voltar">arrow_back</span>
+      <span
+        class="material-symbols-outlined"
+        @click="voltar"
+      >
+        arrow_back
+      </span>
 
       <h2>Resultado da busca</h2>
     </div>
 
-    <div class="preview-card" v-if="imagem">
-      <img :src="imagem" />
+
+    <div
+      class="preview-card"
+      v-if="imagem"
+    >
+      <img
+        :src="imagem"
+        alt="Imagem pesquisada"
+      />
     </div>
+
 
     <div class="results-title">
       Produtos semelhantes
     </div>
 
-    <div class="grid">
+
+    <div v-if="loading" class="loading">
+      Procurando produtos...
+    </div>
+
+
+    <div
+      v-else-if="produtos.length"
+      class="grid"
+    >
 
       <div
         v-for="item in produtos"
         :key="item.id"
         class="card"
       >
-        <img :src="item.imagem" />
+
+        <img
+          :src="formatImagem(item)"
+          :alt="item.nome"
+        />
+
 
         <div class="info">
-          <h3>{{ item.nome }}</h3>
-          <p>R$ {{ item.preco }}</p>
+
+          <h3>
+            {{ item.nome }}
+          </h3>
+
+          <p>
+            R$ {{ formatPreco(item.preco) }}
+          </p>
+
         </div>
+
       </div>
 
     </div>
 
+
+    <div
+      v-else
+      class="empty"
+    >
+      Nenhum produto encontrado
+    </div>
+
+
   </div>
 </template>
-
 <style scoped>
 .page {
   min-height: 100vh;
