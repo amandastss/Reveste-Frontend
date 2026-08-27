@@ -140,7 +140,7 @@ const getCategoriaNome = (item: Categoria | null) => {
   return item.nome || item.name || item.title || ''
 }
 
-const getResponseList = <T>(data: unknown): T[] => {
+const getResponseList = <T,>(data: unknown): T[] => {
   if (!data || typeof data !== 'object') {
     return []
   }
@@ -164,8 +164,12 @@ const produtoPertenceCategoria = (produto: Produto, categoriaSelecionada: Catego
   const candidatos = [
     produto.categoria_id,
     produto.category_id,
-    typeof produto.categoria === 'object' && produto.categoria ? produto.categoria.id : produto.categoria,
-    typeof produto.category === 'object' && produto.category ? produto.category.id : produto.category,
+    typeof produto.categoria === 'object' && produto.categoria
+      ? produto.categoria.id
+      : produto.categoria,
+    typeof produto.category === 'object' && produto.category
+      ? produto.category.id
+      : produto.category,
     produto.categoria_nome,
     produto.categoriaNome,
     produto.categoria_name,
@@ -231,7 +235,9 @@ const aplicarCategoriaDaRota = () => {
   const categoriaId = Number(valorCategoria)
   categoriaSelecionada.value =
     categorias.value.find((item) => Number(item.id) === categoriaId) ||
-    categorias.value.find((item) => normalizeText(getCategoriaNome(item)) === normalizeText(valorCategoria)) ||
+    categorias.value.find(
+      (item) => normalizeText(getCategoriaNome(item)) === normalizeText(valorCategoria),
+    ) ||
     null
 }
 
@@ -329,6 +335,9 @@ function abrirProduto(id: number) {
   router.push(`/produto/${id}`)
 }
 
+// ==========================================
+// CÂMERA E BUSCA VISUAL (NOVA LÓGICA)
+// ==========================================
 const mostrarModalCamera = ref(false)
 
 function abrirCameraModal() {
@@ -339,7 +348,11 @@ function fecharModal() {
   mostrarModalCamera.value = false
 }
 
-async function irParaCamera(tipo: 'camera' | 'gallery') {
+function limparBusca() {
+  search.value = ''
+}
+
+function irParaCamera(tipo: 'camera' | 'gallery') {
   fecharModal()
 
   if (tipo === 'gallery') {
@@ -364,7 +377,7 @@ async function irParaCamera(tipo: 'camera' | 'gallery') {
             document.body.removeChild(input)
             router.push('/pesquisa-camera')
             resolve()
-            console.log("IMAGEM SALVA:", data.substring(0, 50))
+            console.log('IMAGEM SALVA:', data.substring(0, 50))
           }
           reader.readAsDataURL(file)
         } else {
@@ -385,15 +398,12 @@ onMounted(async () => {
   await Promise.all([carregarCategorias(), carregarProdutos()])
   aplicarCategoriaDaRota()
 })
-
 </script>
+
 <template>
   <div class="search-page">
-    <!-- HEADER -->
     <div class="top-bar">
-      <span class="material-symbols-outlined icon-btn" @click="voltar">
-        arrow_back
-      </span>
+      <span class="material-symbols-outlined icon-btn" @click="voltar"> arrow_back </span>
 
       <div class="search-bar">
         <div class="search-input-wrapper">
@@ -404,7 +414,7 @@ onMounted(async () => {
             placeholder="Pesquisar itens..."
           />
 
-          <span class="search-icon">
+          <span v-if="!search" class="search-icon">
             <svg viewBox="0 0 24 24" fill="none">
               <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" />
               <path
@@ -412,6 +422,18 @@ onMounted(async () => {
                 stroke="currentColor"
                 stroke-width="2"
                 stroke-linecap="round"
+              />
+            </svg>
+          </span>
+
+          <span v-else class="search-icon clear-icon" @click="limparBusca">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M18 6L6 18M6 6L18 18"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
               />
             </svg>
           </span>
@@ -444,7 +466,7 @@ onMounted(async () => {
           />
         </div>
 
-        <span>{{ getCategoriaNome(item) || "Categoria" }}</span>
+        <span>{{ getCategoriaNome(item) || 'Categoria' }}</span>
       </button>
     </div>
 
@@ -453,11 +475,7 @@ onMounted(async () => {
       <p class="recentes-title">Pesquisas recentes</p>
 
       <div class="recentes-list">
-        <div
-          class="recente-item"
-          v-for="(item, index) in recentes"
-          :key="index"
-        >
+        <div class="recente-item" v-for="(item, index) in recentes" :key="index">
           <span @click="usarRecente(item)">
             {{ item }}
           </span>
@@ -467,26 +485,14 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- RESULTADOS -->
     <div class="results" v-if="filtrados.length">
-      <div
-        class="card"
-        v-for="item in filtrados"
-        :key="item.id"
-        @click="abrirProduto(item.id)"
-      >
-        <img
-          :src="item.imagem_url || item.imagem"
-          :alt="item.nome"
-          @error="onImgError"
-        />
+      <div class="card" v-for="item in filtrados" :key="item.id" @click="abrirProduto(item.id)">
+        <img :src="item.imagem_url || item.imagem" :alt="item.nome" @error="onImgError" />
 
         <div class="info">
           <h3>{{ item.nome }}</h3>
           <p class="marca">{{ item.marca }}</p>
-          <p class="preco">
-            R$ {{ Number(item.preco).toFixed(2) }}
-          </p>
+          <p class="preco">R$ {{ Number(item.preco).toFixed(2) }}</p>
         </div>
       </div>
     </div>
@@ -497,26 +503,17 @@ onMounted(async () => {
     </div>
 
     <!-- OVERLAY -->
-    <div
-      v-if="mostrarModalCamera"
-      class="camera-overlay"
-      @click="fecharModal"
-    ></div>
+    <div v-if="mostrarModalCamera" class="camera-overlay" @click="fecharModal"></div>
 
     <!-- MODAL -->
     <div v-if="mostrarModalCamera" class="camera-sheet">
-      <button @click="irParaCamera('camera')">
-        Tirar foto
-      </button>
+      <button @click="irParaCamera('camera')">Tirar foto</button>
 
-      <button @click="irParaCamera('gallery')">
-        Importar da galeria
-      </button>
+      <button @click="irParaCamera('gallery')">Importar da galeria</button>
 
-      <button class="cancel" @click="fecharModal">
-        Cancelar
-      </button>
+      <button class="cancel" @click="fecharModal">Cancelar</button>
     </div>
   </div>
 </template>
+
 <style scoped src="../css/search.css"></style>

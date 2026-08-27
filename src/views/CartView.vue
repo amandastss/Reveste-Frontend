@@ -1,7 +1,8 @@
+```vue
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useCartStore } from '@/stores/cart'
-import EditItemModal from './EditItemModal.vue'
+import { criarCheckout } from '@/api/pagamentosApi'
 
 interface CartItem {
   id: number
@@ -15,57 +16,79 @@ interface CartItem {
 
 const cartStore = useCartStore()
 
+const carregandoPagamento = ref(false)
+const mensagemErro = ref('')
+
 const cartItems = computed(() => cartStore.items)
+
 const subtotal = computed(() => cartStore.subtotal)
 
-const isEmpty = computed(() => 
-  Array.isArray(cartItems.value) && cartItems.value.length === 0
-)
+const isEmpty = computed(() => {
+  return Array.isArray(cartItems.value) && cartItems.value.length === 0
+})
 
-// modal
-const editModalVisible = ref(false)
-const itemBeingEdited = ref<CartItem | null>(null)
-
-function editItem(item: CartItem) {
-  itemBeingEdited.value = item
-  editModalVisible.value = true
-}
-
-function onItemUpdated(data: { size: string; color: string }) {
-  if (itemBeingEdited.value) {
-    itemBeingEdited.value.size = data.size
-    itemBeingEdited.value.color = data.color
-  }
-}
-
-// ações
 function goBack() {
   window.history.back()
 }
 
-function decreaseQuantity(item: CartItem) {
-  if (item.quantity > 1) {
-    cartStore.updateQuantity(item.id, item.quantity - 1)
-  } else {
-    const confirmRemove = confirm('Deseja remover este item do carrinho?')
+async function removeItem(item: CartItem) {
+  const confirmar = confirm(`Deseja remover "${item.name}" do carrinho?`)
 
-    if (confirmRemove) {
-      cartStore.removeItem(item.id)
-    }
+  if (!confirmar) {
+    return
+  }
+
+  mensagemErro.value = ''
+
+  try {
+    await cartStore.removeItem(item.id)
+  } catch (erro) {
+    console.error('Erro ao remover produto:', erro)
+
+    mensagemErro.value = 'Não foi possível remover o produto do carrinho.'
   }
 }
 
+async function checkout() {
+  if (isEmpty.value) {
+    return
+  }
 
-function increaseQuantity(item: CartItem) {
-  cartStore.updateQuantity(item.id, item.quantity + 1)
+  mensagemErro.value = ''
+  carregandoPagamento.value = true
+
+  try {
+    const resposta = await criarCheckout()
+
+    if (!resposta.checkout_url) {
+      throw new Error('O link de pagamento não foi retornado.')
+    }
+
+    window.location.href = resposta.checkout_url
+  } catch (erro: unknown) {
+    console.error('Erro ao iniciar pagamento:', erro)
+
+    let mensagem = 'Não foi possível iniciar o pagamento. Tente novamente.'
+
+    if (typeof erro === 'object' && erro !== null && 'response' in erro) {
+      const axiosError = erro as { response?: { data?: { detail?: string } } }
+      mensagem = axiosError.response?.data?.detail || mensagem
+    }
+
+    mensagemErro.value = mensagem
+  } finally {
+    carregandoPagamento.value = false
+  }
 }
 
-function checkout() {
-  alert('Pagamento ainda não implementado')
-}
+onMounted(async () => {
+  try {
+    await cartStore.loadCart()
+  } catch (erro) {
+    console.error('Erro ao carregar carrinho:', erro)
 
-onMounted(() => {
-  cartStore.loadCart()
+    mensagemErro.value = 'Não foi possível carregar o carrinho.'
+  }
 })
 </script>
 
@@ -73,16 +96,31 @@ onMounted(() => {
   <div class="cart-page">
     <header class="cart-header">
       <button @click="goBack" class="back-btn" aria-label="Voltar">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="19" y1="12" x2="5" y2="12"></line>
-          <polyline points="12 19 5 12 12 5"></polyline>
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="19" y1="12" x2="5" y2="12" />
+
+          <polyline points="12 19 5 12 12 5" />
         </svg>
       </button>
+
       <h1>Seu Carrinho</h1>
     </header>
 
     <section class="cart-items">
+      <!-- ERRO -->
+      <div v-if="mensagemErro" class="cart-error">
+        {{ mensagemErro }}
+      </div>
+
       <!-- CARRINHO VAZIO -->
       <div v-if="isEmpty" class="empty-cart">
         <p>Seu carrinho está vazio.</p>
@@ -96,49 +134,50 @@ onMounted(() => {
           <div class="item-info">
             <div class="top-info">
               <div>
-                <h2>{{ item.name }}</h2>
+                <h2>
+                  {{ item.name }}
+                </h2>
+
                 <div class="details">
-                  <span>{{ item.color }}</span>
-                  <span>|</span>
-                  <span>{{ item.size }}</span>
+                  <span v-if="item.color">
+                    {{ item.color }}
+                  </span>
+
+                  <span v-if="item.color && item.size"> | </span>
+
+                  <span v-if="item.size">
+                    {{ item.size }}
+                  </span>
                 </div>
               </div>
-              <p class="price">${{ item.price * item.quantity }}</p>
+
+              <p class="price">R$ {{ Number(item.price).toFixed(2) }}</p>
             </div>
 
-            <button class="edit-btn" @click="editItem(item)">EDIT</button>
+            <div class="item-actions">
+              <span class="unique-item"> Peça única </span>
 
-            <div class="quantity-controls">
-              <button @click="decreaseQuantity(item)">−</button>
-              <span>{{ item.quantity }}</span>
-              <button @click="increaseQuantity(item)">+</button>
+              <button class="remove-btn" @click="removeItem(item)">REMOVER</button>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- FOOTER (só aparece se tiver item) -->
+    <!-- FOOTER -->
     <footer v-if="!isEmpty" class="cart-footer">
       <div class="subtotal">
-        <span>Sub total</span>
-        <span>${{ subtotal }}</span>
+        <span> Subtotal </span>
+
+        <span> R$ {{ Number(subtotal).toFixed(2) }} </span>
       </div>
 
-      <button class="checkout-btn" @click="checkout">
-        SEGUIR PARA PAGAMENTO
+      <button class="checkout-btn" @click="checkout" :disabled="carregandoPagamento">
+        {{ carregandoPagamento ? 'REDIRECIONANDO...' : 'SEGUIR PARA PAGAMENTO' }}
       </button>
     </footer>
-
-    <!-- MODAL -->
-    <EditItemModal 
-      v-if="itemBeingEdited"
-      :item="itemBeingEdited as any"
-      :visible="editModalVisible"
-      @close="editModalVisible = false"
-      @update="onItemUpdated"
-    />
   </div>
 </template>
 
 <style scoped src="/src/css/cart.css"></style>
+```
