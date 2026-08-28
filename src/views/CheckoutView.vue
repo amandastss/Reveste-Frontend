@@ -615,10 +615,12 @@ onBeforeUnmount(async () => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 20px 80px;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .checkout-header {
   margin-bottom: 32px;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .checkout-header h1 {
