@@ -32,10 +32,7 @@ function closeMenu() {
 
     <HeaderDesktop />
 
-    <MenuComponent
-      :isOpen="isMenuOpen"
-      @close-menu="closeMenu"
-    />
+    <MenuComponent :isOpen="isMenuOpen" @close-menu="closeMenu" />
 
     <main class="content">
       <router-view />
@@ -58,6 +55,10 @@ function closeMenu() {
   :deep(.header-desktop) {
     display: none;
   }
+
+  .content {
+    padding-bottom: 64px;
+  }
 }
 
 /* esconder footer mobile no desktop */
@@ -79,6 +80,7 @@ function closeMenu() {
 /* conteúdo principal */
 .content {
   flex: 1;
+  min-width: 0;
   background: var(--app-bg);
 }
 
