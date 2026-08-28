@@ -1,101 +1,178 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import api from '@/api/config'
 
 export interface CartItem {
   id: number
+  itemPedidoId: number
   name: string
+  color: string
+  size: string
   price: number
   quantity: number
   image: string
-  color?: string
-  size?: string
+}
+
+interface BackendCartItem {
+  id: number
+  quantidade: number
+  preco: string
+  nome: string | null
+  cor: string | null
+  tamanho: string | null
+  imagem_url: string | null
+  pedido: number
+  produto: number
 }
 
 export const useCartStore = defineStore('cart', {
   state: () => ({
     items: [] as CartItem[],
+    loading: false,
   }),
 
   getters: {
-    subtotal: (state) =>
-      state.items.reduce((t, i) => t + i.price * i.quantity, 0),
+    totalItems: (state) => {
+      return state.items.reduce(
+        (total, item) => total + item.quantity,
+        0,
+      )
+    },
+
+    totalPrice: (state) => {
+      return state.items.reduce(
+        (total, item) => total + item.price * item.quantity,
+        0,
+      )
+    },
   },
 
   actions: {
-    // 🔹 CARREGAR CARRINHO
     async loadCart() {
-      const token = localStorage.getItem('token')
+      this.loading = true
 
-      if (token) {
-        // usuário logado → backend
-        const res = await axios.get('/api/cart/', {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+      try {
+        const response = await api.get<BackendCartItem[]>('/carrinho/')
 
-         console.log('res.data:', res.data)
-    console.log('isArray:', Array.isArray(res.data))
+        const cartItems = response.data
 
-    
-        this.items = res.data
-      } else {
-        // visitante → localStorage
-        const saved = localStorage.getItem('cart')
-        this.items = saved ? JSON.parse(saved) : []
+        const itemsWithProductData = await Promise.all(
+          cartItems.map(async (item) => {
+            try {
+              const productResponse = await api.get(
+                `/produtos/${item.produto}/`,
+              )
+
+              const produto = productResponse.data
+
+              return {
+                id: produto.id,
+                itemPedidoId: item.id,
+
+                name:
+                  item.nome ??
+                  produto.nome ??
+                  produto.titulo ??
+                  'Produto',
+
+                color:
+                  item.cor ??
+                  produto.cor ??
+                  '',
+
+                size:
+                  item.tamanho ??
+                  produto.tamanho ??
+                  '',
+
+                price: Number(item.preco),
+
+                quantity: item.quantidade,
+
+                image:
+                  item.imagem_url ??
+                  produto.imagem_url ??
+                  produto.imagem ??
+                  produto.foto ??
+                  '',
+              }
+            } catch (error) {
+              console.error(
+                `Erro ao carregar produto ${item.produto}:`,
+                error,
+              )
+
+              return {
+                id: item.produto,
+                itemPedidoId: item.id,
+                name: item.nome ?? 'Produto',
+                color: item.cor ?? '',
+                size: item.tamanho ?? '',
+                price: Number(item.preco),
+                quantity: item.quantidade,
+                image: item.imagem_url ?? '',
+              }
+            }
+          }),
+        )
+
+        this.items = itemsWithProductData
+      } catch (error) {
+        console.error('Erro ao carregar carrinho:', error)
+
+        this.items = []
+      } finally {
+        this.loading = false
       }
     },
 
-    // 🔹 ADICIONAR ITEM
-    async addItem(item: CartItem) {
-      const token = localStorage.getItem('token')
-
-      const existing = this.items.find((i) => i.id === item.id)
-
-      if (existing) {
-        existing.quantity++
-      } else {
-        this.items.push({ ...item, quantity: 1 })
-      }
-
-      if (token) {
-        await axios.post('/api/cart/', item, {
-          headers: { Authorization: `Bearer ${token}` },
+    async addItem(productId: number) {
+      try {
+        await api.post('/carrinho/', {
+          productId,
         })
-      } else {
-        localStorage.setItem('cart', JSON.stringify(this.items))
+
+        await this.loadCart()
+      } catch (error) {
+        console.error('Erro ao adicionar produto ao carrinho:', error)
+
+        throw error
       }
     },
 
-    // 🔹 ATUALIZAR QTD
-    async updateQuantity(id: number, quantity: number) {
-      const item = this.items.find((i) => i.id === id)
-      if (!item) return
+    async removeItem(itemPedidoId: number) {
+      try {
+        await api.delete(`/carrinho/${itemPedidoId}/`)
 
-      item.quantity = quantity
+        await this.loadCart()
+      } catch (error) {
+        console.error('Erro ao remover item do carrinho:', error)
 
-      const token = localStorage.getItem('token')
-
-      if (token) {
-        await axios.patch(`/api/cart/${id}/`, { quantity }, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-      } else {
-        localStorage.setItem('cart', JSON.stringify(this.items))
+        throw error
       }
     },
 
-    // 🔹 REMOVER
-    async removeItem(id: number) {
-      this.items = this.items.filter((i) => i.id !== id)
-
-      const token = localStorage.getItem('token')
-
-      if (token) {
-        await axios.delete(`/api/cart/${id}/`, {
-          headers: { Authorization: `Bearer ${token}` },
+    async updateQuantity(
+      itemPedidoId: number,
+      quantity: number,
+    ) {
+      try {
+        await api.patch(`/carrinho/${itemPedidoId}/`, {
+          quantidade: quantity,
         })
-      } else {
-        localStorage.setItem('cart', JSON.stringify(this.items))
+
+        await this.loadCart()
+      } catch (error) {
+        console.error(
+          'Erro ao atualizar quantidade do carrinho:',
+          error,
+        )
+
+        throw error
       }
+    },
+
+    clearCart() {
+      this.items = []
     },
   },
 })

@@ -102,19 +102,85 @@ p {
   border-radius: 6px;
 }
 
-/* BOTÃO FIXO */
-.bottom-bar {
+/* BOTÃO FIXO */.bottom-bar {
   position: fixed;
   bottom: 0;
   left: 0;
-  right: 0;
+
   width: 100%;
-  max-width: 430px;
-  margin: 0 auto;
-  padding: 16px;
-  background: white;
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-  z-index: 999;
+  min-height: 88px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 12px;
+  padding: 16px 24px;
+
+  background: #ffffff;
+  border-top: 1px solid #e5e5e5;
+
+  z-index: 100;
+}
+
+.cart-btn,
+.buy-now-btn {
+  flex: 1;
+  max-width: 320px;
+
+  height: 52px;
+
+  border-radius: 8px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.cart-btn:hover,
+.buy-now-btn:hover {
+  transform: translateY(-2px);
+}
+
+.cart-btn:disabled,
+.buy-now-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Adicionar ao carrinho */
+.cart-btn {
+  background: #ffffff;
+  color: #000000;
+
+  border: 2px solid #000000;
+}
+
+/* Comprar agora */
+.buy-now-btn {
+  background: #000000;
+  color: #ffffff;
+
+  border: 2px solid #000000;
+}
+
+@media (max-width: 600px) {
+  .bottom-bar {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .cart-btn,
+  .buy-now-btn {
+    height: 48px;
+    font-size: 12px;
+  }
 }
 
 .buy-btn {
@@ -458,5 +524,17 @@ p {
   .modal {
     border-radius: 20px;
     padding: 26px;
+  }
+}
+@media (max-width: 600px) {
+  .bottom-bar {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .cart-btn,
+  .buy-now-btn {
+    font-size: 13px;
+    height: 48px;
   }
 }
