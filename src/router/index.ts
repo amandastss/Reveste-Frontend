@@ -26,6 +26,7 @@ import NotificationsView from '../views/NotificationsView.vue'
 import CategoriaView from '../views/CategoriaView.vue'
 import EditProfileView from '../views/EditProfileView.vue'
 import CategoriaSuporteView from '../views/CategoriaSuporteView.vue'
+import FavoritesView from '@/views/FavoritesView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -191,6 +192,12 @@ const router = createRouter({
       name: 'auth-verify-code',
       component: VerifyCodeView,
     },
+    {
+      path: '/favoritos',
+      name: 'favoritos',
+      component: FavoritesView,
+    },
+    
   ],
 })
 
