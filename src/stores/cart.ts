@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+
 import api from '@/api/config'
 
 export interface CartItem {
@@ -15,13 +16,19 @@ export interface CartItem {
 interface BackendCartItem {
   id: number
   quantidade: number
-  preco: string
+  preco: string | number
   nome: string | null
   cor: string | null
   tamanho: string | null
   imagem_url: string | null
-  pedido: number
   produto: number
+}
+
+interface BackendCartResponse {
+  pedido_id: number
+  status: string
+  itens: BackendCartItem[]
+  total: string | number
 }
 
 export const useCartStore = defineStore('cart', {
@@ -34,14 +41,14 @@ export const useCartStore = defineStore('cart', {
     totalItems: (state) => {
       return state.items.reduce(
         (total, item) => total + item.quantity,
-        0,
+        0
       )
     },
 
     totalPrice: (state) => {
       return state.items.reduce(
         (total, item) => total + item.price * item.quantity,
-        0,
+        0
       )
     },
   },
@@ -51,21 +58,28 @@ export const useCartStore = defineStore('cart', {
       this.loading = true
 
       try {
-        const response = await api.get<BackendCartItem[]>('/carrinho/')
+        const response = await api.get<BackendCartResponse>(
+          '/carrinho/'
+        )
 
-        const cartItems = response.data
+        console.log(
+          'CARRINHO VINDO DO BACKEND:',
+          response.data
+        )
+
+        const cartItems = response.data.itens ?? []
 
         const itemsWithProductData = await Promise.all(
           cartItems.map(async (item) => {
             try {
               const productResponse = await api.get(
-                `/produtos/${item.produto}/`,
+                `/produtos/${item.produto}/`
               )
 
               const produto = productResponse.data
 
               return {
-                id: produto.id,
+                id: item.produto,
                 itemPedidoId: item.id,
 
                 name:
@@ -98,28 +112,39 @@ export const useCartStore = defineStore('cart', {
             } catch (error) {
               console.error(
                 `Erro ao carregar produto ${item.produto}:`,
-                error,
+                error
               )
 
               return {
                 id: item.produto,
                 itemPedidoId: item.id,
+
                 name: item.nome ?? 'Produto',
+
                 color: item.cor ?? '',
+
                 size: item.tamanho ?? '',
+
                 price: Number(item.preco),
+
                 quantity: item.quantidade,
+
                 image: item.imagem_url ?? '',
               }
             }
-          }),
+          })
         )
 
         this.items = itemsWithProductData
       } catch (error) {
-        console.error('Erro ao carregar carrinho:', error)
+        console.error(
+          'Erro ao carregar carrinho:',
+          error
+        )
 
         this.items = []
+
+        throw error
       } finally {
         this.loading = false
       }
@@ -133,38 +158,30 @@ export const useCartStore = defineStore('cart', {
 
         await this.loadCart()
       } catch (error) {
-        console.error('Erro ao adicionar produto ao carrinho:', error)
+        console.error(
+          'Erro ao adicionar produto ao carrinho:',
+          error
+        )
 
         throw error
       }
     },
 
-    async removeItem(itemPedidoId: number) {
+    async removeItem(productId: number) {
       try {
-        await api.delete(`/carrinho/${itemPedidoId}/`)
-
-        await this.loadCart()
-      } catch (error) {
-        console.error('Erro ao remover item do carrinho:', error)
-
-        throw error
-      }
-    },
-
-    async updateQuantity(
-      itemPedidoId: number,
-      quantity: number,
-    ) {
-      try {
-        await api.patch(`/carrinho/${itemPedidoId}/`, {
-          quantidade: quantity,
+        await api.delete('/carrinho/', {
+          data: {
+            productId,
+          },
         })
 
-        await this.loadCart()
+        this.items = this.items.filter(
+          (item) => item.id !== productId
+        )
       } catch (error) {
         console.error(
-          'Erro ao atualizar quantidade do carrinho:',
-          error,
+          'Erro ao remover item do carrinho:',
+          error
         )
 
         throw error
