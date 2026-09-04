@@ -1,13 +1,20 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { getFavoriteCount, readFavorites, removeFavorite } from '@/utils/favorites'
+import { getFavoriteCount, readFavorites, removeFavorite, syncFavoritesFromServer } from '@/utils/favorites'
 
 const router = useRouter()
 const favorites = ref(readFavorites())
 
-const refreshFavorites = () => {
-  favorites.value = readFavorites()
+const refreshFavorites = async () => {
+  const synced = await syncFavoritesFromServer()
+  favorites.value = synced.length ? synced : readFavorites()
+}
+
+const handleStorageChange = (event: StorageEvent) => {
+  if (!event.key || event.key.includes('reveste_favorites_v1') || event.key === 'user' || event.key === 'email') {
+    refreshFavorites()
+  }
 }
 
 const formatPrice = (value: number) => {
@@ -29,18 +36,23 @@ const abrirProduto = (id: number) => {
   router.push({ name: 'produto-detalhe', params: { id } })
 }
 
-const removerFavorito = (id: number) => {
-  removeFavorite(id)
-  refreshFavorites()
+const removerFavorito = async (id: number) => {
+  await removeFavorite(id)
+  await refreshFavorites()
 }
 
 const voltar = () => router.back()
 
 onMounted(() => {
   refreshFavorites()
+  window.addEventListener('storage', handleStorageChange)
   if (getFavoriteCount() === 0) {
     document.title = 'Favoritos - Reveste'
   }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('storage', handleStorageChange)
 })
 </script>
 
@@ -94,7 +106,8 @@ onMounted(() => {
 }
 
 .favorites-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
   align-items: center;
   gap: 12px;
   padding: 18px 20px 14px;
@@ -113,12 +126,14 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .header-title-wrap {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .eyebrow {
@@ -131,8 +146,12 @@ onMounted(() => {
 
 .favorites-header h1 {
   margin: 0;
-  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-size: clamp(1rem, 4vw, 2rem);
   font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .empty-state {
@@ -248,6 +267,17 @@ onMounted(() => {
 
 .favorite-remove .material-symbols-outlined {
   font-size: 18px;
+}
+
+@media (max-width: 420px) {
+  .favorites-header {
+    gap: 10px;
+  }
+
+  .favorites-header h1 {
+    font-size: 1.35rem;
+    white-space: normal;
+  }
 }
 
 @media (min-width: 768px) {

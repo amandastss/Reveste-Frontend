@@ -47,7 +47,7 @@ const loadFavoriteState = () => {
   isFavorite.value = isFavoriteProduct(productId)
 }
 
-const toggleFavorite = () => {
+const toggleFavorite = async () => {
   if (!productData.value) return
 
   const favoritePayload: FavoriteProduct = {
@@ -58,7 +58,7 @@ const toggleFavorite = () => {
     categoria: productData.value.categoria,
   }
 
-  isFavorite.value = toggleFavoriteProduct(favoritePayload)
+  isFavorite.value = await toggleFavoriteProduct(favoritePayload)
 
   isAnimating.value = true
   setTimeout(() => {
