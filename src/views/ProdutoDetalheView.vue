@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { useCartStore } from '@/stores/cart'
+import { isFavoriteProduct, toggleFavorite as toggleFavoriteProduct, type FavoriteProduct } from '@/utils/favorites'
 
 interface Produto {
   id: number
@@ -43,19 +44,22 @@ const isFavorite = ref(false)
 const isAnimating = ref(false)
 
 const loadFavoriteState = () => {
-  if (productId) {
-    const saved = localStorage.getItem(`favorite-${productId}`)
-    isFavorite.value = saved === 'true'
-  }
+  isFavorite.value = isFavoriteProduct(productId)
 }
 
 const toggleFavorite = () => {
-  isFavorite.value = !isFavorite.value
-  if (productId) {
-    localStorage.setItem(`favorite-${productId}`, String(isFavorite.value))
+  if (!productData.value) return
+
+  const favoritePayload: FavoriteProduct = {
+    id: productData.value.id,
+    nome: productData.value.nome,
+    preco: Number(productData.value.preco || 0),
+    imagem_url: productData.value.imagem_url,
+    categoria: productData.value.categoria,
   }
 
-  // Animação de pulsação
+  isFavorite.value = toggleFavoriteProduct(favoritePayload)
+
   isAnimating.value = true
   setTimeout(() => {
     isAnimating.value = false
@@ -147,6 +151,13 @@ const fetchProduct = async () => {
     loading.value = false
   }
 }
+
+watch(
+  () => route.params.id,
+  () => {
+    loadFavoriteState()
+  },
+)
 
 onMounted(() => {
   loadFavoriteState()
