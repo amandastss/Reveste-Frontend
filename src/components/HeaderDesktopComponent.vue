@@ -85,19 +85,24 @@ function goToSell() {
 /* HEADER */
 .header-desktop {
   width: 100%;
-  background: var(--surface-bg);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-color);
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
 }
 
 /* CONTAINER CENTRAL */
 .header-inner {
-  width: 100%;
-  padding: 12px 5%;
+  width: min(1280px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 14px 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 40px;
+  gap: 32px;
   position: relative;
 }
 
@@ -105,7 +110,7 @@ function goToSell() {
 .floating-menu {
   position: absolute;
   top: 60px;
-  left: 80px;
+  left: 0;
   animation: fadeDown 0.2s ease;
 }
 
@@ -114,10 +119,11 @@ function goToSell() {
   color: var(--surface-bg);
   border: none;
   padding: 10px 18px;
-  border-radius: 20px;
+  border-radius: 999px;
   font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
 }
 
 /* ANIMAÇÃO */
@@ -140,19 +146,20 @@ function goToSell() {
 
 /* BOTÕES */
 .nav-button {
-  background: transparent;
-  border: none;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-color);
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
   transition: 0.2s;
 }
 
 .nav-button:hover {
-  background: rgba(15, 23, 42, 0.06);
+  background: rgba(15, 23, 42, 0.04);
+  transform: translateY(-1px);
 }
 
 .nav-text {
@@ -194,8 +201,8 @@ function goToSell() {
 }
 
 .headerdesktop-button {
-  background: transparent;
-  border: none;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-color);
   cursor: pointer;
   padding: 10px;
   border-radius: 50%;
@@ -210,7 +217,8 @@ function goToSell() {
 }
 
 .headerdesktop-button:hover {
-  background: rgba(15, 23, 42, 0.06);
+  background: rgba(15, 23, 42, 0.04);
+  transform: translateY(-1px);
 }
 
 /* ÍCONES */

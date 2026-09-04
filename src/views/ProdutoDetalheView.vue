@@ -292,8 +292,18 @@ const buyNow = async () => {
 
         <!-- AVALIAÇÕES -->
         <div class="reviews-card" @click="openReviews">
-          <span>Ver avaliações</span>
-          <span>→</span>
+          <div class="reviews-header">
+            <div>
+              <h2>Avaliações</h2>
+              <p class="reviews-score">4,9 · 128 avaliações</p>
+            </div>
+            <span class="reviews-arrow">→</span>
+          </div>
+
+          <div class="reviews-preview">
+            <div class="review-pill">★★★★★</div>
+            <span>Excelente qualidade e acabamento.</span>
+          </div>
         </div>
       </div>
     </main>
