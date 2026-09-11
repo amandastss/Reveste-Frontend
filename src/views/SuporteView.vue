@@ -245,12 +245,7 @@ async function submitMessage() {
         </div>
 
         <div ref="messagesContainer" class="messages">
-          <div
-            v-for="message in messages"
-            :key="message.id"
-            class="bubble"
-            :class="message.sender"
-          >
+          <div v-for="message in messages" :key="message.id" class="bubble" :class="message.sender">
             {{ message.text }}
           </div>
 
@@ -485,7 +480,7 @@ async function submitMessage() {
 
 .bubble {
   max-width: 82%;
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-radius: 18px;
   line-height: 1.5;
   word-break: break-word;
@@ -631,9 +626,9 @@ async function submitMessage() {
 
   .content {
     display: grid;
-    grid-template-columns: minmax(300px, 0.95fr) minmax(420px, 1.45fr);
+    grid-template-columns: minmax(280px, 0.85fr) minmax(420px, 1.5fr);
     align-items: start;
-    gap: 22px;
+    gap: 20px;
     padding-top: 0;
     margin-top: 24px;
   }
@@ -644,6 +639,15 @@ async function submitMessage() {
     min-height: 100%;
   }
 
+  .chat-card {
+    padding-bottom: 12px;
+  }
+
+  .messages {
+    min-height: 200px;
+    max-height: 300px;
+  }
+
   .seller-button {
     grid-column: 1 / -1;
     width: 100%;
@@ -652,4 +656,3 @@ async function submitMessage() {
   }
 }
 </style>
-
