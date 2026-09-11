@@ -70,17 +70,25 @@ const dragStartY = ref(0)
 const isDragging = ref(false)
 
 function onTouchStart(e: TouchEvent) {
-  dragStartY.value = e.touches[0].clientY
+  const touch = e.touches[0]
+  if (!touch) return
+
+  dragStartY.value = touch.clientY
   isDragging.value = true
 }
 
 function onTouchMove(e: TouchEvent) {
   if (!isDragging.value) return
-  const dy = e.touches[0].clientY - dragStartY.value
+
+  const touch = e.touches[0]
+  if (!touch) return
+
+  const dy = touch.clientY - dragStartY.value
+
   if (dy > 0) {
     sheetTranslateY.value = dy
     e.preventDefault()
-  }
+  }  
 }
 
 function onTouchEnd() {

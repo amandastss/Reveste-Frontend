@@ -1,6 +1,6 @@
 .camera-page {
   min-height: 100vh;
-  background: #f7f7f7;
+  background: var(--surface-elevated);
 }
 
 .top-bar {
@@ -8,8 +8,8 @@
   align-items: center;
   gap: 10px;
   padding: 16px;
-  background: white;
-  border-bottom: 1px solid #eee;
+  background: var(--surface-bg);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .top-bar p {
@@ -33,7 +33,7 @@
   overflow: hidden;
   border-radius: 24px;
   box-shadow: 0 6px 25px rgba(0,0,0,.08);
-  background: #000;
+  background: var(--surface-elevated);
 }
 
 .camera-video,
@@ -43,6 +43,7 @@
   object-fit: cover;
   display: block;
 }
+
 
 .camera-controls {
   position: absolute;
@@ -67,32 +68,29 @@
   background: black;
   cursor: pointer;
   z-index: 30;
-}
-
-.preview-controls {
+}.preview-controls {
   position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 52px;
+  inset: 0;
+
   display: flex;
   flex-direction: column;
-  width: auto;
+  justify-content: center;
+  align-items: center;
+
   gap: 12px;
-  padding: 0;
+  padding: 16px;
 }
 
 .row-actions {
+  width: 100%;
+  max-width: 320px;
   display: flex;
   gap: 12px;
 }
 
-.row-actions button {
-  flex: 1;
-  min-height: 48px;
-  border: none;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
+.row-actions button,
+.cancel-btn {
+  width: 100%;
 }
 
 .preview-controls .cancel-btn {
@@ -110,10 +108,10 @@
 
 .preview-controls .retake-btn {
   background: rgba(255, 255, 255, 0.85);
-  color: #000;
+  color: var(--text-color);
 }
 
 .preview-controls .cancel-btn {
   background: rgba(236, 236, 236, 0.85);
-  color: #000;
+  color: var(--text-color);
 }

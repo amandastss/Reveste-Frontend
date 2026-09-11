@@ -271,9 +271,9 @@ video {
 }
 
 .cancel-btn {
-  background: #f5f5f5;
-  color: #333;
-  border: 1px solid #ddd;
+  background: var(--surface-elevated);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
 }
 
 /* INITIAL SCREEN */

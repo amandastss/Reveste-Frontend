@@ -1,7 +1,9 @@
 import axios from "axios"
 
+const API_BASE = import.meta.env.VITE_API_URL ?? "https://reveste-backend.class.fabricadesoftware.ifc.edu.br"
+
 const api = axios.create({
-  baseURL: "http://127.0.0.1:8000/api/"
+  baseURL: `${API_BASE}/api`,
 })
 
 export const getProdutos = async () => {

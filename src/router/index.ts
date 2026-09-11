@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import CheckoutView from '../views/CheckoutView.vue'
 import HomeView from '../views/HomeView.vue'
 import SearchView from '@/views/SearchView.vue'
 import SellView from '../views/SellView.vue'
@@ -20,6 +21,11 @@ import PedidoDetalheView from '../views/PedidoDetalheView.vue'
 import CartView from '../views/CartView.vue'
 import ProdutoDetalheView from '../views/ProdutoDetalheView.vue'
 import ReviewsView from '../views/ReviewsView.vue'
+import AppearanceView from '../views/AppearanceView.vue'
+import NotificationsView from '../views/NotificationsView.vue'
+import CategoriaView from '../views/CategoriaView.vue'
+import EditProfileView from '../views/EditProfileView.vue'
+import FavoritosView from '../views/FavoritosView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -35,6 +41,12 @@ const router = createRouter({
       path: '/search',
       name: 'search',
       component: SearchView,
+    },
+    {
+      path: '/categoria/:id',
+      name: 'categoria',
+      component: CategoriaView,
+      props: true,
     },
     {
       path: '/pesquisa-camera',
@@ -56,7 +68,16 @@ const router = createRouter({
       name: 'profile',
       component: ProfileView,
     },
-
+    {
+      path: '/profile/edit',
+      name: 'profile-edit',
+      component: EditProfileView,
+    },
+    {
+      path: '/favoritos',
+      name: 'favoritos',
+      component: FavoritosView,
+    },
     {
       path: '/menu',
       name: 'menu',
@@ -79,6 +100,12 @@ const router = createRouter({
       path: '/carrinho',
       name: 'cart',
       component: CartView,
+    },
+
+    {
+      path: '/checkout',
+      name: 'checkout',
+      component: CheckoutView,
     },
 
     {
@@ -105,15 +132,31 @@ const router = createRouter({
       props: true,
     },
     {
+      path: '/aparencia',
+      name: 'aparencia',
+      component: AppearanceView,
+    },
+
+    {
       path: '/suporte',
       name: 'suporte',
       component: () => import('@/views/SuporteView.vue'),
+    },
+    {
+      path: '/notificacoes',
+      name: 'notificacoes',
+      component: NotificationsView,
     },
 
     {
       path: '/suporte/categoria',
       name: 'categoria-suporte',
       component: () => import('@/views/CategoriaSuporteView.vue'),
+    },
+    {
+      path: '/suporte',
+      name: 'suporte',
+      component: () => import('@/views/SuporteView.vue'),
     },
 
     // AUTH

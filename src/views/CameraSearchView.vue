@@ -8,21 +8,15 @@ const router = useRouter()
 const videoRef = ref<HTMLVideoElement | null>(null)
 const stream = ref<MediaStream | null>(null)
 const imagem = ref<string | null>(null)
-const resultados = ref<any[]>([])
+const resultados = ref<Array<{ id?: string; imagem?: string; nome?: string; preco?: number }>>([])
 const loading = ref(false)
 
 async function startCamera() {
-  try {
-    const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-    stream.value = s
-    if (videoRef.value) {
-      videoRef.value.srcObject = s
-      await videoRef.value.play()
-    }
-  } catch (err) {
-    console.error('Erro ao acessar câmera', err)
-    alert('Não foi possível acessar a câmera. Verifique permissões.')
-    router.back()
+  const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+  stream.value = s
+  if (videoRef.value) {
+    videoRef.value.srcObject = s
+    await videoRef.value.play()
   }
 }
 
@@ -36,16 +30,20 @@ function stopCamera() {
     videoRef.value.srcObject = null
   }
 }
-
-const cameraPermitida = ref(false)
-
 onMounted(async () => {
+  console.log("ENTREI NA CAMERA SEARCH")
+
+  const imagemSalva = sessionStorage.getItem('camera-image')
+
+  console.log(
+    "IMAGEM RECEBIDA:",
+    imagemSalva?.substring(0, 50)
+  )
+
   try {
-    await navigator.mediaDevices.getUserMedia({ video: true })
-    cameraPermitida.value = true
-    startCamera()
+    await startCamera()
   } catch (err) {
-    console.error(err)
+    console.error('Erro ao acessar câmera', err)
     alert('Permissão da câmera negada')
     router.back()
   }
@@ -76,13 +74,64 @@ async function retakePhoto() {
     await videoRef.value.play()
   }
 }
-
 async function enviarFoto() {
   if (!imagem.value) return
 
-  sessionStorage.setItem('camera-image', imagem.value)
+  loading.value = true
 
-  router.push('/pesquisa-camera')
+  try {
+
+    // transforma base64 em arquivo
+    const blob = await fetch(imagem.value)
+      .then(res => res.blob())
+
+    const arquivo = new File(
+      [blob],
+      "foto.jpg",
+      {
+        type: "image/jpeg"
+      }
+    )
+
+
+    // cria formulário para enviar imagem
+    const formData = new FormData()
+
+    formData.append(
+      "imagem",
+      arquivo
+    )
+
+
+    // envia para Django
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_URL}/api/pesquisa-imagem/`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
+      }
+    )
+
+
+    console.log("Resultado da busca:", response.data)
+
+    resultados.value = response.data
+
+
+  } catch (error) {
+
+    console.error(
+      "Erro ao enviar imagem:",
+      error
+    )
+
+  } finally {
+
+    loading.value = false
+
+  }
 }
 
 function voltar() {
@@ -112,7 +161,7 @@ function voltar() {
           muted
           class="camera-video"
         ></video>
-        <img v-show="imagem" :src="imagem" alt="Preview" class="camera-photo" />
+        <img v-show="imagem" :src="imagem || ''" alt="Preview" class="camera-photo" />
 
         <div v-if="!imagem" class="camera-controls">
           <button class="capture-btn" @click="capturePhoto">Tirar foto</button>

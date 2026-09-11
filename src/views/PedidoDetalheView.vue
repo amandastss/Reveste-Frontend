@@ -82,13 +82,13 @@ const pedido = {
 
 <style scoped>
 .detalhe-page {
-  background: #f5f5f5;
+  background: var(--surface-elevated);
   min-height: 100vh;
   font-family: "Montserrat", sans-serif;
 }
 
 .top {
-  background: white;
+  background: var(--surface-bg);
   padding: 20px;
   display: flex;
   gap: 15px;
@@ -122,7 +122,7 @@ const pedido = {
 }
 
 .produto {
-  background: white;
+  background: var(--surface-bg);
   margin: 20px;
   padding: 15px;
   display: flex;

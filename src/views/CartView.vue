@@ -1,150 +1,166 @@
-
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import EditItemModal from './EditItemModal.vue'
+import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useCartStore } from '@/stores/cart'
 
-interface CartItem {
-  id: number
-  name: string
-  color: string
-  size: string
-  price: number
-  quantity: number
-  image: string
-}
+const router = useRouter()
+const cartStore = useCartStore()
 
-const cartItems = ref<CartItem[]>([
-  {
-    id: 1,
-    name: 'The Joni High Rise Loose 29L',
-    color: 'Preto',
-    size: 'M',
-    price: 100,
-    quantity: 2,
-    image:
-      'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=400&auto=format&fit=crop'
-  },
-  {
-    id: 2,
-    name: 'Graydon Button-Up',
-    color: 'Azul Claro',
-    size: 'G',
-    price: 159,
-    quantity: 2,
-    image:
-      'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=400&auto=format&fit=crop'
-  },
-  {
-    id: 3,
-    name: 'Desire Vest',
-    color: 'Rosa',
-    size: 'M',
-    price: 85,
-    quantity: 2,
-    image:
-      'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?q=80&w=400&auto=format&fit=crop'
-  }
-])
+const mensagemErro = ref('')
+const carregando = ref(true)
 
-// ── Modal de edição ───────────────────────────────────────────────────────────
-const editModalVisible = ref(false)
-const itemBeingEdited = ref<CartItem | null>(null)
+const cartItems = computed(() => cartStore.items)
+const subtotal = computed(() => cartStore.totalPrice)
 
-function editItem(item: CartItem) {
-  itemBeingEdited.value = item
-  editModalVisible.value = true
-}
-
-function onItemUpdated(data: { size: string; color: string }) {
-  if (itemBeingEdited.value) {
-    itemBeingEdited.value.size = data.size
-    itemBeingEdited.value.color = data.color
-  }
-}
-
-// ── Carrinho ──────────────────────────────────────────────────────────────────
-const subtotal = computed(() =>
-  cartItems.value.reduce((total, item) => total + item.price * item.quantity, 0)
-)
+const isEmpty = computed(() => cartItems.value.length === 0)
 
 function goBack() {
-  window.history.back()
+  router.back()
 }
 
-function decreaseQuantity(item: CartItem) {
-  if (item.quantity > 1) item.quantity--
+async function removeItem(productId: number) {
+  mensagemErro.value = ''
+
+  try {
+    await cartStore.removeItem(productId)
+  } catch (error: unknown) {
+    console.error('Erro ao remover produto:', error)
+
+    let mensagem = 'Não foi possível remover o produto do carrinho.'
+
+    if (typeof error === 'object' && error !== null && 'response' in error) {
+      const axiosError = error as {
+        response?: {
+          data?: {
+            detail?: string
+          }
+        }
+      }
+
+      mensagem = axiosError.response?.data?.detail || mensagem
+    }
+
+    mensagemErro.value = mensagem
+  }
 }
 
-function increaseQuantity(item: CartItem) {
-  item.quantity++
+function continuarComprando() {
+  router.push('/')
 }
 
-function checkout() {
-  alert('Página de pagamento ainda não criada.')
+function irParaPagamento() {
+  if (isEmpty.value) {
+    return
+  }
+
+  router.push('/checkout')
 }
+
+async function carregarCarrinho() {
+  carregando.value = true
+  mensagemErro.value = ''
+
+  try {
+    await cartStore.loadCart()
+  } catch (error: unknown) {
+    console.error('Erro ao carregar carrinho:', error)
+
+    let mensagem = 'Não foi possível carregar o carrinho.'
+
+    if (typeof error === 'object' && error !== null && 'response' in error) {
+      const axiosError = error as {
+        response?: {
+          data?: {
+            detail?: string
+          }
+        }
+      }
+
+      mensagem = axiosError.response?.data?.detail || mensagem
+    }
+
+    mensagemErro.value = mensagem
+  } finally {
+    carregando.value = false
+  }
+}
+
+onMounted(() => {
+  carregarCarrinho()
+})
 </script>
 
 <template>
   <div class="cart-page">
     <header class="cart-header">
-      <button class="back-btn" @click="goBack">←</button>
-      <h1>SEU CARRINHO</h1>
+      <button class="back-btn" aria-label="Voltar" @click="goBack">←</button>
+
+      <h1>Seu Carrinho</h1>
     </header>
 
-    <section class="cart-items">
-      <div
-        v-for="item in cartItems"
-        :key="item.id"
-        class="cart-item"
-      >
-        <img
-          :src="item.image"
-          :alt="item.name"
-          class="item-image"
-        />
+    <main class="cart-content">
+      <div v-if="carregando" class="loading">Carregando carrinho...</div>
 
-        <div class="item-info">
-          <div class="top-info">
-            <div>
-              <h2>{{ item.name }}</h2>
-              <div class="details">
-                <span>{{ item.color }}</span>
-                <span>|</span>
-                <span>{{ item.size }}</span>
-              </div>
+      <div v-else-if="mensagemErro" class="cart-error">
+        <p>{{ mensagemErro }}</p>
+
+        <button class="continue-btn" @click="carregarCarrinho">TENTAR NOVAMENTE</button>
+      </div>
+
+      <div v-else-if="isEmpty" class="empty-cart">
+        <h2>Seu carrinho está vazio</h2>
+
+        <p>Adicione uma peça para continuar.</p>
+
+        <button class="continue-btn" @click="continuarComprando">CONTINUAR COMPRANDO</button>
+      </div>
+
+      <section v-else class="cart-items">
+        <article v-for="item in cartItems" :key="item.id" class="cart-item">
+          <div class="item-image-container">
+            <img v-if="item.image" :src="item.image" :alt="item.name" class="item-image" />
+
+            <div v-else class="item-image-placeholder">Sem imagem</div>
+          </div>
+
+          <div class="item-info">
+            <div class="item-header">
+              <h2>
+                {{ item.name || 'Produto' }}
+              </h2>
+
+              <button class="remove-btn" @click="removeItem(item.itemPedidoId)">REMOVER</button>
             </div>
-            <p class="price">${{ item.price * item.quantity }}</p>
+
+            <div v-if="item.color || item.size" class="details">
+              <span v-if="item.color">
+                {{ item.color }}
+              </span>
+
+              <span v-if="item.color && item.size"> · </span>
+
+              <span v-if="item.size">
+                {{ item.size }}
+              </span>
+            </div>
+
+            <span class="unique-item"> Peça única </span>
+
+            <strong class="price"> R$ {{ item.price.toFixed(2).replace('.', ',') }} </strong>
           </div>
+        </article>
+      </section>
+    </main>
 
-          <button class="edit-btn" @click="editItem(item)">EDIT</button>
+    <footer v-if="!carregando && !mensagemErro && !isEmpty" class="cart-footer">
+      <div class="total">
+        <span>Total</span>
 
-          <div class="quantity-controls">
-            <button @click="decreaseQuantity(item)">−</button>
-            <span>{{ item.quantity }}</span>
-            <button @click="increaseQuantity(item)">+</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <footer class="cart-footer">
-      <div class="subtotal">
-        <span>Sub total</span>
-        <span>${{ subtotal }}</span>
+        <strong> R$ {{ subtotal.toFixed(2).replace('.', ',') }} </strong>
       </div>
 
-      <button class="checkout-btn" @click="checkout">
-        SEGUIR PARA PAGAMENTO
-      </button>
+      <button class="checkout-btn" @click="irParaPagamento">SEGUIR PARA PAGAMENTO</button>
     </footer>
-
-    <!-- Modal de edição -->
-    <EditItemModal
-      :item="itemBeingEdited"
-      :visible="editModalVisible"
-      @close="editModalVisible = false"
-      @update="onItemUpdated"
-    />
   </div>
 </template>
 

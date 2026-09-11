@@ -71,7 +71,7 @@ function goBack() {
 <style scoped>
 .suporte {
   min-height: 100vh;
-  background: #f6f6f7;
+  background: var(--surface-elevated);
   display: flex;
   flex-direction: column;
   font-family: "Montserrat", sans-serif;
@@ -136,7 +136,7 @@ function goBack() {
 
 /* CARD */
 .card {
-  background: white;
+  background: var(--surface-bg);
   margin-top: -30px;
   border-radius: 24px 24px 0 0;
   padding: 20px;
@@ -145,7 +145,7 @@ function goBack() {
 
 .titulo {
   font-size: 14px;
-  color: #777;
+  color: var(--text-muted);
   margin-bottom: 14px;
 }
 
@@ -165,7 +165,7 @@ function goBack() {
 
 .item:active {
   transform: scale(0.97);
-  background: #f8f8f8;
+  background: var(--surface-elevated);
 }
 
 .arrow {
@@ -204,8 +204,8 @@ function goBack() {
 
 /* botão secundário */
 .ligue {
-  background: white;
-  border: 1px solid #ddd;
+  background: var(--surface-bg);
+  border: 1px solid var(--border-color);
 }
 
 /* botão principal */
