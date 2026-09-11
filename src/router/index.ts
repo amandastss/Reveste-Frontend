@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import CategoriaSuporteView from '@/views/CategoriaSuporteView.vue'
+import FavoritesView from '@/views/FavoritesView.vue'
 import CheckoutView from '../views/CheckoutView.vue'
 import HomeView from '../views/HomeView.vue'
 import SearchView from '@/views/SearchView.vue'
@@ -74,6 +76,11 @@ const router = createRouter({
       component: EditProfileView,
     },
     {
+      path: '/favoritos',
+      name: 'favoritos',
+      component: FavoritosView,
+    },
+    {
       path: '/menu',
       name: 'menu',
       component: MenuComponent,
@@ -95,11 +102,6 @@ const router = createRouter({
       path: '/carrinho',
       name: 'cart',
       component: CartView,
-    },
-    {
-      path: '/favoritos',
-      name: 'favoritos',
-      component: FavoritosView,
     },
 
     {
@@ -149,10 +151,10 @@ const router = createRouter({
     },
 
     {
-      path: '/suporte/categoria',
-      name: 'categoria-suporte',
-      component: () => import('@/views/CategoriaSuporteView.vue'),
+      path: '/suporte/categoria/:tipo',
+      component: CategoriaSuporteView
     },
+
     {
       path: '/suporte',
       name: 'suporte',
@@ -196,6 +198,12 @@ const router = createRouter({
       name: 'auth-verify-code',
       component: VerifyCodeView,
     },
+    {
+      path: '/favoritos',
+      name: 'favoritos',
+      component: FavoritesView,
+    },
+    
   ],
 })
 

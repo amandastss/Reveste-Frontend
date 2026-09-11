@@ -129,7 +129,9 @@ onMounted(() => {
                 {{ item.name || 'Produto' }}
               </h2>
 
-              <button class="remove-btn" @click="removeItem(item.itemPedidoId)">REMOVER</button>
+              <button class="remove-btn" @click="removeItem(item.id)">
+                REMOVER
+              </button>
             </div>
 
             <div v-if="item.color || item.size" class="details">

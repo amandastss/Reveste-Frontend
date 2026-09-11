@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 // router
 const router = useRouter()
+const route = useRoute()
 
 // tipagem
 type Pergunta = {
@@ -15,34 +16,90 @@ type Pergunta = {
 // estado
 const aberto = ref<number | null>(null)
 
-const perguntas = ref<Pergunta[]>([
-  {
-    pergunta: 'Endereço incorreto e encomendas não entregues',
-    resposta: 'Se você inseriu o endereço errado, o pacote pode retornar.',
-    avaliacao: null
-  },
-  {
-    pergunta: 'Quanto tempo demora para envio?',
-    resposta: 'De 2 a 5 dias úteis.',
-    avaliacao: null
-  },
-  {
-    pergunta: 'Como rastrear meu pedido?',
-    resposta: 'Você recebe um código por email.',
-    avaliacao: null
-  }
-])
+// títulos
+const titulo = {
+  informacoes: 'INFORMAÇÕES DO PEDIDO',
+  pagamento: 'PAGAMENTO E SEGURANÇA',
+  entrega: 'ENVIO E ENTREGA',
+  produto: 'PRODUTO E GARANTIA'
+} as const
+
+// pegar tipo da rota (seguro)
+const tipo = computed(() => {
+  const param = route.params.tipo
+  return Array.isArray(param) ? param[0] : param
+})
+
+// FAQs por categoria
+const faqPorCategoria: Record<string, Pergunta[]> = {
+  informacoes: [
+    {
+      pergunta: 'Endereço incorreto e encomendas não entregues',
+      resposta: 'Se você inseriu o endereço errado, o pacote pode retornar.',
+      avaliacao: null
+    },
+    {
+      pergunta: 'Posso cancelar um pedido?',
+      resposta: 'Sim, antes do envio você pode cancelar.',
+      avaliacao: null
+    }
+  ],
+
+  pagamento: [
+    {
+      pergunta: 'Quais formas de pagamento são aceitas?',
+      resposta: 'Cartão, Pix e boleto.',
+      avaliacao: null
+    },
+    {
+      pergunta: 'Pagamento recusado',
+      resposta: 'Verifique os dados ou tente outro método.',
+      avaliacao: null
+    }
+  ],
+
+  entrega: [
+    {
+      pergunta: 'Quanto tempo demora para envio?',
+      resposta: 'De 2 a 5 dias úteis.',
+      avaliacao: null
+    },
+    {
+      pergunta: 'Como rastrear meu pedido?',
+      resposta: 'Você recebe um código por email.',
+      avaliacao: null
+    }
+  ],
+
+  produto: [
+    {
+      pergunta: 'O produto tem garantia?',
+      resposta: 'Depende do vendedor.',
+      avaliacao: null
+    },
+    {
+      pergunta: 'Posso trocar um produto?',
+      resposta: 'Sim, dentro do prazo.',
+      avaliacao: null
+    }
+  ]
+}
+
+// perguntas dinâmicas
+const perguntas = computed(() => {
+  return faqPorCategoria[tipo.value as keyof typeof faqPorCategoria] || []
+})
 
 // abrir/fechar
 function toggle(index: number) {
   aberto.value = aberto.value === index ? null : index
 }
 
-// avaliar (sem erro TS)
-function avaliar(index: number, tipo: 'sim' | 'nao') {
+// avaliar
+function avaliar(index: number, tipoAvaliacao: 'sim' | 'nao') {
   const item = perguntas.value[index]
   if (item) {
-    item.avaliacao = tipo
+    item.avaliacao = tipoAvaliacao
   }
 }
 
@@ -60,7 +117,7 @@ function voltar() {
       <span class="material-symbols-outlined back" @click="voltar">
         arrow_back
       </span>
-      <h2>ENVIO E ENTREGA</h2>
+      <h2>{{ titulo[tipo as keyof typeof titulo] }}</h2>
     </div>
 
     <!-- FAQ -->

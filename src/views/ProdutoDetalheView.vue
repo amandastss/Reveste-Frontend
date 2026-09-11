@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { useCartStore } from '@/stores/cart'
+import { isFavoriteProduct, toggleFavorite as toggleFavoriteProduct, type FavoriteProduct } from '@/utils/favorites'
 
 interface Produto {
   id: number
@@ -43,63 +44,21 @@ const isFavorite = ref(false)
 const isAnimating = ref(false)
 
 const loadFavoriteState = () => {
-  if (!productId) return
+  isFavorite.value = isFavoriteProduct(productId)
 
-  const favoritosSalvos = localStorage.getItem('favoritos')
-
-  if (!favoritosSalvos) {
-    isFavorite.value = false
-    return
-  }
-
-  try {
-    const favoritos = JSON.parse(favoritosSalvos)
-
-    isFavorite.value = favoritos.some(
-      (produto: Produto) => produto.id === productId,
-    )
-  } catch (error) {
-    console.error('Erro ao carregar favoritos:', error)
-
-    isFavorite.value = false
-  }
 }
 
 const toggleFavorite = () => {
   if (!productData.value) return
-
-  const favoritosSalvos = localStorage.getItem('favoritos')
-
-  let favoritos: Produto[] = []
-
-  try {
-    favoritos = favoritosSalvos
-      ? JSON.parse(favoritosSalvos)
-      : []
-  } catch (error) {
-    console.error('Erro ao acessar favoritos:', error)
+  const favoritePayload: FavoriteProduct = {
+    id: productData.value.id,
+    nome: productData.value.nome,
+    preco: Number(productData.value.preco || 0),
+    imagem_url: productData.value.imagem_url,
+    categoria: productData.value.categoria,
   }
 
-  const produtoJaFavoritado = favoritos.some(
-    (produto) => produto.id === productData.value?.id,
-  )
-
-  if (produtoJaFavoritado) {
-    favoritos = favoritos.filter(
-      (produto) => produto.id !== productData.value?.id,
-    )
-
-    isFavorite.value = false
-  } else {
-    favoritos.push(productData.value)
-
-    isFavorite.value = true
-  }
-
-  localStorage.setItem(
-    'favoritos',
-    JSON.stringify(favoritos),
-  )
+  isFavorite.value = toggleFavoriteProduct(favoritePayload)
 
   isAnimating.value = true
 
@@ -193,6 +152,13 @@ const fetchProduct = async () => {
     loading.value = false
   }
 }
+
+watch(
+  () => route.params.id,
+  () => {
+    loadFavoriteState()
+  },
+)
 
 onMounted(() => {
   loadFavoriteState()
