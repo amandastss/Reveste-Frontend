@@ -25,8 +25,7 @@ import AppearanceView from '../views/AppearanceView.vue'
 import NotificationsView from '../views/NotificationsView.vue'
 import CategoriaView from '../views/CategoriaView.vue'
 import EditProfileView from '../views/EditProfileView.vue'
-import CategoriaSuporteView from '../views/CategoriaSuporteView.vue'
-import FavoritesView from '@/views/FavoritesView.vue'
+import FavoritosView from '../views/FavoritosView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -75,6 +74,11 @@ const router = createRouter({
       component: EditProfileView,
     },
     {
+      path: '/favoritos',
+      name: 'favoritos',
+      component: FavoritosView,
+    },
+    {
       path: '/menu',
       name: 'menu',
       component: MenuComponent,
@@ -97,7 +101,7 @@ const router = createRouter({
       name: 'cart',
       component: CartView,
     },
-    
+
     {
       path: '/checkout',
       name: 'checkout',

@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
-
 import { useCartStore } from '@/stores/cart'
-import { useFavoritesStore } from '@/stores/favorites'
+import { isFavoriteProduct, toggleFavorite as toggleFavoriteProduct, type FavoriteProduct } from '@/utils/favorites'
 
 interface Produto {
   id: number
@@ -14,128 +13,64 @@ interface Produto {
   marca: string
   condicao?: string
   imagem_url?: string | null
-  categoria?:
-  | number
-  | string
-  | {
-    id?: number
-    nome?: string
-    name?: string
-    title?: string
-  }
-  | null
+  categoria?: number | string | { id?: number; nome?: string; name?: string; title?: string } | null
 }
 
 const route = useRoute()
 const router = useRouter()
-
 const cartStore = useCartStore()
-const favoritesStore = useFavoritesStore()
-
 const productId = Number(route.params.id || 0)
 
 const productData = ref<Produto | null>(null)
 const categoriaNome = ref('')
 const loading = ref(true)
 const error = ref('')
-
 const showAddToCartConfirm = ref(false)
 const isAddingToCart = ref(false)
 const addToCartError = ref('')
 const addToCartSuccess = ref(false)
 
-const favoriteMessage = ref('')
-const showFavoriteMessage = ref(false)
-
 const mainImage = computed(() => {
   if (!productData.value?.imagem_url) {
     return 'https://via.placeholder.com/600x600?text=Sem+imagem'
   }
-
   return productData.value.imagem_url.startsWith('http')
     ? productData.value.imagem_url
     : `${import.meta.env.VITE_API_URL}/api${productData.value.imagem_url}`
 })
 
-const goBack = () => {
-  router.back()
-}
-
-/* =========================================
-   FAVORITOS
-========================================= */
-
-const isFavorite = computed(() => {
-  if (!productData.value) return false
-
-  return favoritesStore.isFavorite(productData.value.id)
-})
-
+const goBack = () => router.back()
+const isFavorite = ref(false)
 const isAnimating = ref(false)
 
-const toggleFavorite = () => {
-
-  if (!productData.value) return
-
-  const jaEraFavorito = favoritesStore.isFavorite(
-    productData.value.id
-  )
-
-  favoritesStore.toggleFavorite({
-    id: productData.value.id,
-    nome: productData.value.nome,
-    preco: Number(productData.value.preco),
-    imagem_url: productData.value.imagem_url,
-    marca: productData.value.marca,
-  })
-
-  if (jaEraFavorito) {
-
-    favoriteMessage.value = 'Removido dos favoritos!'
-
-  } else {
-
-    favoriteMessage.value = '♡ Adicionado aos favoritos!'
-
-  }
-
-  showFavoriteMessage.value = true
-
-  isAnimating.value = true
-
-  setTimeout(() => {
-
-    isAnimating.value = false
-
-  }, 600)
-
-  setTimeout(() => {
-
-    showFavoriteMessage.value = false
-
-  }, 3000)
-
+const loadFavoriteState = () => {
+  isFavorite.value = isFavoriteProduct(productId)
 }
 
-/* =========================================
-   CARRINHO
-========================================= */
+const toggleFavorite = () => {
+  if (!productData.value) return
 
+  const favoritePayload: FavoriteProduct = {
+    id: productData.value.id,
+    nome: productData.value.nome,
+    preco: Number(productData.value.preco || 0),
+    imagem_url: productData.value.imagem_url,
+    categoria: productData.value.categoria,
+  }
+
+  isFavorite.value = toggleFavoriteProduct(favoritePayload)
+
+  isAnimating.value = true
+  setTimeout(() => {
+    isAnimating.value = false
+  }, 600)
+}
 const openAddToCartConfirm = () => {
   showAddToCartConfirm.value = true
 }
-
 const closeAddToCartConfirm = () => {
   showAddToCartConfirm.value = false
   addToCartError.value = ''
-}
-
-const handleAddToCartSuccess = () => {
-  addToCartSuccess.value = true
-
-  setTimeout(() => {
-    addToCartSuccess.value = false
-  }, 3000)
 }
 
 const confirmAddToCart = async () => {
@@ -150,59 +85,38 @@ const confirmAddToCart = async () => {
     closeAddToCartConfirm()
     handleAddToCartSuccess()
   } catch (err) {
-    console.error('Erro ao adicionar ao carrinho:', err)
-
-    addToCartError.value =
-      'Erro ao adicionar ao carrinho.'
+    addToCartError.value = err instanceof Error ? err.message : 'Erro ao adicionar ao carrinho'
   } finally {
     isAddingToCart.value = false
   }
 }
 
-/* =========================================
-   AVALIAÇÕES
-========================================= */
+const openReviews = () => router.push({ name: 'produto-avaliacoes', params: { id: productId } })
 
-const openReviews = () => {
-  router.push({
-    name: 'produto-avaliacoes',
-    params: {
-      id: productId,
-    },
-  })
+const handleAddToCartSuccess = () => {
+  addToCartSuccess.value = true
+  setTimeout(() => {
+    addToCartSuccess.value = false
+  }, 3000)
 }
 
-/* =========================================
-   CATEGORIA
-========================================= */
-
-const resolveCategoriaNome = async (
-  produto: Produto,
-) => {
+const resolveCategoriaNome = async (produto: Produto) => {
   const categoria = produto.categoria
 
   if (typeof categoria === 'object' && categoria) {
-    categoriaNome.value =
-      categoria.nome ||
-      categoria.name ||
-      categoria.title ||
-      ''
-
+    const nomeCategoria = categoria.nome || categoria.name || categoria.title || ''
+    categoriaNome.value = nomeCategoria
     return
   }
 
   const categoriaId = Number(categoria)
-
   if (!Number.isFinite(categoriaId) || categoriaId <= 0) {
     categoriaNome.value = ''
     return
   }
 
   try {
-    const res = await axios.get(
-      `${import.meta.env.VITE_API_URL}/api/categorias/`,
-    )
-
+    const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/categorias/`)
     const categorias = Array.isArray(res.data?.results)
       ? res.data.results
       : Array.isArray(res.data)
@@ -210,32 +124,16 @@ const resolveCategoriaNome = async (
         : []
 
     const categoriaEncontrada = categorias.find(
-      (item: {
-        id?: number
-        nome?: string
-        name?: string
-        title?: string
-      }) => Number(item.id) === categoriaId,
+      (item: { id?: number; nome?: string; name?: string; title?: string }) =>
+        Number(item.id) === categoriaId,
     )
-
     categoriaNome.value =
-      categoriaEncontrada?.nome ||
-      categoriaEncontrada?.name ||
-      categoriaEncontrada?.title ||
-      ''
+      categoriaEncontrada?.nome || categoriaEncontrada?.name || categoriaEncontrada?.title || ''
   } catch (err) {
-    console.error(
-      'Erro ao carregar categoria:',
-      err,
-    )
-
+    console.error('Erro ao carregar categoria do produto:', err)
     categoriaNome.value = ''
   }
 }
-
-/* =========================================
-   BUSCAR PRODUTO
-========================================= */
 
 const fetchProduct = async () => {
   loading.value = true
@@ -243,26 +141,28 @@ const fetchProduct = async () => {
   categoriaNome.value = ''
 
   try {
-    const res = await axios.get(
-      `${import.meta.env.VITE_API_URL}/api/produtos/${productId}/`,
-    )
-
+    const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/produtos/${productId}/`)
     productData.value = res.data
-
     await resolveCategoriaNome(res.data)
   } catch (err) {
     console.error(err)
-
-    error.value =
-      'Erro ao carregar os dados do produto.'
+    error.value = 'Erro ao carregar os dados do produto.'
   } finally {
     loading.value = false
   }
 }
 
-/* =========================================
-   COMPRAR AGORA
-========================================= */
+watch(
+  () => route.params.id,
+  () => {
+    loadFavoriteState()
+  },
+)
+
+onMounted(() => {
+  loadFavoriteState()
+  fetchProduct()
+})
 
 const buyNow = async () => {
   if (!productData.value) return
@@ -271,48 +171,25 @@ const buyNow = async () => {
   addToCartError.value = ''
 
   try {
-    const produtoJaNoCarrinho =
-      cartStore.items.some(
-        item =>
-          item.id === productData.value!.id,
-      )
+    // Verificar se o produto já está no carrinho
+    // Como é peça única, não duplicar
+    const produtoJaNoCarrinho = cartStore.items.some((item) => item.id === productData.value!.id)
 
+    // Se não está no carrinho, adicionar
     if (!produtoJaNoCarrinho) {
-      await cartStore.addItem(
-        productData.value.id,
-      )
+      await cartStore.addItem(productData.value.id)
     }
 
+    // Redirecionar direto para checkout (não para carrinho)
     await router.push('/checkout')
-  } catch (err) {
-    console.error(
-      'Erro ao iniciar compra:',
-      err,
-    )
+  } catch (error) {
+    console.error('Erro ao iniciar compra:', error)
 
-    addToCartError.value =
-      'Não foi possível iniciar a compra. Tente novamente.'
+    addToCartError.value = 'Não foi possível iniciar a compra. Tente novamente.'
   } finally {
     isAddingToCart.value = false
   }
 }
-
-/* =========================================
-   MONTAGEM
-========================================= */
-
-onMounted(async () => {
-  favoritesStore.loadFavorites()
-
-  await fetchProduct()
-
-  try {
-    await cartStore.loadCart()
-  } catch (err) {
-    console.log('Carrinho não carregado:', err)
-  }
-})
-
 </script>
 
 <template>
@@ -323,22 +200,9 @@ onMounted(async () => {
       <div class="header-actions"></div>
     </header>
 
-    <!-- MENSAGENS DE SUCESSO -->
-
+    <!-- SUCCESS MESSAGE -->
     <Transition name="fade">
-
-      <div v-if="addToCartSuccess" class="success-message">
-        ✓ Adicionado ao carrinho!
-      </div>
-
-    </Transition>
-
-    <Transition name="fade">
-
-      <div v-if="showFavoriteMessage" class="favorite-success-message">
-        {{ favoriteMessage }}
-      </div>
-
+      <div v-if="addToCartSuccess" class="success-message">✓ Adicionado ao carrinho!</div>
     </Transition>
 
     <!-- CONTEÚDO -->
@@ -347,27 +211,40 @@ onMounted(async () => {
       <div class="image-wrapper">
         <img :src="mainImage" class="main-product-image" />
         <button class="back-btn" @click="goBack" title="Voltar">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-            stroke-linejoin="round">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
         </button>
-
-        <button class="favorite-btn" :class="{
-          'is-favorite': isFavorite,
-          'is-animating': isAnimating
-        }" @click.stop="toggleFavorite" type="button">
-
-          <svg v-if="!isFavorite" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
+        <button
+          class="favorite-btn"
+          :class="{ 'is-favorite': isFavorite, 'is-animating': isAnimating }"
+          @click="toggleFavorite"
+          title="Adicionar aos favoritos"
+        >
+          <svg
+            v-if="!isFavorite"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <path
-              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
-            </path>
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+            ></path>
           </svg>
           <svg v-else viewBox="0 0 24 24" fill="currentColor">
             <path
-              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
-            </path>
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+            ></path>
           </svg>
         </button>
       </div>
@@ -423,7 +300,11 @@ onMounted(async () => {
 
     <!-- BOTÃO FIXO (ÚNICO!) -->
     <div class="bottom-bar">
-      <button class="cart-btn" :disabled="isAddingToCart || !productData" @click="openAddToCartConfirm">
+      <button
+        class="cart-btn"
+        :disabled="isAddingToCart || !productData"
+        @click="openAddToCartConfirm"
+      >
         Adicionar ao carrinho
       </button>
 
@@ -434,7 +315,11 @@ onMounted(async () => {
     </div>
 
     <!-- MODAL -->
-    <div v-if="showAddToCartConfirm && productData" class="overlay" @click.self="closeAddToCartConfirm">
+    <div
+      v-if="showAddToCartConfirm && productData"
+      class="overlay"
+      @click.self="closeAddToCartConfirm"
+    >
       <div class="modal">
         <h2>Adicionar ao carrinho?</h2>
 
