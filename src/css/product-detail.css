@@ -538,3 +538,41 @@ p {
     height: 48px;
   }
 }
+
+/*MSG FAVORITO*/
+.favorite-success-message {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+
+  padding: 12px 20px;
+
+  background: var(--text-color);
+  color: var(--surface-bg);
+
+  border-radius: 30px;
+
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+
+  white-space: nowrap;
+}
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-enter-from {
+  opacity: 0;
+  transform: translate(-50%, -10px);
+}
+
+.fade-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -10px);
+}

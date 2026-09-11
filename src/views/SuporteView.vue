@@ -4,10 +4,10 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 const categorias = [
-  { label: 'Informações do pedido', route: '/suporte/categoria' },
-  { label: 'Pagamento e segurança', route: '/suporte/categoria' },
-  { label: 'Compras e entregas', route: '/suporte/categoria' },
-  { label: 'Produto e garantia', route: '/suporte/categoria' },
+  { label: 'Informações do pedido', route: '/suporte/categoria/informacoes' },
+  { label: 'Pagamento e segurança', route: '/suporte/categoria/pagamento' },
+  { label: 'Compras e entregas', route: '/suporte/categoria/entrega' },
+  { label: 'Produto e garantia', route: '/suporte/categoria/produto' },
 ]
 
 function goTo(route: string) {
@@ -82,17 +82,20 @@ function goBack() {
   position: relative;
 }
 
+/* imagem */
 .header img {
   width: 100%;
   height: 220px;
   object-fit: cover;
+  display: block;
 }
 
-/* overlay escuro */
+/* overlay (fica atrás dos botões) */
 .overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.35);
+  background: rgba(0,0,0,0.25);
+  z-index: 1;
 }
 
 /* botão voltar */
@@ -100,6 +103,7 @@ function goBack() {
   position: absolute;
   top: 16px;
   left: 16px;
+  z-index: 2;
 
   background: rgba(255,255,255,0.2);
   backdrop-filter: blur(6px);
@@ -115,13 +119,6 @@ function goBack() {
 
   color: white;
   cursor: pointer;
-
-  transition: transform 0.15s ease, opacity 0.15s ease;
-}
-
-.back-button:active {
-  transform: scale(0.9);
-  opacity: 0.8;
 }
 
 /* título */
@@ -129,6 +126,7 @@ function goBack() {
   position: absolute;
   bottom: 24px;
   left: 16px;
+  z-index: 2;
   color: white;
   font-size: 24px;
   font-weight: 600;

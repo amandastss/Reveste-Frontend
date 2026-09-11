@@ -149,10 +149,10 @@ const router = createRouter({
     },
 
     {
-      path: '/suporte/categoria',
-      name: 'categoria-suporte',
-      component: () => import('@/views/CategoriaSuporteView.vue'),
+      path: '/suporte/categoria/:tipo',
+      component: CategoriaSuporteView
     },
+
     {
       path: '/suporte',
       name: 'suporte',
@@ -196,6 +196,12 @@ const router = createRouter({
       name: 'auth-verify-code',
       component: VerifyCodeView,
     },
+    {
+      path: '/favoritos',
+      name: 'favoritos',
+      component: FavoritesView,
+    },
+    
   ],
 })
 
