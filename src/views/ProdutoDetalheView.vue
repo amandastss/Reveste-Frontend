@@ -29,6 +29,7 @@ const showAddToCartConfirm = ref(false)
 const isAddingToCart = ref(false)
 const addToCartError = ref('')
 const addToCartSuccess = ref(false)
+const favoriteSuccess = ref(false)
 
 const mainImage = computed(() => {
   if (!productData.value?.imagem_url) {
@@ -58,7 +59,22 @@ const toggleFavorite = () => {
     categoria: productData.value.categoria,
   }
 
+  const wasFavorite = isFavorite.value
   isFavorite.value = toggleFavoriteProduct(favoritePayload)
+
+  if (!wasFavorite && isFavorite.value) {
+    favoriteSuccess.value = true
+    setTimeout(() => {
+      favoriteSuccess.value = false
+    }, 2200)
+  }
+
+  if (wasFavorite && !isFavorite.value) {
+    favoriteSuccess.value = true
+    setTimeout(() => {
+      favoriteSuccess.value = false
+    }, 2200)
+  }
 
   isAnimating.value = true
   setTimeout(() => {
@@ -203,6 +219,11 @@ const buyNow = async () => {
     <!-- SUCCESS MESSAGE -->
     <Transition name="fade">
       <div v-if="addToCartSuccess" class="success-message">✓ Adicionado ao carrinho!</div>
+    </Transition>
+    <Transition name="fade">
+      <div v-if="favoriteSuccess" class="success-message">
+        {{ isFavorite ? '✓ Adicionado aos favoritos!' : '✓ Removido dos favoritos!' }}
+      </div>
     </Transition>
 
     <!-- CONTEÚDO -->
