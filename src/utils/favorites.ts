@@ -13,6 +13,90 @@ const toStorageKey = (value?: string | null) => {
   return normalized || 'guest'
 }
 
+const isFavoriteProductLike = (item: unknown): item is FavoriteProduct =>
+  !!item &&
+  typeof item === 'object' &&
+  typeof (item as { id?: unknown }).id === 'number' &&
+  typeof (item as { nome?: unknown }).nome === 'string'
+
+const readLegacyFavorites = (): FavoriteProduct[] => {
+  try {
+    const collected: FavoriteProduct[] = []
+    const candidateKeys = new Set<string>()
+
+    const storedUser = localStorage.getItem('user')
+    if (storedUser) {
+      const user = JSON.parse(storedUser) as Record<string, unknown>
+      const candidates = [
+        user.email,
+        user.username,
+        user.name,
+        user.id,
+      ]
+
+      for (const value of candidates) {
+        if (value !== undefined && value !== null && String(value).trim()) {
+          candidateKeys.add(String(value).trim())
+        }
+      }
+    }
+
+    const email = localStorage.getItem('email')
+    if (email && email.trim()) {
+      candidateKeys.add(email.trim())
+    }
+
+    const explicitKey = localStorage.getItem('favorites_user_key')
+    if (explicitKey && explicitKey.trim()) {
+      candidateKeys.add(explicitKey.trim())
+    }
+
+    for (const value of Array.from(candidateKeys)) {
+      candidateKeys.add(`favorites_${value}`)
+      candidateKeys.add(`${STORAGE_PREFIX}:${toStorageKey(value)}`)
+    }
+
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const storageKey = localStorage.key(index)
+      if (!storageKey) {
+        continue
+      }
+
+      if (!storageKey.startsWith('favorites_') && !storageKey.startsWith(`${STORAGE_PREFIX}:`)) {
+        continue
+      }
+
+      if (candidateKeys.size > 0 && !candidateKeys.has(storageKey)) {
+        const normalized = storageKey.replace(/^favorites_/, '').replace(`${STORAGE_PREFIX}:`, '')
+        if (normalized && !Array.from(candidateKeys).some(candidate => candidate === normalized || `favorites_${candidate}` === storageKey || `${STORAGE_PREFIX}:${toStorageKey(candidate)}` === storageKey)) {
+          continue
+        }
+      }
+
+      const raw = localStorage.getItem(storageKey)
+      if (!raw) {
+        continue
+      }
+
+      const parsed = JSON.parse(raw)
+      if (!Array.isArray(parsed)) {
+        continue
+      }
+
+      collected.push(...parsed.filter(isFavoriteProductLike))
+    }
+
+    const uniqueById = new Map<number, FavoriteProduct>()
+    for (const item of collected) {
+      uniqueById.set(Number(item.id), item)
+    }
+
+    return Array.from(uniqueById.values())
+  } catch {
+    return []
+  }
+}
+
 export const getUserFavoritesStorageKey = () => {
   try {
     const storedUser = localStorage.getItem('user')
@@ -63,21 +147,68 @@ export const getUserFavoritesStorageKey = () => {
 
 export const readFavorites = (): FavoriteProduct[] => {
   try {
-    const key = getUserFavoritesStorageKey()
-    const raw = localStorage.getItem(key)
-    const parsed = raw ? JSON.parse(raw) : []
+    const keysToRead = new Set<string>([
+      getUserFavoritesStorageKey(),
+      `${STORAGE_PREFIX}:guest`,
+    ])
 
-    if (!Array.isArray(parsed)) {
-      return []
+    const storedUser = localStorage.getItem('user')
+    if (storedUser) {
+      const user = JSON.parse(storedUser) as Record<string, unknown>
+      for (const value of [user.email, user.username, user.name, user.id]) {
+        if (value !== undefined && value !== null && String(value).trim()) {
+          const normalized = String(value).trim()
+          keysToRead.add(`${STORAGE_PREFIX}:${toStorageKey(normalized)}`)
+          keysToRead.add(`favorites_${normalized}`)
+        }
+      }
     }
 
-    return parsed.filter(
-      (item): item is FavoriteProduct =>
-        !!item &&
-        typeof item === 'object' &&
-        typeof item.id === 'number' &&
-        typeof item.nome === 'string',
-    )
+    const email = localStorage.getItem('email')
+    if (email && email.trim()) {
+      const normalized = email.trim()
+      keysToRead.add(`${STORAGE_PREFIX}:${toStorageKey(normalized)}`)
+      keysToRead.add(`favorites_${normalized}`)
+    }
+
+    const explicitKey = localStorage.getItem('favorites_user_key')
+    if (explicitKey && explicitKey.trim()) {
+      const normalized = explicitKey.trim()
+      keysToRead.add(`${STORAGE_PREFIX}:${toStorageKey(normalized)}`)
+      keysToRead.add(`favorites_${normalized}`)
+    }
+
+    const collected: FavoriteProduct[] = []
+
+    for (const key of keysToRead) {
+      const raw = localStorage.getItem(key)
+      if (!raw) {
+        continue
+      }
+
+      try {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) {
+          collected.push(...parsed.filter(isFavoriteProductLike))
+        }
+      } catch {
+        // ignora chave corrompida
+      }
+    }
+
+    const merged = [...collected, ...readLegacyFavorites()]
+    const uniqueById = new Map<number, FavoriteProduct>()
+    for (const item of merged) {
+      uniqueById.set(Number(item.id), item)
+    }
+
+    const favorites = Array.from(uniqueById.values())
+    if (favorites.length > 0) {
+      writeFavorites(favorites)
+      return favorites
+    }
+
+    return []
   } catch {
     return []
   }
