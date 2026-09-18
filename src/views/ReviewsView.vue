@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import reviewsApi from '@/stores/reviewsApi'
+import { canDeleteReview, getLoggedUserId, normalizeId } from '@/utils/reviews'
 
 const router = useRouter()
 const route = useRoute()
@@ -11,6 +12,7 @@ const getPreview = (file: File) => {
 
 interface Review {
   id: number
+  userId?: number | null
   userName: string
   userAvatar: string
   stars: number
@@ -34,12 +36,37 @@ interface ApiImage {
 
 interface ApiReview {
   id: number
-  userName: string
-  userAvatar: string
+  userId?: number | null
+  user_id?: number | null
+  user?: {
+    id?: number | string | null
+    userId?: number | string | null
+    user_id?: number | string | null
+    name?: string
+    profile_image?: string
+    email?: string
+  } | null
+  userName?: string
+  user_name?: string
+  userAvatar?: string
   stars: number
   text: string
   created_at: string
   images?: ApiImage[]
+}
+
+const currentUserId = computed(() => getLoggedUserId())
+
+function extractReviewUserId(review: ApiReview): number | null {
+  const candidateIds = [
+    review.userId,
+    review.user_id,
+    review.user?.id,
+    review.user?.userId,
+    review.user?.user_id
+  ]
+
+  return candidateIds.map((value) => normalizeId(value)).find((value): value is number => value !== null) ?? null
 }
 
 async function fetchReviews() {
@@ -53,8 +80,9 @@ async function fetchReviews() {
 
     reviewsList.value = res.data.map((r: ApiReview) => ({
       id: r.id,
-      userName: r.userName,
-      userAvatar: r.userAvatar,
+      userId: extractReviewUserId(r),
+      userName: r.userName ?? r.user?.name ?? r.user_name ?? 'Usuário',
+      userAvatar: r.userAvatar ?? r.user?.profile_image ?? '',
       stars: r.stars,
       date: new Date(r.created_at).toLocaleDateString(),
       text: r.text,
@@ -68,6 +96,32 @@ async function fetchReviews() {
 onMounted(fetchReviews)
 
 const totalReviews = computed(() => reviewsList.value.length)
+const canDeleteSelectedReview = computed(() => canDeleteReview(selectedReview.value, currentUserId.value))
+
+async function deleteSelectedReview() {
+  if (!selectedReview.value) {
+    return
+  }
+
+  if (!canDeleteReview(selectedReview.value, currentUserId.value)) {
+    alert('Você só pode excluir uma avaliação que você publicou.')
+    return
+  }
+
+  const confirmed = window.confirm('Tem certeza que deseja excluir esta avaliação?')
+  if (!confirmed) {
+    return
+  }
+
+  try {
+    await reviewsApi.deleteReview(produtoId, selectedReview.value.id)
+    selectedReview.value = null
+    await fetchReviews()
+  } catch (err) {
+    console.error('Erro ao excluir avaliação:', err)
+    alert('Não foi possível excluir esta avaliação.')
+  }
+}
 
 // FORM
 const newStars = ref(5)
@@ -181,6 +235,12 @@ async function submitReview() {
           </div>
 
           <p class="review-text">{{ selectedReview.text }}</p>
+
+          <div v-if="canDeleteSelectedReview" class="review-actions">
+            <button class="btn-delete-review" @click.stop="deleteSelectedReview">
+              EXCLUIR AVALIAÇÃO
+            </button>
+          </div>
 
           <!-- ✅ IMAGENS DO BACKEND -->
           <div
