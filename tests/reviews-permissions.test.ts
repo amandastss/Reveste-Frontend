@@ -32,16 +32,18 @@ describe('review deletion permissions', () => {
     assert.equal(canDeleteReview({ user: { id: 7 } }, 7), true)
   })
 
-  test('allows deleting when the avatar matches the logged user, which is how this backend identifies authors', () => {
-    localStorage.setItem('user', JSON.stringify({
-      id: 2,
-      name: 'Julia Costa',
-      profile_image: 'https://cdn.example.com/julia.png',
-      email: 'julia@example.com'
-    }))
+  test('allows deleting when the logged user email matches the review author email, even without a profile photo', () => {
+    localStorage.setItem(
+      'user',
+      JSON.stringify({
+        id: 2,
+        name: 'Julia Costa',
+        email: 'julia@example.com',
+      }),
+    )
 
-    assert.equal(canDeleteReview({ userAvatar: 'https://cdn.example.com/julia.png' }, 2), true)
-    assert.equal(canDeleteReview({ userName: 'Julia Costa' }, 2), true)
+    assert.equal(canDeleteReview({ email: 'julia@example.com' }, 2), true)
+    assert.equal(canDeleteReview({ user: { email: 'julia@example.com' } }, 2), true)
   })
 
   test('blocks deleting when the current user is not the review author', () => {

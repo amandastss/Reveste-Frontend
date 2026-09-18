@@ -208,7 +208,7 @@ async function submitReview() {
 
 <template>
   <div class="reviews-page-container">
-    
+
     <!-- DETALHE -->
     <template v-if="selectedReview">
       <header class="reviews-header">
@@ -219,7 +219,7 @@ async function submitReview() {
 
       <main class="reviews-content">
         <div class="form-container-desktop single-review-container">
-          
+
           <div class="review-user-row">
             <img :src="selectedReview.userAvatar" class="user-avatar" />
             <div class="user-meta">
@@ -230,8 +230,7 @@ async function submitReview() {
 
           <div class="stars-display" style="margin-top: 12px">
             <span v-for="n in 5" :key="n">
-              {{ n <= selectedReview.stars ? '★' : '☆' }}
-            </span>
+              {{ n <= selectedReview.stars ? '★' : '☆' }} </span>
           </div>
 
           <p class="review-text">{{ selectedReview.text }}</p>
@@ -243,16 +242,8 @@ async function submitReview() {
           </div>
 
           <!-- ✅ IMAGENS DO BACKEND -->
-          <div
-            v-if="selectedReview.images && selectedReview.images.length"
-            class="single-review-images"
-          >
-            <img
-              v-for="(img, idx) in selectedReview.images"
-              :key="idx"
-              :src="img"
-              class="single-review-large-img"
-            />
+          <div v-if="selectedReview.images && selectedReview.images.length" class="single-review-images">
+            <img v-for="(img, idx) in selectedReview.images" :key="idx" :src="img" class="single-review-large-img" />
           </div>
 
         </div>
@@ -273,13 +264,8 @@ async function submitReview() {
           <div class="form-group">
             <label class="form-label">Estrelas</label>
             <div class="interactive-stars">
-              <span
-                v-for="star in 5"
-                :key="star"
-                class="star"
-                :class="{ active: star <= newStars }"
-                @click="setRating(star)"
-              >
+              <span v-for="star in 5" :key="star" class="star" :class="{ active: star <= newStars }"
+                @click="setRating(star)">
                 ★
               </span>
             </div>
@@ -289,24 +275,15 @@ async function submitReview() {
             <label class="form-label">
               Your review <span class="required">*</span>
             </label>
-            <textarea
-              v-model="newText"
-              placeholder="O que você achou sobre o produto..."
-              class="review-textarea"
-            ></textarea>
+            <textarea v-model="newText" placeholder="O que você achou sobre o produto..."
+              class="review-textarea"></textarea>
           </div>
 
           <div class="form-group">
             <label class="form-label">Attach photo</label>
 
-            <input
-              type="file"
-              ref="fileInputRef"
-              accept="image/*"
-              multiple
-              class="hidden-file-input"
-              @change="handleFileSelected"
-            />
+            <input type="file" ref="fileInputRef" accept="image/*" multiple class="hidden-file-input"
+              @change="handleFileSelected" />
 
             <button class="btn-attach-photo" @click="triggerPhotoUpload">
               ADICIONE SUA FOTO
@@ -318,12 +295,7 @@ async function submitReview() {
 
             <!-- ✅ PREVIEW LOCAL -->
             <div v-if="uploadedImages.length" class="form-images-preview">
-              <img
-                v-for="(file, index) in uploadedImages"
-                :key="index"
-                :src="getPreview(file)"
-                class="preview-thumb"
-              />
+              <img v-for="(file, index) in uploadedImages" :key="index" :src="getPreview(file)" class="preview-thumb" />
             </div>
 
           </div>
@@ -347,13 +319,9 @@ async function submitReview() {
         </h2>
 
         <div class="reviews-list">
-          <div
-            v-for="review in reviewsList"
-            :key="review.id"
-            class="review-item clickable-review"
-            @click="openReview(review)"
-          >
-            
+          <div v-for="review in reviewsList" :key="review.id" class="review-item clickable-review"
+            @click="openReview(review)">
+
             <div class="review-user-row">
               <img :src="review.userAvatar" class="user-avatar" />
               <div class="user-meta">
@@ -364,23 +332,14 @@ async function submitReview() {
 
             <div class="stars-display">
               <span v-for="n in 5" :key="n">
-                {{ n <= review.stars ? '★' : '☆' }}
-              </span>
+                {{ n <= review.stars ? '★' : '☆' }} </span>
             </div>
 
             <p class="review-text">{{ review.text }}</p>
 
             <!-- ✅ IMAGENS DA LISTA -->
-            <div
-              v-if="review.images && review.images.length"
-              class="review-images-grid"
-            >
-              <img
-                v-for="(img, idx) in review.images"
-                :key="idx"
-                :src="img"
-                class="attached-review-img"
-              />
+            <div v-if="review.images && review.images.length" class="review-images-grid">
+              <img v-for="(img, idx) in review.images" :key="idx" :src="img" class="attached-review-img" />
             </div>
 
           </div>
@@ -391,6 +350,6 @@ async function submitReview() {
   </div>
 </template>
 
-    <style scoped>
-      @import '../css/reviews.css';
-    </style>
+<style scoped>
+@import '../css/reviews.css';
+</style>
