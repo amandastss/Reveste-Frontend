@@ -7,5 +7,13 @@ export default {
 
   async createReview(produtoId: number, data: FormData) {
     return api.post(`/reviews/${produtoId}/`, data)
-  }
+  },
+
+  async deleteReview(produtoId: number, reviewId: number) {
+    return api.delete(`/reviews/${produtoId}/`, {
+      data: {
+        review_id: reviewId,
+      },
+    })
+  },
 }
