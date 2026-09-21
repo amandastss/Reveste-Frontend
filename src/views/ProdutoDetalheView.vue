@@ -3,6 +3,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { useCartStore } from '@/stores/cart'
+import { hasCartAuthToken, getCartAuthMessage, getCartAuthRedirectPath } from '@/utils/cartAuth'
 import { isFavoriteProduct, toggleFavorite as toggleFavoriteProduct, type FavoriteProduct } from '@/utils/favorites'
 
 interface Produto {
@@ -91,6 +92,13 @@ const closeAddToCartConfirm = () => {
 
 const confirmAddToCart = async () => {
   if (!productData.value) return
+
+  if (!hasCartAuthToken()) {
+    addToCartError.value = getCartAuthMessage()
+    closeAddToCartConfirm()
+    router.push(getCartAuthRedirectPath())
+    return
+  }
 
   isAddingToCart.value = true
   addToCartError.value = ''
@@ -189,6 +197,12 @@ onMounted(() => {
 
 const buyNow = async () => {
   if (!productData.value) return
+
+  if (!hasCartAuthToken()) {
+    addToCartError.value = getCartAuthMessage()
+    router.push(getCartAuthRedirectPath())
+    return
+  }
 
   isAddingToCart.value = true
   addToCartError.value = ''
