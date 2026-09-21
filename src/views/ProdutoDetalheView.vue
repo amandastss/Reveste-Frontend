@@ -27,6 +27,7 @@ const categoriaNome = ref('')
 const loading = ref(true)
 const error = ref('')
 const showAddToCartConfirm = ref(false)
+const showLoginRequiredModal = ref(false)
 const isAddingToCart = ref(false)
 const addToCartError = ref('')
 const addToCartSuccess = ref(false)
@@ -90,13 +91,27 @@ const closeAddToCartConfirm = () => {
   addToCartError.value = ''
 }
 
+const openLoginRequiredModal = () => {
+  showLoginRequiredModal.value = true
+  addToCartError.value = ''
+}
+
+const closeLoginRequiredModal = () => {
+  showLoginRequiredModal.value = false
+}
+
+const redirectToAuth = (mode: 'login' | 'register') => {
+  const nextMode = mode === 'login' ? 'true' : 'false'
+  localStorage.setItem('isLogin', nextMode)
+  closeLoginRequiredModal()
+  router.push(getCartAuthRedirectPath())
+}
+
 const confirmAddToCart = async () => {
   if (!productData.value) return
 
   if (!hasCartAuthToken()) {
-    addToCartError.value = getCartAuthMessage()
-    closeAddToCartConfirm()
-    router.push(getCartAuthRedirectPath())
+    openLoginRequiredModal()
     return
   }
 
@@ -199,8 +214,7 @@ const buyNow = async () => {
   if (!productData.value) return
 
   if (!hasCartAuthToken()) {
-    addToCartError.value = getCartAuthMessage()
-    router.push(getCartAuthRedirectPath())
+    openLoginRequiredModal()
     return
   }
 
@@ -348,12 +362,16 @@ const buyNow = async () => {
       <button
         class="cart-btn"
         :disabled="isAddingToCart || !productData"
-        @click="openAddToCartConfirm"
+        @click="hasCartAuthToken() ? openAddToCartConfirm() : openLoginRequiredModal()"
       >
         Adicionar ao carrinho
       </button>
 
-      <button class="buy-now-btn" :disabled="isAddingToCart || !productData" @click="buyNow">
+      <button
+        class="buy-now-btn"
+        :disabled="isAddingToCart || !productData"
+        @click="hasCartAuthToken() ? buyNow() : openLoginRequiredModal()"
+      >
         <span v-if="isAddingToCart">Processando...</span>
         <span v-else>Comprar agora</span>
       </button>
@@ -379,6 +397,32 @@ const buyNow = async () => {
         <p v-if="addToCartError" class="error-message">
           {{ addToCartError }}
         </p>
+      </div>
+    </div>
+
+    <div
+      v-if="showLoginRequiredModal"
+      class="overlay auth-overlay"
+      @click.self="closeLoginRequiredModal"
+    >
+      <div class="auth-modal">
+        <div class="auth-modal-icon">🔒</div>
+
+        <h2>Faça login para continuar</h2>
+
+        <p>
+          Para adicionar ao carrinho ou comprar, você precisa entrar na sua conta ou criar uma nova.
+        </p>
+
+        <div class="actions auth-actions">
+          <button class="btn-secondary auth-btn" @click="redirectToAuth('login')">
+            Fazer login
+          </button>
+
+          <button class="btn-primary auth-btn" @click="redirectToAuth('register')">
+            Criar conta
+          </button>
+        </div>
       </div>
     </div>
   </div>

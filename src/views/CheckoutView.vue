@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
+import { hasCartAuthToken, getCartAuthRedirectPath } from '@/utils/cartAuth'
 import { getCheckoutResultState, getFriendlyCheckoutError } from '@/utils/checkoutPayment'
 
 interface CheckoutResponse {
@@ -18,6 +19,7 @@ const cartStore = useCartStore()
 const carregando = ref(true)
 const mensagemErro = ref('')
 const submetendo = ref(false)
+const showLoginRequiredModal = ref(false)
 const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 
 const retornoPagamento = computed(() => {
@@ -101,8 +103,23 @@ async function criarCheckout(): Promise<CheckoutResponse> {
   return data as CheckoutResponse
 }
 
+function closeLoginRequiredModal() {
+  showLoginRequiredModal.value = false
+}
+
+function redirectToAuth(mode: 'login' | 'register') {
+  localStorage.setItem('isLogin', mode === 'login' ? 'true' : 'false')
+  closeLoginRequiredModal()
+  router.push(getCartAuthRedirectPath())
+}
+
 async function finalizarCompra() {
   if (submetendo.value) {
+    return
+  }
+
+  if (!hasCartAuthToken()) {
+    showLoginRequiredModal.value = true
     return
   }
 
@@ -254,6 +271,32 @@ onMounted(async () => {
         </button>
       </div>
     </section>
+
+    <div
+      v-if="showLoginRequiredModal"
+      class="auth-overlay"
+      @click.self="closeLoginRequiredModal"
+    >
+      <div class="auth-modal">
+        <div class="auth-modal-icon">🔒</div>
+
+        <h2>Faça login para continuar</h2>
+
+        <p>
+          Para finalizar a compra, você precisa entrar na sua conta ou criar uma nova.
+        </p>
+
+        <div class="auth-actions">
+          <button class="btn-secondary auth-btn" @click="redirectToAuth('login')">
+            Fazer login
+          </button>
+
+          <button class="btn-primary auth-btn" @click="redirectToAuth('register')">
+            Criar conta
+          </button>
+        </div>
+      </div>
+    </div>
   </main>
 </template>
 
