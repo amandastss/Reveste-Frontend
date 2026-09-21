@@ -30,6 +30,16 @@ const isAddingToCart = ref(false)
 const addToCartError = ref('')
 const addToCartSuccess = ref(false)
 const favoriteSuccess = ref(false)
+const showLoginModal = ref(false)
+
+const isLoggedIn = computed(() => {
+  if (typeof window === 'undefined') {
+    return false
+  }
+  const token = localStorage.getItem('token')
+  const storedUser = localStorage.getItem('user')
+  return Boolean(token || (storedUser && JSON.parse(storedUser || '{}') && Object.keys(JSON.parse(storedUser || '{}')).length))
+})
 
 const mainImage = computed(() => {
   if (!productData.value?.imagem_url) {
@@ -49,6 +59,11 @@ const loadFavoriteState = () => {
 }
 
 const toggleFavorite = () => {
+  if (!isLoggedIn.value) {
+    showLoginModal.value = true
+    return
+  }
+
   if (!productData.value) return
 
   const favoritePayload: FavoriteProduct = {
@@ -335,7 +350,7 @@ const buyNow = async () => {
       </button>
     </div>
 
-    <!-- MODAL -->
+    <!-- MODAL ADICIONAR AO CARRINHO -->
     <div
       v-if="showAddToCartConfirm && productData"
       class="overlay"
@@ -355,6 +370,25 @@ const buyNow = async () => {
         <p v-if="addToCartError" class="error-message">
           {{ addToCartError }}
         </p>
+      </div>
+    </div>
+
+    <!-- MODAL LOGIN PARA FAVORITOS -->
+    <div
+      v-if="showLoginModal"
+      class="overlay"
+      @click.self="showLoginModal = false"
+    >
+      <div class="modal">
+        <h2>Faça login para favoritar</h2>
+
+        <p>Você precisa estar logado para adicionar produtos aos seus favoritos.</p>
+
+        <div class="actions">
+          <button class="btn-secondary" @click="showLoginModal = false">Cancelar</button>
+
+          <button class="btn-primary" @click="router.push('/auth/email')">Entrar / Cadastrar</button>
+        </div>
       </div>
     </div>
   </div>

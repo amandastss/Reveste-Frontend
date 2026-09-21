@@ -59,14 +59,12 @@ const favoriteCount = computed(() => getFavoriteCount())
 
 const menuItems = computed(() => [
   { label: 'Meus Pedidos', icon: 'inventory_2', route: '/pedidos' },
-  { label: 'Promoções', icon: 'emoji_events', route: '/promocoes' },
   {
     label: 'Favoritos',
     icon: 'favorite',
     extra: favoriteCount.value === 0 ? '0 itens' : `${favoriteCount.value} ${favoriteCount.value === 1 ? 'item' : 'itens'}`,
     route: '/favoritos'
   },
-  { label: 'Seguindo', icon: 'star', route: '/seguindo' },
   { label: 'Aparência', icon: 'palette', route: '/aparencia' },
   { label: 'Ajuda e Suporte', icon: 'lock', route: '/suporte' }
 ])
@@ -318,6 +316,10 @@ function logout() {
   transform: translateY(-2px);
 }
 
+.menu-item.auth {
+  justify-content: center;
+}
+
 .left {
   display: flex;
   align-items: center;
@@ -349,6 +351,7 @@ function logout() {
 .auth {
   color: #1f6feb;
   font-weight: 500;
+  grid-column: span 2;
 }
 
 /* ÍCONES */
