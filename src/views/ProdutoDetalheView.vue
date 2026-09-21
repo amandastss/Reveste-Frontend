@@ -101,13 +101,18 @@ const confirmAddToCart = async () => {
     closeAddToCartConfirm()
     handleAddToCartSuccess()
   } catch (err) {
-    addToCartError.value = err instanceof Error ? err.message : 'Erro ao adicionar ao carrinho'
+    const message =
+      err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { data?: { detail?: string; message?: string } } }).response?.data?.detail ||
+          (err as { response?: { data?: { detail?: string; message?: string } } }).response?.data?.message ||
+          'Erro ao adicionar ao carrinho.'
+        : 'Erro ao adicionar ao carrinho.'
+
+    addToCartError.value = message
   } finally {
     isAddingToCart.value = false
   }
 }
-
-const openReviews = () => router.push({ name: 'produto-avaliacoes', params: { id: productId } })
 
 const handleAddToCartSuccess = () => {
   addToCartSuccess.value = true
@@ -115,6 +120,8 @@ const handleAddToCartSuccess = () => {
     addToCartSuccess.value = false
   }, 3000)
 }
+
+const openReviews = () => router.push({ name: 'produto-avaliacoes', params: { id: productId } })
 
 const resolveCategoriaNome = async (produto: Produto) => {
   const categoria = produto.categoria
@@ -187,21 +194,24 @@ const buyNow = async () => {
   addToCartError.value = ''
 
   try {
-    // Verificar se o produto já está no carrinho
-    // Como é peça única, não duplicar
     const produtoJaNoCarrinho = cartStore.items.some((item) => item.id === productData.value!.id)
 
-    // Se não está no carrinho, adicionar
     if (!produtoJaNoCarrinho) {
       await cartStore.addItem(productData.value.id)
     }
 
-    // Redirecionar direto para checkout (não para carrinho)
     await router.push('/checkout')
   } catch (error) {
     console.error('Erro ao iniciar compra:', error)
 
-    addToCartError.value = 'Não foi possível iniciar a compra. Tente novamente.'
+    const message =
+      error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { detail?: string; message?: string } } }).response?.data?.detail ||
+          (error as { response?: { data?: { detail?: string; message?: string } } }).response?.data?.message ||
+          'Não foi possível iniciar a compra. Tente novamente.'
+        : 'Não foi possível iniciar a compra. Tente novamente.'
+
+    addToCartError.value = message
   } finally {
     isAddingToCart.value = false
   }

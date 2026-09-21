@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 
 import api from '@/api/config'
+import { getCartMutationBodies } from '@/utils/cartCompat'
 
 export interface CartItem {
   id: number
@@ -151,41 +152,58 @@ export const useCartStore = defineStore('cart', {
     },
 
     async addItem(productId: number) {
-      try {
-        await api.post('/carrinho/', {
-          productId,
-        })
+      let lastError: unknown = null
 
-        await this.loadCart()
-      } catch (error) {
-        console.error(
-          'Erro ao adicionar produto ao carrinho:',
-          error
-        )
-
-        throw error
+      for (const payload of getCartMutationBodies(productId)) {
+        try {
+          await api.post('/carrinho/', payload)
+          await this.loadCart()
+          return
+        } catch (error) {
+          lastError = error
+          console.warn(
+            'Formato de payload do carrinho falhou, tentando alternativa:',
+            payload,
+            error
+          )
+        }
       }
+
+      console.error('Erro ao adicionar produto ao carrinho:', lastError)
+      throw lastError ?? new Error('Não foi possível adicionar ao carrinho.')
     },
 
     async removeItem(productId: number) {
-      try {
-        await api.delete('/carrinho/', {
-          data: {
-            productId,
-          },
-        })
+      const payloads = [
+        { productId },
+        { product_id: productId },
+        { produto_id: productId },
+        { produto: productId },
+        { id: productId },
+      ]
 
-        this.items = this.items.filter(
-          (item) => item.id !== productId
-        )
-      } catch (error) {
-        console.error(
-          'Erro ao remover item do carrinho:',
-          error
-        )
+      let lastError: unknown = null
 
-        throw error
+      for (const payload of payloads) {
+        try {
+          await api.delete('/carrinho/', {
+            data: payload,
+          })
+
+          this.items = this.items.filter((item) => item.id !== productId)
+          return
+        } catch (error) {
+          lastError = error
+          console.warn(
+            'Formato de remoção do carrinho falhou, tentando alternativa:',
+            payload,
+            error
+          )
+        }
       }
+
+      console.error('Erro ao remover item do carrinho:', lastError)
+      throw lastError ?? new Error('Não foi possível remover o item do carrinho.')
     },
 
     clearCart() {
