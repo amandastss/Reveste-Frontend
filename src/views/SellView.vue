@@ -134,11 +134,12 @@ const publicarPeca = async () => {
       body: formData,
     })
 
-    if (!response.ok) {
-      throw new Error('Erro ao cadastrar produto')
-    }
+    const data = await response.json().catch(() => null)
 
-    const data = await response.json()
+    if (!response.ok) {
+      const detail = data ? JSON.stringify(data) : 'sem detalhes retornados pela API'
+      throw new Error(`Erro ao cadastrar produto (${response.status}): ${detail}`)
+    }
 
     console.log('Produto criado:', data)
 
@@ -159,7 +160,7 @@ const publicarPeca = async () => {
     podePublicar.value = false
   } catch (error) {
     console.error(error)
-    alert('Erro ao publicar produto.')
+    alert(error instanceof Error ? error.message : 'Erro ao publicar produto.')
   }
 }
 </script>
@@ -193,7 +194,8 @@ const publicarPeca = async () => {
 
       <div class="field-group">
         <label>DESCRIÇÃO</label>
-        <textarea v-model="form.descricao"></textarea>
+        <textarea v-model="form.descricao" maxlength="100"></textarea>
+        <p class="character-count">{{ form.descricao.length }}/100</p>
       </div>
 
       <div class="field-group">

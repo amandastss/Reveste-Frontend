@@ -16,15 +16,10 @@ body,
   width: 100%;
   min-height: 100vh;
 
-  background: linear-gradient(
-    to bottom,
-    #ffffff 0%,
-    #f7f7f7 60%,
-    #f1f1f1 100%
-  );
+  background: linear-gradient(to bottom, #ffffff 0%, #f7f7f7 60%, #f1f1f1 100%);
 
   padding: 24px 24px 220px;
-  font-family: "Montserrat", sans-serif;
+  font-family: 'Montserrat', sans-serif;
 }
 /*MODAL LOGIN*/
 .overlay {
@@ -141,15 +136,13 @@ body,
   padding: 14px 16px;
   border-radius: 14px;
 
-  box-shadow:
-    0 6px 16px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
 
   transition: all 0.2s ease;
 }
 
 .field-group:focus-within {
-  box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
 .field-group label {
@@ -182,6 +175,13 @@ body,
 .field-group textarea {
   min-height: 80px;
   resize: none;
+}
+
+.character-count {
+  margin: 5px 0 0;
+  color: #888;
+  font-size: 0.75rem;
+  text-align: right;
 }
 
 /*FOTOS*/
@@ -246,8 +246,7 @@ body,
   border-radius: 18px;
   overflow: hidden;
 
-  box-shadow:
-    0 10px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
 
 .preview-box img {
@@ -307,8 +306,7 @@ body,
   cursor: pointer;
   transition: all 0.25s ease;
 
-  box-shadow:
-    0 12px 24px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
 }
 
 .publish-btn:hover {
