@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+
+import { normalizePaginatedProducts } from '@/utils/pagination'
 
 interface Produto {
   id: number
@@ -31,6 +33,9 @@ const router = useRouter()
 const produtos = ref<Produto[]>([])
 const categorias = ref<Categoria[]>([])
 const carousel = ref<HTMLElement | null>(null)
+const nextPage = ref(1)
+const hasMore = ref(true)
+const isLoadingMore = ref(false)
 
 /* =========================================
    ESTILOS DO CARROSSEL
@@ -135,18 +140,60 @@ const formatMediaUrl = (url?: string | null) => {
    PRODUTOS
 ========================================= */
 
-const fetchProdutos = async () => {
+const fetchProdutos = async (append = false) => {
+  if (isLoadingMore.value && append) return
+
+  const pageToLoad = append ? nextPage.value : 1
+
   try {
     const res = await axios.get(
-      `${import.meta.env.VITE_API_URL}/api/produtos/`
+      `${import.meta.env.VITE_API_URL}/api/produtos/`,
+      { params: { page: pageToLoad } }
     )
 
-    produtos.value = Array.isArray(res.data)
-      ? res.data
-      : res.data.results || []
+    const normalized = normalizePaginatedProducts<Produto>(res.data)
+    const nextCandidate =
+      normalized.nextPage ??
+      (typeof res.data === 'object' && res.data && 'count' in res.data && typeof res.data.count === 'number'
+        ? (res.data.count > produtos.value.length ? pageToLoad + 1 : null)
+        : null)
 
+    if (append) {
+      produtos.value = [...produtos.value, ...normalized.items]
+    } else {
+      produtos.value = normalized.items
+      nextPage.value = 1
+    }
+
+    nextPage.value = nextCandidate ?? pageToLoad
+    hasMore.value = normalized.hasMore || nextCandidate !== null
   } catch (err) {
     console.error('Erro ao buscar produtos:', err)
+    if (!append) {
+      produtos.value = []
+      hasMore.value = false
+    }
+  }
+}
+
+const loadMoreProdutos = async () => {
+  if (!hasMore.value || isLoadingMore.value) return
+
+  isLoadingMore.value = true
+
+  try {
+    await fetchProdutos(true)
+  } finally {
+    isLoadingMore.value = false
+  }
+}
+
+const handleScroll = () => {
+  const nearBottom =
+    window.innerHeight + window.scrollY >= document.body.scrollHeight - 260
+
+  if (nearBottom) {
+    void loadMoreProdutos()
   }
 }
 
@@ -176,6 +223,11 @@ const fetchCategorias = async () => {
 onMounted(() => {
   fetchProdutos()
   fetchCategorias()
+  window.addEventListener('scroll', handleScroll, { passive: true })
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', handleScroll)
 })
 </script>
 
@@ -186,42 +238,16 @@ onMounted(() => {
          SEARCH BAR
     ========================================= -->
 
-    <div
-      class="search-bar"
-      @click="goToSearch"
-    >
+    <div class="search-bar" @click="goToSearch">
       <div class="search-input-wrapper">
 
-        <input
-          type="text"
-          placeholder="Pesquisar itens..."
-          readonly
-        />
+        <input type="text" placeholder="Pesquisar itens..." readonly />
 
-        <span
-          class="search-icon"
-          aria-hidden="true"
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-          >
-            <circle
-              cx="11"
-              cy="11"
-              r="7"
-              stroke="currentColor"
-              stroke-width="2"
-            />
+        <span class="search-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" />
 
-            <path
-              d="M16.5 16.5L21 21"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-            />
+            <path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
         </span>
 
@@ -246,10 +272,7 @@ onMounted(() => {
           </h2>
         </div>
 
-        <button
-          class="explore-btn"
-          @click="goToSearch"
-        >
+        <button class="explore-btn" @click="goToSearch">
           Explorar
 
           <span class="material-symbols-outlined">
@@ -265,11 +288,7 @@ onMounted(() => {
 
         <!-- SETA ESQUERDA -->
 
-        <button
-          class="carousel-btn carousel-btn-left"
-          @click="scrollCarousel('left')"
-          aria-label="Estilo anterior"
-        >
+        <button class="carousel-btn carousel-btn-left" @click="scrollCarousel('left')" aria-label="Estilo anterior">
           <span class="material-symbols-outlined">
             chevron_left
           </span>
@@ -277,22 +296,11 @@ onMounted(() => {
 
         <!-- CARROSSEL -->
 
-        <div
-          ref="carousel"
-          class="style-carousel"
-        >
+        <div ref="carousel" class="style-carousel">
 
-          <article
-            v-for="estilo in estilos"
-            :key="estilo.id"
-            class="style-card"
-            @click="goToEstilo(estilo)"
-          >
+          <article v-for="estilo in estilos" :key="estilo.id" class="style-card" @click="goToEstilo(estilo)">
 
-            <img
-              :src="estilo.imagem"
-              :alt="estilo.titulo"
-            />
+            <img :src="estilo.imagem" :alt="estilo.titulo" />
 
             <div class="style-overlay"></div>
 
@@ -322,11 +330,7 @@ onMounted(() => {
 
         <!-- SETA DIREITA -->
 
-        <button
-          class="carousel-btn carousel-btn-right"
-          @click="scrollCarousel('right')"
-          aria-label="Próximo estilo"
-        >
+        <button class="carousel-btn carousel-btn-right" @click="scrollCarousel('right')" aria-label="Próximo estilo">
           <span class="material-symbols-outlined">
             chevron_right
           </span>
@@ -348,18 +352,9 @@ onMounted(() => {
 
       <div class="categories">
 
-        <div
-          v-for="cat in categorias"
-          :key="cat.id"
-          class="item"
-          @click="goToCategory(cat)"
-        >
+        <div v-for="cat in categorias" :key="cat.id" class="item" @click="goToCategory(cat)">
 
-          <img
-            class="circle"
-            :src="formatMediaUrl(cat.imagem_url)"
-            :alt="cat.nome"
-          />
+          <img class="circle" :src="formatMediaUrl(cat.imagem_url)" :alt="cat.nome" />
 
           <span>
             {{ cat.nome || cat.name || cat.title }}
@@ -383,10 +378,7 @@ onMounted(() => {
           Para você
         </h3>
 
-        <button
-          class="see-more"
-          @click="goToSearch"
-        >
+        <button class="see-more" @click="goToSearch">
           Ver tudo
         </button>
 
@@ -394,19 +386,11 @@ onMounted(() => {
 
       <div class="grid">
 
-        <div
-          v-for="p in produtos"
-          :key="p.id"
-          class="card"
-          @click="goToProduto(p.id)"
-        >
+        <div v-for="p in produtos" :key="p.id" class="card" @click="goToProduto(p.id)">
 
           <div class="product-image">
 
-            <img
-              :src="formatMediaUrl(p.imagem_url)"
-              :alt="p.nome"
-            />
+            <img :src="formatMediaUrl(p.imagem_url)" :alt="p.nome" />
 
           </div>
 
@@ -428,7 +412,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-
 /* =========================================
    HOME
 ========================================= */
@@ -676,11 +659,9 @@ onMounted(() => {
   inset: 0;
 
   background:
-    linear-gradient(
-      to top,
+    linear-gradient(to top,
       rgba(0, 0, 0, 0.72),
-      rgba(0, 0, 0, 0.05) 65%
-    );
+      rgba(0, 0, 0, 0.05) 65%);
 }
 
 /* =========================================

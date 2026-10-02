@@ -2,9 +2,11 @@
 import blusa from '@/assets/roupas/blusalaranjabasica.png'
 import jeans from '@/assets/roupas/calcajeansskinny.png'
 import skinny from '@/assets/roupas/calcaskinny.png'
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
+
+import { normalizePaginatedProducts } from '@/utils/pagination'
 
 const router = useRouter()
 const route = useRoute()
@@ -43,6 +45,9 @@ const categoriaSelecionada = ref<Categoria | null>(null)
 const showCategorias = ref(false)
 const produtos = ref<Produto[]>([])
 const recentes = ref<string[]>([])
+const nextPage = ref(1)
+const hasMore = ref(true)
+const isLoadingMore = ref(false)
 
 const RECENTES_KEY = 'recent_searches_v1'
 const LEGACY_KEYS = ['recent_searches', 'recentSearches', 'recent_searches_v1']
@@ -210,14 +215,66 @@ const carregarCategorias = async () => {
   }
 }
 
-const carregarProdutos = async (q?: string) => {
+const carregarProdutos = async (q?: string, append = false) => {
+  const termo = (q ?? search.value ?? '').trim()
+  const pageToLoad = append ? nextPage.value : 1
+
   try {
-    const params = q ? { search: q } : {}
+    const params: Record<string, string | number> = {}
+
+    if (termo) {
+      params.search = termo
+    }
+
+    if (pageToLoad > 1) {
+      params.page = pageToLoad
+    }
+
     const res = await axios.get(`${API_BASE}/api/produtos/`, { params })
-    produtos.value = getResponseList(res.data)
+    const normalized = normalizePaginatedProducts<Produto>(res.data)
+    const count =
+      typeof res.data === 'object' && res.data && 'count' in res.data
+        ? Number((res.data as { count?: number }).count)
+        : null
+
+    if (append) {
+      produtos.value = [...produtos.value, ...normalized.items]
+    } else {
+      produtos.value = normalized.items
+      nextPage.value = 1
+    }
+
+    const nextCandidate =
+      normalized.nextPage ??
+      (Number.isFinite(count) && count !== null && count > produtos.value.length ? pageToLoad + 1 : null)
+
+    nextPage.value = nextCandidate ?? pageToLoad
+    hasMore.value = normalized.hasMore || nextCandidate !== null
   } catch (error) {
     console.warn('API indisponível. Usando mock.', error)
-    produtos.value = mockProdutos
+    produtos.value = append ? [...produtos.value, ...mockProdutos] : mockProdutos
+    hasMore.value = false
+  }
+}
+
+const carregarMaisProdutos = async () => {
+  if (!hasMore.value || isLoadingMore.value) return
+
+  isLoadingMore.value = true
+
+  try {
+    await carregarProdutos(search.value, true)
+  } finally {
+    isLoadingMore.value = false
+  }
+}
+
+const handleScroll = () => {
+  const nearBottom =
+    window.innerHeight + window.scrollY >= document.body.scrollHeight - 260
+
+  if (nearBottom) {
+    void carregarMaisProdutos()
   }
 }
 
@@ -296,6 +353,8 @@ function pesquisar() {
   if (!search.value.trim()) return
 
   salvarRecente(search.value)
+  nextPage.value = 1
+  hasMore.value = true
   carregarProdutos(search.value)
 }
 
@@ -395,8 +454,13 @@ function irParaCamera(tipo: 'camera' | 'gallery') {
 
 onMounted(async () => {
   carregarRecentes()
+  window.addEventListener('scroll', handleScroll, { passive: true })
   await Promise.all([carregarCategorias(), carregarProdutos()])
   aplicarCategoriaDaRota()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', handleScroll)
 })
 </script>
 
@@ -407,34 +471,19 @@ onMounted(async () => {
 
       <div class="search-bar">
         <div class="search-input-wrapper">
-          <input
-            type="text"
-            v-model="search"
-            @keyup.enter="pesquisar"
-            placeholder="Pesquisar itens..."
-          />
+          <input type="text" v-model="search" @keyup.enter="pesquisar" placeholder="Pesquisar itens..." />
 
           <span v-if="!search" class="search-icon">
             <svg viewBox="0 0 24 24" fill="none">
               <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" />
-              <path
-                d="M16.5 16.5L21 21"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-              />
+              <path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
             </svg>
           </span>
 
           <span v-else class="search-icon clear-icon" @click="limparBusca">
             <svg viewBox="0 0 24 24" fill="none">
-              <path
-                d="M18 6L6 18M6 6L18 18"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
+              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
             </svg>
           </span>
         </div>
@@ -451,19 +500,11 @@ onMounted(async () => {
 
     <!-- CATEGORIAS -->
     <div class="categories-row" v-if="showCategorias && categorias.length">
-      <button
-        type="button"
-        v-for="item in categorias"
-        :key="item.id"
-        :class="['category-chip', { active: categoriaAtiva(item) }]"
-        @click="selecionarCategoria(item)"
-      >
+      <button type="button" v-for="item in categorias" :key="item.id"
+        :class="['category-chip', { active: categoriaAtiva(item) }]" @click="selecionarCategoria(item)">
         <div class="category-image">
-          <img
-            :src="formatMediaUrl(item.imagem_url)"
-            :alt="getCategoriaNome(item) || 'Categoria'"
-            @error="onImgError"
-          />
+          <img :src="formatMediaUrl(item.imagem_url)" :alt="getCategoriaNome(item) || 'Categoria'"
+            @error="onImgError" />
         </div>
 
         <span>{{ getCategoriaNome(item) || 'Categoria' }}</span>
