@@ -1,53 +1,48 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
-import { ref } from 'vue';
+import { useRouter } from 'vue-router'
+import { ref } from 'vue'
 
-const router = useRouter();
-const showMenu = ref(false);
+const router = useRouter()
+const showMenu = ref(false)
 
 interface NavItem {
-  aria: string;
-  icon: string;
-  route: string;
+  aria: string
+  icon: string
+  route: string
 }
 
 const navItems: NavItem[] = [
   { aria: 'Home', icon: 'home', route: '/' },
   { aria: '', icon: 'add', route: '' },
-];
+]
 
 const rightItems: NavItem[] = [
   { aria: 'Notificações', icon: 'notifications', route: '/notificacoes' },
   { aria: 'Carrinho', icon: 'shopping_cart', route: '/carrinho' },
   { aria: 'Perfil', icon: 'person', route: '/profile' },
-];
+]
 
 function handleNavClick(item: NavItem) {
   if (item.icon === 'add') {
-    showMenu.value = !showMenu.value;
+    showMenu.value = !showMenu.value
   } else {
-    router.push(item.route);
-    showMenu.value = false;
+    router.push(item.route)
+    showMenu.value = false
   }
 }
 
 function goToSell() {
-  router.push('/sell');
-  showMenu.value = false;
+  router.push('/sell')
+  showMenu.value = false
 }
-
 </script>
 
 <template>
   <header class="header-desktop">
-
     <div class="header-inner">
-
       <!-- MENU -->
       <div v-if="showMenu" class="floating-menu">
-        <button class="sell-button" @click="goToSell">
-          Vender
-        </button>
+        <button class="sell-button" @click="goToSell">Vender</button>
       </div>
 
       <!-- ESQUERDA -->
@@ -76,11 +71,10 @@ function goToSell() {
           <span class="material-symbols-outlined">{{ item.icon }}</span>
         </button>
       </div>
-
     </div>
-
   </header>
 </template>
+
 <style scoped>
 /* HEADER */
 .header-desktop {
@@ -117,7 +111,7 @@ function goToSell() {
   border-radius: 20px;
   font-size: 14px;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 /* ANIMAÇÃO */

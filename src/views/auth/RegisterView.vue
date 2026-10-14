@@ -69,7 +69,7 @@ async function register() {
       phone.value,
       birthdate.value,
       photo.value ?? undefined,
-      undefined
+      undefined,
     )
 
     const responseData = response.data || {}
@@ -87,10 +87,7 @@ async function register() {
     localStorage.setItem('user', JSON.stringify(userData))
     localStorage.setItem('isLogin', 'true')
 
-    const token =
-      typeof responseData.token === 'string'
-        ? responseData.token
-        : undefined
+    const token = typeof responseData.token === 'string' ? responseData.token : undefined
 
     if (token) {
       localStorage.setItem('token', token)
@@ -120,22 +117,16 @@ async function register() {
 
 <template>
   <div class="register-wrapper">
-
     <!-- Overlay de sucesso -->
-    <div
-      v-if="showSuccessModal"
-      class="success-overlay"
-    >
+    <div v-if="showSuccessModal" class="success-overlay">
       <div class="success-card">
-        <span class="material-symbols-outlined success-icon">
-          check_circle
-        </span>
+        <span class="material-symbols-outlined success-icon"> check_circle </span>
 
         <h2>Conta criada!</h2>
 
         <p>
           Sua conta foi criada com sucesso.
-          <br>
+          <br />
           Redirecionando...
         </p>
       </div>
@@ -144,82 +135,44 @@ async function register() {
     <div class="register-card">
       <h1>Criar conta</h1>
 
-      <input
-        v-model="name"
-        placeholder="Nome completo"
-      />
+      <input v-model="name" placeholder="Nome completo" />
 
-      <input
-        v-model="email"
-        type="email"
-        placeholder="Email"
-      />
+      <input v-model="email" type="email" placeholder="Email" />
 
       <div class="field-row">
         <div class="field-group">
           <label>Telefone</label>
 
-          <input
-            v-model="phone"
-            type="tel"
-            placeholder="(xx) xxxxx-xxxx"
-          />
+          <input v-model="phone" type="tel" placeholder="(xx) xxxxx-xxxx" />
         </div>
 
         <div class="field-group">
           <label>Data de nascimento</label>
 
-          <input
-            v-model="birthdate"
-            type="date"
-          />
+          <input v-model="birthdate" type="date" />
         </div>
       </div>
 
       <div class="photo-field">
         <label>Foto de perfil</label>
 
-        <input
-          type="file"
-          accept="image/*"
-          @change="handlePhotoChange"
-        />
+        <input type="file" accept="image/*" @change="handlePhotoChange" />
 
-        <div
-          v-if="photoPreview"
-          class="photo-preview"
-        >
-          <img
-            :src="photoPreview"
-            alt="Prévia da foto"
-          />
+        <div v-if="photoPreview" class="photo-preview">
+          <img :src="photoPreview" alt="Prévia da foto" />
         </div>
       </div>
 
-      <input
-        v-model="password"
-        type="password"
-        placeholder="Senha"
-      />
+      <input v-model="password" type="password" placeholder="Senha" />
 
-      <input
-        v-model="confirmPassword"
-        type="password"
-        placeholder="Confirmar senha"
-      />
+      <input v-model="confirmPassword" type="password" placeholder="Confirmar senha" />
 
-      <p
-        v-if="confirmPassword && password !== confirmPassword"
-        class="error-message"
-      >
+      <p v-if="confirmPassword && password !== confirmPassword" class="error-message">
         As senhas não coincidem.
       </p>
 
-      <button @click="register">
-        Criar conta
-      </button>
+      <button @click="register">Criar conta</button>
     </div>
-
   </div>
 </template>
 
@@ -232,7 +185,7 @@ async function register() {
   justify-content: center;
   padding: 24px;
   background: linear-gradient(135deg, #f5f7fb, #e8ecf5);
-  font-family: "Montserrat", sans-serif;
+  font-family: 'Montserrat', sans-serif;
 }
 
 /* CARD */

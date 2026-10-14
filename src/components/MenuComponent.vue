@@ -17,9 +17,7 @@ function closeMenu() {
 
 function toggleSection(section: string) {
   if (openSections.value.includes(section)) {
-    openSections.value = openSections.value.filter(
-      (item: string) => item !== section
-    )
+    openSections.value = openSections.value.filter((item: string) => item !== section)
   } else {
     openSections.value.push(section)
   }
@@ -34,7 +32,7 @@ watch(
   () => props.isOpen,
   (value) => {
     document.body.style.overflow = value ? 'hidden' : ''
-  }
+  },
 )
 </script>
 
@@ -42,23 +40,11 @@ watch(
   <div>
     <!-- overlay -->
     <transition name="overlay-fade">
-      <div
-        v-if="props.isOpen"
-        class="overlay"
-        @click="closeMenu"
-      >
+      <div v-if="props.isOpen" class="overlay" @click="closeMenu">
         <!-- sidebar -->
-        <div
-          class="menu-container"
-          @click.stop
-        >
+        <div class="menu-container" @click.stop>
           <!-- botão fechar -->
-          <button
-            class="close-button"
-            @click="closeMenu"
-          >
-            ✕
-          </button>
+          <button class="close-button" @click="closeMenu">✕</button>
 
           <p class="menu-title">menu</p>
 
@@ -66,75 +52,45 @@ watch(
             <p class="login" @click="goToLogin">Entrar/Cadastrar</p>
 
             <!-- masculino -->
-            <div
-              class="menu-item"
-              @click="toggleSection('masculino')"
-            >
+            <div class="menu-item" @click="toggleSection('masculino')">
               <span>Masculino</span>
               <span>
-                {{
-                  openSections.includes('masculino')
-                    ? '−'
-                    : '+'
-                }}
+                {{ openSections.includes('masculino') ? '−' : '+' }}
               </span>
             </div>
 
             <transition name="fade">
-              <div
-                v-if="openSections.includes('masculino')"
-                class="submenu"
-              >
+              <div v-if="openSections.includes('masculino')" class="submenu">
                 <p>Camisetas</p>
                 <p>Calças</p>
               </div>
             </transition>
 
             <!-- feminino -->
-            <div
-              class="menu-item"
-              @click="toggleSection('feminino')"
-            >
+            <div class="menu-item" @click="toggleSection('feminino')">
               <span>Feminino</span>
               <span>
-                {{
-                  openSections.includes('feminino')
-                    ? '−'
-                    : '+'
-                }}
+                {{ openSections.includes('feminino') ? '−' : '+' }}
               </span>
             </div>
 
             <transition name="fade">
-              <div
-                v-if="openSections.includes('feminino')"
-                class="submenu"
-              >
+              <div v-if="openSections.includes('feminino')" class="submenu">
                 <p>Vestidos</p>
                 <p>Saias</p>
               </div>
             </transition>
 
             <!-- infantil -->
-            <div
-              class="menu-item"
-              @click="toggleSection('infantil')"
-            >
+            <div class="menu-item" @click="toggleSection('infantil')">
               <span>Infantil</span>
               <span>
-                {{
-                  openSections.includes('infantil')
-                    ? '−'
-                    : '+'
-                }}
+                {{ openSections.includes('infantil') ? '−' : '+' }}
               </span>
             </div>
 
             <transition name="fade">
-              <div
-                v-if="openSections.includes('infantil')"
-                class="submenu"
-              >
+              <div v-if="openSections.includes('infantil')" class="submenu">
                 <p>Meninos</p>
                 <p>Meninas</p>
               </div>
@@ -182,7 +138,7 @@ watch(
   padding: 20px;
   box-sizing: border-box;
 
-  font-family: "Montserrat", sans-serif;
+  font-family: 'Montserrat', sans-serif;
 
   overflow-y: auto;
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);

@@ -3,14 +3,17 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import authApi from '@/api/authApi'
 
+type User = Record<string, unknown>
 const router = useRouter()
 const isSaving = ref(false)
 const feedback = ref('')
 const feedbackType = ref<'success' | 'error'>('success')
+const user = ref<User>({})
+const form = ref({ name: '', email: '', phone: '', birthDate: '', bio: '' })
+const photoFile = ref<File | null>(null)
+const photoPreview = ref('')
 
-type StoredUser = Record<string, unknown>
-
-const getStoredUser = (): StoredUser => {
+const getStoredUser = (): User => {
   try {
     return JSON.parse(localStorage.getItem('user') || '{}')
   } catch {
@@ -18,34 +21,41 @@ const getStoredUser = (): StoredUser => {
   }
 }
 
-const user = ref<StoredUser>(getStoredUser())
-const form = ref({
-  name: '',
-  email: '',
-  phone: '',
-  birthDate: '',
-  bio: '',
-})
-const photoFile = ref<File | null>(null)
-const photoPreview = ref('')
+const readValue = (item: User, ...keys: string[]) => {
+  for (const key of keys) {
+    const value = item[key]
+    if (typeof value === 'string' && value) return value
+  }
+  return ''
+}
 
-function getImagePreview(value: unknown): string {
+const getImagePreview = (value: unknown) => {
   if (typeof value !== 'string' || !value) return ''
   return value.startsWith('http') ? value : `${import.meta.env.VITE_API_URL}/api${value}`
 }
 
-function handlePhotoChange(event: Event) {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0] || null
-  photoFile.value = file
+const setFormFromUser = (currentUser: User) => {
+  form.value = {
+    name: readValue(currentUser, 'name'),
+    email: readValue(currentUser, 'email'),
+    phone: readValue(currentUser, 'phone'),
+    birthDate: readValue(currentUser, 'date_of_birth', 'birth_date'),
+    bio: readValue(currentUser, 'bio'),
+  }
+  photoPreview.value = getImagePreview(
+    currentUser.photo || currentUser.profile_image || currentUser.avatar || currentUser.image,
+  )
+}
 
+const handlePhotoChange = (event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0] || null
+  photoFile.value = file
   if (!file) {
     photoPreview.value = getImagePreview(
       user.value.photo || user.value.profile_image || user.value.avatar || user.value.image,
     )
     return
   }
-
   const reader = new FileReader()
   reader.onload = () => {
     photoPreview.value = (reader.result as string) || ''
@@ -53,29 +63,18 @@ function handlePhotoChange(event: Event) {
   reader.readAsDataURL(file)
 }
 
-onMounted(() => {
-  const currentUser = getStoredUser()
-  user.value = currentUser
-
-  form.value = {
-    name: typeof currentUser.name === 'string' ? currentUser.name : '',
-    email: typeof currentUser.email === 'string' ? currentUser.email : '',
-    phone: typeof currentUser.phone === 'string' ? currentUser.phone : '',
-    birthDate:
-      typeof currentUser.date_of_birth === 'string'
-        ? currentUser.date_of_birth
-        : typeof currentUser.birth_date === 'string'
-          ? currentUser.birth_date
-          : '',
-    bio: typeof currentUser.bio === 'string' ? currentUser.bio : '',
+const getErrorMessage = (error: unknown) => {
+  if (!error || typeof error !== 'object') return 'Não foi possível salvar agora. Tente novamente.'
+  if ('response' in error && error.response && typeof error.response === 'object') {
+    const data = (error.response as { data?: Record<string, unknown> }).data
+    if (typeof data?.detail === 'string') return data.detail
+    if (typeof data?.message === 'string') return data.message
   }
+  if ('message' in error && typeof error.message === 'string') return error.message
+  return 'Não foi possível salvar agora. Tente novamente.'
+}
 
-  photoPreview.value = getImagePreview(
-    currentUser.photo || currentUser.profile_image || currentUser.avatar || currentUser.image,
-  )
-})
-
-async function saveProfile() {
+const saveProfile = async () => {
   if (!form.value.name.trim() || !form.value.email.trim()) {
     feedback.value = 'Preencha nome e e-mail para continuar.'
     feedbackType.value = 'error'
@@ -98,9 +97,8 @@ async function saveProfile() {
       ...payload,
       profile_image: photoFile.value || undefined,
     })
-
     const mergedUser = {
-      ...(user.value || {}),
+      ...user.value,
       ...payload,
       date_of_birth: form.value.birthDate,
       birth_date: form.value.birthDate,
@@ -108,42 +106,40 @@ async function saveProfile() {
       profile_image:
         photoPreview.value ||
         (typeof user.value.profile_image === 'string' ? user.value.profile_image : ''),
-      ...(serverUser && typeof serverUser === 'object' ? (serverUser as StoredUser) : {}),
+      ...(serverUser && typeof serverUser === 'object' ? (serverUser as User) : {}),
     }
 
     localStorage.setItem('user', JSON.stringify(mergedUser))
     localStorage.setItem('email', payload.email)
-
     feedback.value = 'Perfil atualizado com sucesso!'
     feedbackType.value = 'success'
     setTimeout(() => router.push('/profile'), 400)
   } catch (error: unknown) {
     console.error('Erro ao atualizar perfil:', error)
-
-    const message = (() => {
-      if (!error || typeof error !== 'object')
-        return 'Não foi possível salvar agora. Tente novamente.'
-      if ('response' in error && error.response && typeof error.response === 'object') {
-        const resp = error.response as Record<string, unknown>
-        const data = resp.data as Record<string, unknown> | undefined
-        if (data?.detail && typeof data.detail === 'string') return data.detail
-        if (data?.message && typeof data.message === 'string') return data.message
-      }
-      if ('message' in error && typeof error.message === 'string') return error.message
-      return 'Não foi possível salvar agora. Tente novamente.'
-    })()
-
-    feedback.value = message
+    feedback.value = getErrorMessage(error)
     feedbackType.value = 'error'
   } finally {
     isSaving.value = false
   }
 }
+
+const fields = [
+  { key: 'name', label: 'Nome', type: 'text', placeholder: 'Seu nome completo' },
+  { key: 'email', label: 'E-mail', type: 'email', placeholder: 'seu@email.com' },
+  { key: 'phone', label: 'Telefone', type: 'text', placeholder: '(xx) xxxxx-xxxx' },
+  { key: 'birthDate', label: 'Data de nascimento', type: 'date', placeholder: '' },
+  { key: 'bio', label: 'Bio', type: 'textarea', placeholder: 'Fale sobre você...' },
+] as const
+
+onMounted(() => {
+  const currentUser = getStoredUser()
+  user.value = currentUser
+  setFormFromUser(currentUser)
+})
 </script>
 
 <template>
   <div class="page">
-    <!-- HEADER -->
     <div class="topbar">
       <button class="back" @click="router.back()">
         <svg
@@ -163,7 +159,6 @@ async function saveProfile() {
       </button>
     </div>
 
-    <!-- FOTO -->
     <div class="photo-area">
       <div class="photo">
         <img v-if="photoPreview" :src="photoPreview" />
@@ -175,36 +170,19 @@ async function saveProfile() {
       </label>
     </div>
 
-    <!-- FORM -->
     <div class="form-area">
-      <div class="input-group">
-        <label>Nome</label>
-        <input v-model="form.name" placeholder="Seu nome completo" />
+      <div v-for="field in fields" :key="field.key" class="input-group">
+        <label>{{ field.label }}</label>
+        <input
+          v-if="field.type !== 'textarea'"
+          v-model="form[field.key]"
+          :type="field.type"
+          :placeholder="field.placeholder"
+        />
+        <textarea v-else v-model="form[field.key]" :placeholder="field.placeholder" />
       </div>
 
-      <div class="input-group">
-        <label>E-mail</label>
-        <input v-model="form.email" type="email" placeholder="seu@email.com" />
-      </div>
-
-      <div class="input-group">
-        <label>Telefone</label>
-        <input v-model="form.phone" placeholder="(xx) xxxxx-xxxx" />
-      </div>
-
-      <div class="input-group">
-        <label>Data de nascimento</label>
-        <input v-model="form.birthDate" type="date" />
-      </div>
-
-      <div class="input-group">
-        <label>Bio</label>
-        <textarea v-model="form.bio" placeholder="Fale sobre você..." />
-      </div>
-
-      <p v-if="feedback" class="feedback" :class="feedbackType">
-        {{ feedback }}
-      </p>
+      <p v-if="feedback" class="feedback" :class="feedbackType">{{ feedback }}</p>
     </div>
   </div>
 </template>

@@ -154,7 +154,7 @@ async function submitReview() {
 
 <template>
   <div class="reviews-page-container">
-    
+
     <!-- DETALHE -->
     <template v-if="selectedReview">
       <header class="reviews-header">
@@ -165,7 +165,7 @@ async function submitReview() {
 
       <main class="reviews-content">
         <div class="form-container-desktop single-review-container">
-          
+
           <div class="review-user-row">
             <img :src="selectedReview.userAvatar" class="user-avatar" />
             <div class="user-meta">
@@ -293,7 +293,7 @@ async function submitReview() {
             class="review-item clickable-review"
             @click="openReview(review)"
           >
-            
+
             <div class="review-user-row">
               <img :src="review.userAvatar" class="user-avatar" />
               <div class="user-meta">

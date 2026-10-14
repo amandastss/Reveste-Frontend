@@ -153,12 +153,6 @@ const router = createRouter({
       name: 'categoria-suporte',
       component: () => import('@/views/CategoriaSuporteView.vue'),
     },
-    {
-      path: '/suporte',
-      name: 'suporte',
-      component: () => import('@/views/SuporteView.vue'),
-    },
-
     // AUTH
     {
       path: '/auth/email',

@@ -163,18 +163,24 @@ const publicarPeca = async () => {
 <template>
   <div class="sell-page">
     <div v-if="mostrarLoginAviso" class="overlay">
-  <div class="modal">
-    <h2>Ops!</h2>
-    <p>Você precisa estar logado para vender uma peça.</p>
-    <button @click="$router.push('/auth-email')">
-      Entrar / Criar conta
-    </button>
-  </div>
-</div>
-<header class="top-bar">
+      <div class="modal">
+        <h2>Ops!</h2>
+        <p>Você precisa estar logado para vender uma peça.</p>
+        <button @click="$router.push('/auth-email')">Entrar / Criar conta</button>
+      </div>
+    </div>
+    <header class="top-bar">
       <button @click="$router.back()" class="back-btn" aria-label="Voltar">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-          stroke-linecap="round" stroke-linejoin="round">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
           <line x1="19" y1="12" x2="5" y2="12"></line>
           <polyline points="12 19 5 12 12 5"></polyline>
         </svg>

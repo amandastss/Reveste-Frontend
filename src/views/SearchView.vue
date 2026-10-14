@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import blusa from '@/assets/roupas/blusalaranjabasica.png'
-import jeans from '@/assets/roupas/calcajeansskinny.png'
-import skinny from '@/assets/roupas/calcaskinny.png'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
@@ -45,16 +42,8 @@ const produtos = ref<Produto[]>([])
 const recentes = ref<string[]>([])
 
 const RECENTES_KEY = 'recent_searches_v1'
-const LEGACY_KEYS = ['recent_searches', 'recentSearches', 'recent_searches_v1']
+const LEGACY_KEYS = ['recent_searches', 'recentSearches']
 const DEFAULT_RECENTES = ['Calças', 'Blusas', 'Sapatos', 'Jaqueta']
-
-const fallbackCategorias: Categoria[] = [
-  { id: 1, nome: 'Casual', imagem_url: 'https://placehold.co/80x80?text=Casual' },
-  { id: 2, nome: 'Streetwear', imagem_url: 'https://placehold.co/80x80?text=Street' },
-  { id: 3, nome: 'Formal', imagem_url: 'https://placehold.co/80x80?text=Formal' },
-  { id: 4, nome: 'Vintage', imagem_url: 'https://placehold.co/80x80?text=Vintage' },
-  { id: 5, nome: 'Praia', imagem_url: 'https://placehold.co/80x80?text=Praia' },
-]
 
 const parseRecentes = (raw: string | null): string[] | null => {
   if (!raw) return null
@@ -92,36 +81,6 @@ const salvarRecentesNoStorage = () => {
     void e
   }
 }
-
-const mockProdutos: Produto[] = [
-  {
-    id: 1,
-    nome: 'Blusa Laranja Básica',
-    preco: 50,
-    marca: 'Nike',
-    categoria: 'camiseta',
-    genero: 'feminino',
-    imagem: blusa,
-  },
-  {
-    id: 2,
-    nome: 'Calça Jeans Skinny',
-    preco: 90,
-    marca: 'Zara',
-    categoria: 'calca',
-    genero: 'feminino',
-    imagem: jeans,
-  },
-  {
-    id: 3,
-    nome: 'Calça Skinny',
-    preco: 70,
-    marca: 'Shein',
-    categoria: 'calca',
-    genero: 'feminino',
-    imagem: skinny,
-  },
-]
 
 const normalizeText = (texto: string) =>
   texto
@@ -161,23 +120,14 @@ const produtoPertenceCategoria = (produto: Produto, categoriaSelecionada: Catego
   if (!categoriaSelecionada) return false
 
   const idCategoria = Number(categoriaSelecionada.id)
-  const candidatos = [
+  const ids = [
     produto.categoria_id,
     produto.category_id,
-    typeof produto.categoria === 'object' && produto.categoria
-      ? produto.categoria.id
-      : produto.categoria,
-    typeof produto.category === 'object' && produto.category
-      ? produto.category.id
-      : produto.category,
-    produto.categoria_nome,
-    produto.categoriaNome,
-    produto.categoria_name,
-    typeof produto.categoria === 'string' ? produto.categoria : undefined,
-    typeof produto.category === 'string' ? produto.category : undefined,
-  ]
+    typeof produto.categoria === 'object' ? produto.categoria?.id : produto.categoria,
+    typeof produto.category === 'object' ? produto.category?.id : produto.category,
+  ].map((valor) => Number(valor))
 
-  if (candidatos.some((valor) => Number(valor) === idCategoria && Number.isFinite(Number(valor)))) {
+  if (ids.some((valor) => Number.isFinite(valor) && valor === idCategoria)) {
     return true
   }
 
@@ -204,10 +154,6 @@ const carregarCategorias = async () => {
     console.warn('Erro ao carregar categorias:', error)
     categorias.value = []
   }
-
-  if (!categorias.value.length) {
-    categorias.value = fallbackCategorias
-  }
 }
 
 const carregarProdutos = async (q?: string) => {
@@ -216,8 +162,8 @@ const carregarProdutos = async (q?: string) => {
     const res = await axios.get(`${API_BASE}/api/produtos/`, { params })
     produtos.value = getResponseList(res.data)
   } catch (error) {
-    console.warn('API indisponível. Usando mock.', error)
-    produtos.value = mockProdutos
+    console.warn('API indisponível. Nenhum produto carregado.', error)
+    produtos.value = []
   }
 }
 
@@ -335,62 +281,8 @@ function abrirProduto(id: number) {
   router.push(`/produto/${id}`)
 }
 
-// ==========================================
-// CÂMERA E BUSCA VISUAL (NOVA LÓGICA)
-// ==========================================
-const mostrarModalCamera = ref(false)
-
-function abrirCameraModal() {
-  mostrarModalCamera.value = true
-}
-
-function fecharModal() {
-  mostrarModalCamera.value = false
-}
-
 function limparBusca() {
   search.value = ''
-}
-
-function irParaCamera(tipo: 'camera' | 'gallery') {
-  fecharModal()
-
-  if (tipo === 'gallery') {
-    return new Promise<void>((resolve) => {
-      const input = document.createElement('input')
-      input.type = 'file'
-      input.accept = 'image/*'
-      input.style.display = 'none'
-      document.body.appendChild(input)
-
-      input.onchange = async () => {
-        const file = input.files && input.files[0]
-        if (file) {
-          const reader = new FileReader()
-          reader.onload = () => {
-            const data = reader.result as string
-            try {
-              sessionStorage.setItem('camera-image', data)
-            } catch (e) {
-              console.warn('Não foi possível salvar a imagem no sessionStorage', e)
-            }
-            document.body.removeChild(input)
-            router.push('/pesquisa-camera')
-            resolve()
-            console.log('IMAGEM SALVA:', data.substring(0, 50))
-          }
-          reader.readAsDataURL(file)
-        } else {
-          document.body.removeChild(input)
-          resolve()
-        }
-      }
-
-      input.click()
-    })
-  }
-
-  router.push({ name: 'camera-search', query: { tipo } })
 }
 
 onMounted(async () => {
@@ -442,10 +334,6 @@ onMounted(async () => {
 
       <span class="material-symbols-outlined filter-button" @click="toggleCategorias">
         filter_alt
-      </span>
-
-      <span class="material-symbols-outlined camera-button" @click="abrirCameraModal">
-        photo_camera
       </span>
     </div>
 
@@ -501,19 +389,6 @@ onMounted(async () => {
     <div v-if="!filtrados.length" class="empty">
       <p>Nenhum resultado encontrado</p>
     </div>
-
-    <!-- OVERLAY -->
-    <div v-if="mostrarModalCamera" class="camera-overlay" @click="fecharModal"></div>
-
-    <!-- MODAL -->
-    <div v-if="mostrarModalCamera" class="camera-sheet">
-      <button @click="irParaCamera('camera')">Tirar foto</button>
-
-      <button @click="irParaCamera('gallery')">Importar da galeria</button>
-
-      <button class="cancel" @click="fecharModal">Cancelar</button>
-    </div>
   </div>
 </template>
-
 <style scoped src="../css/search.css"></style>
