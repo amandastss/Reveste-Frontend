@@ -29,6 +29,17 @@ See [Vite Configuration Reference](https://vite.dev/config/).
 npm install
 ```
 
+### Configuração local
+
+Copie `.env.example` para `.env` e configure:
+
+- `VITE_API_URL`: URL raiz do backend (por exemplo, `http://localhost:8000` ou `https://servidor`); pode terminar em `/api`, pois o cliente normaliza esse sufixo.
+- `VITE_MERCADO_PAGO_PUBLIC_KEY`: chave **pública** do Mercado Pago compatível com o ambiente de credenciais do backend.
+
+Não configure `MERCADO_PAGO_ACCESS_TOKEN`, `MERCADO_PAGO_WEBHOOK_SECRET` nem qualquer segredo em variáveis `VITE_*`: credenciais privadas pertencem somente à configuração do backend. Para produção, defina a chave pública e a URL do backend no ambiente de build/deploy; o `.env.production` do repositório não contém a chave.
+
+O checkout usa o Payment Brick no navegador. O backend valida/prepara o pedido, determina o total e recebe o `pedido_id` junto dos dados produzidos pelo Brick. O frontend confirma a compra consultando `GET /api/pedidos/{id}/`; os parâmetros de retorno do Mercado Pago e o status do callback não são confirmação de pagamento. A API atual de pagamentos pode retornar também campos de preferência (`preference_id`/`init_point`) ao preparar o checkout; o frontend usa apenas `pedido_id`, `amount` e email do pagador e nunca navega para esses links.
+
 ### Compile and Hot-Reload for Development
 
 ```sh

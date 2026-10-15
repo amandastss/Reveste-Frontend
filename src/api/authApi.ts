@@ -1,17 +1,17 @@
 import api from './config'
-import type { AxiosResponse } from 'axios'
+import axios, { type AxiosResponse } from 'axios'
 
 type AuthResponse<T = unknown> = Promise<AxiosResponse<T>>
 type UserProfile = {
-  "id": number
-  "email": string
-  "name": string
-  "role": "buyer",
-  "birth_date": string
-  "phone": string
-  "bio": string
-  "profile_image": string
-  "created_at": string
+  id: number
+  email: string
+  name: string
+  role: 'buyer'
+  birth_date: string
+  phone: string
+  bio: string
+  profile_image: string
+  created_at: string
 }
 
 type RegisterPayload = {
@@ -53,7 +53,7 @@ const fetchUserProfile = async () => {
 
 async function fetchUserFromCandidates(
   token: string,
-  userId?: string | number
+  userId?: string | number,
 ): Promise<Record<string, unknown> | null> {
   // const authHeaders = (scheme: 'Token' | 'Bearer') => ({
   //   headers: {
@@ -76,17 +76,11 @@ async function fetchUserFromCandidates(
       `/usuario/${userId}/`,
       `/profile/${userId}/`,
       `/perfil/${userId}/`,
-      `/registro/${userId}/`
+      `/registro/${userId}/`,
     )
   }
 
-  candidates.push(
-    '/profile/',
-    '/user/',
-    '/usuario/',
-    '/usuarios/',
-    '/users/'
-  )
+  candidates.push('/profile/', '/user/', '/usuario/', '/usuarios/', '/users/')
 
   for (const url of candidates) {
     try {
@@ -115,7 +109,7 @@ const register = (
   phone?: string,
   birth_date?: string,
   profile_image?: File | string,
-  bio?: string
+  bio?: string,
 ): AuthResponse<Record<string, unknown>> => {
   if (profile_image instanceof File) {
     const formData = new FormData()
@@ -138,7 +132,7 @@ const register = (
     email,
     name,
     password,
-    role
+    role,
   }
 
   if (phone) data.phone = phone
@@ -152,7 +146,11 @@ const register = (
   return api.post('/registro/', data)
 }
 
-const sendUpdateRequest = async (method: 'patch' | 'put', url: string, body: FormData | ProfileUpdatePayload) => {
+const sendUpdateRequest = async (
+  method: 'patch' | 'put',
+  url: string,
+  body: FormData | ProfileUpdatePayload,
+) => {
   if (body instanceof FormData) {
     return api[method](url, body)
   }
@@ -170,7 +168,7 @@ const updateProfile = async (payload: ProfileUpdatePayload): Promise<Record<stri
     '/usuario/me/',
     '/usuario/me',
     '/users/me/',
-    '/users/me'
+    '/users/me',
   ]
 
   if (userId !== undefined && userId !== null) {
@@ -180,7 +178,7 @@ const updateProfile = async (payload: ProfileUpdatePayload): Promise<Record<stri
       `/usuario/${userId}/`,
       `/usuario/${userId}`,
       `/users/${userId}/`,
-      `/users/${userId}`
+      `/users/${userId}`,
     )
   }
 
@@ -210,9 +208,7 @@ const updateProfile = async (payload: ProfileUpdatePayload): Promise<Record<stri
         return response.data as Record<string, unknown>
       } catch (error: unknown) {
         lastError = error
-        const status = error && typeof error === 'object' && 'response' in error && error.response && typeof (error.response as any).status === 'number'
-          ? (error.response as any).status
-          : undefined
+        const status = axios.isAxiosError(error) ? error.response?.status : undefined
 
         if (status === 401) {
           throw error
@@ -230,28 +226,19 @@ const updateProfile = async (payload: ProfileUpdatePayload): Promise<Record<stri
   throw lastError
 }
 
-const verifyCode = (
-  email: string,
-  code: string
-): AuthResponse => {
+const verifyCode = (email: string, code: string): AuthResponse => {
   return api.post('/verify-code/', { email, code })
 }
 
-const requestPasswordReset = (
-  email: string
-): AuthResponse => {
+const requestPasswordReset = (email: string): AuthResponse => {
   return api.post('/forgot-password/', { email })
 }
 
-const resetPassword = (
-  email: string,
-  code: string,
-  newPassword: string
-): AuthResponse => {
+const resetPassword = (email: string, code: string, newPassword: string): AuthResponse => {
   return api.post('/reset-password/', {
     email,
     code,
-    new_password: newPassword
+    new_password: newPassword,
   })
 }
 
@@ -265,5 +252,5 @@ export default {
   updateProfile,
   verifyCode,
   requestPasswordReset,
-  resetPassword
+  resetPassword,
 }

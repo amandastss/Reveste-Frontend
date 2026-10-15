@@ -39,17 +39,11 @@ export const useCartStore = defineStore('cart', {
 
   getters: {
     totalItems: (state) => {
-      return state.items.reduce(
-        (total, item) => total + item.quantity,
-        0
-      )
+      return state.items.reduce((total, item) => total + item.quantity, 0)
     },
 
     totalPrice: (state) => {
-      return state.items.reduce(
-        (total, item) => total + item.price * item.quantity,
-        0
-      )
+      return state.items.reduce((total, item) => total + item.price * item.quantity, 0)
     },
   },
 
@@ -58,23 +52,14 @@ export const useCartStore = defineStore('cart', {
       this.loading = true
 
       try {
-        const response = await api.get<BackendCartResponse>(
-          '/carrinho/'
-        )
-
-        console.log(
-          'CARRINHO VINDO DO BACKEND:',
-          response.data
-        )
+        const response = await api.get<BackendCartResponse>('/carrinho/')
 
         const cartItems = response.data.itens ?? []
 
         const itemsWithProductData = await Promise.all(
           cartItems.map(async (item) => {
             try {
-              const productResponse = await api.get(
-                `/produtos/${item.produto}/`
-              )
+              const productResponse = await api.get(`/produtos/${item.produto}/`)
 
               const produto = productResponse.data
 
@@ -82,39 +67,21 @@ export const useCartStore = defineStore('cart', {
                 id: item.produto,
                 itemPedidoId: item.id,
 
-                name:
-                  item.nome ??
-                  produto.nome ??
-                  produto.titulo ??
-                  'Produto',
+                name: item.nome ?? produto.nome ?? produto.titulo ?? 'Produto',
 
-                color:
-                  item.cor ??
-                  produto.cor ??
-                  '',
+                color: item.cor ?? produto.cor ?? '',
 
-                size:
-                  item.tamanho ??
-                  produto.tamanho ??
-                  '',
+                size: item.tamanho ?? produto.tamanho ?? '',
 
                 price: Number(item.preco),
 
-                quantity: item.quantidade,
+                // Cada anúncio representa uma única peça; a API é a fonte oficial.
+                quantity: 1,
 
                 image:
-                  item.imagem_url ??
-                  produto.imagem_url ??
-                  produto.imagem ??
-                  produto.foto ??
-                  '',
+                  item.imagem_url ?? produto.imagem_url ?? produto.imagem ?? produto.foto ?? '',
               }
-            } catch (error) {
-              console.error(
-                `Erro ao carregar produto ${item.produto}:`,
-                error
-              )
-
+            } catch {
               return {
                 id: item.produto,
                 itemPedidoId: item.id,
@@ -127,65 +94,36 @@ export const useCartStore = defineStore('cart', {
 
                 price: Number(item.preco),
 
-                quantity: item.quantidade,
+                quantity: 1,
 
                 image: item.imagem_url ?? '',
               }
             }
-          })
+          }),
         )
 
         this.items = itemsWithProductData
-      } catch (error) {
-        console.error(
-          'Erro ao carregar carrinho:',
-          error
-        )
-
-        this.items = []
-
-        throw error
       } finally {
         this.loading = false
       }
     },
 
     async addItem(productId: number) {
-      try {
-        await api.post('/carrinho/', {
-          productId,
-        })
+      await api.post('/carrinho/', {
+        productId,
+      })
 
-        await this.loadCart()
-      } catch (error) {
-        console.error(
-          'Erro ao adicionar produto ao carrinho:',
-          error
-        )
-
-        throw error
-      }
+      await this.loadCart()
     },
 
     async removeItem(productId: number) {
-      try {
-        await api.delete('/carrinho/', {
-          data: {
-            productId,
-          },
-        })
+      await api.delete('/carrinho/', {
+        data: {
+          productId,
+        },
+      })
 
-        this.items = this.items.filter(
-          (item) => item.id !== productId
-        )
-      } catch (error) {
-        console.error(
-          'Erro ao remover item do carrinho:',
-          error
-        )
-
-        throw error
-      }
+      this.items = this.items.filter((item) => item.id !== productId)
     },
 
     clearCart() {
