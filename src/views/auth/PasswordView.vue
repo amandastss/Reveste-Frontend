@@ -37,29 +37,17 @@ async function login() {
     }
     const userData = await authApi.fetchUserProfile()
     const existingUser = JSON.parse(localStorage.getItem('user') || '{}')
-    // const currentEmail = email.value?.toLowerCase() || ''
-    // const storedEmail = existingUser.email?.toLowerCase() || ''
+    const mergedUser = {
+      ...existingUser,
+      ...userData,
+      email: userData.email || email.value,
+    }
 
-    // const mergedUser = storedEmail === currentEmail
-    //   ? {
-    //       ...existingUser,
-    //       ...res.data,
-    //       email: email.value,
-    //       name: existingUser.name || res.data.name || res.data.username || res.data.first_name || undefined,
-    //       phone: existingUser.phone || res.data.phone,
-    //       photo: existingUser.photo || res.data.profile_image || res.data.photo || res.data.avatar || res.data.image,
-    //       date_of_birth: existingUser.date_of_birth || res.data.date_of_birth || res.data.birthdate || res.data.birth_date,
-    //     }
-    //   : {
-    //       ...res.data,
-    //       email: email.value,
-    //     }
-
-    localStorage.setItem('user', JSON.stringify(userData))
+    localStorage.setItem('user', JSON.stringify(mergedUser))
     localStorage.setItem('email', email.value)
 
     try {
-      const token = res.data?.token || localStorage.getItem('token')
+      const token = res.data?.access || res.data?.token || localStorage.getItem('token')
       const candidateId =
         res.data?.user_id || res.data?.user?.id || mergedUser.user_id || mergedUser.id
       if (token) {
@@ -89,7 +77,7 @@ async function login() {
 
     router.push('/')
   } catch (err) {
-    alert('Erro ao autenticar: ' + (err.response?.data?.message || 'Tente novamente'))
+    alert('Erro ao autenticar: ' + (err?.response?.data?.message || 'Tente novamente'))
   }
 }
 
@@ -155,7 +143,9 @@ function togglePassword() {
       </button>
 
       <!-- ESQUECI -->
-      <p v-if="isLogin" class="forgot" @click="router.push('/auth/forgot')">Esqueceu sua senha?</p>
+      <p v-if="isLogin" class="forgot" @click="router.push('/auth/forgot-password')">
+        Esqueceu sua senha?
+      </p>
     </div>
   </div>
 </template>
