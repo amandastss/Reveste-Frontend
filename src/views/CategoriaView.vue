@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 
@@ -138,9 +138,13 @@ const abrirProduto = (id: number) => {
 
 const tituloCategoria = computed(() => getCategoriaNome(categoria.value))
 
-onMounted(() => {
-  carregarCategoria()
-})
+watch(
+  () => route.params.id,
+  () => {
+    carregarCategoria()
+  },
+  { immediate: true },
+)
 </script>
 
 <template>

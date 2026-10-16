@@ -22,6 +22,12 @@ const rightItems: NavItem[] = [
   { aria: 'Perfil', icon: 'person', route: '/profile' },
 ]
 
+const searchNavItem: NavItem = {
+  aria: 'Pesquisar',
+  icon: 'search',
+  route: '/search',
+}
+
 function handleNavClick(item: NavItem) {
   router.push(item.route)
   showMenu.value = false
@@ -120,6 +126,14 @@ onMounted(() => {
 
       <!-- DIREITA -->
       <div class="right">
+        <button
+          class="headerdesktop-button search-button"
+          :aria-label="searchNavItem.aria"
+          @click="handleNavClick(searchNavItem)"
+        >
+          <span class="material-symbols-outlined">{{ searchNavItem.icon }}</span>
+        </button>
+
         <button
           v-for="(item, index) in rightItems"
           :key="index"
@@ -329,18 +343,22 @@ onMounted(() => {
 .right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   margin-left: auto;
+}
+
+.search-button {
+  margin-right: 0;
 }
 
 .headerdesktop-button {
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 10px;
+  padding: 8px;
   border-radius: 50%;
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
 
   display: flex;
   align-items: center;

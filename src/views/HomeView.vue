@@ -23,20 +23,12 @@ interface Categoria {
   title?: string
 }
 
-interface Estilo {
-  id: number
-  titulo: string
-  descricao: string
-  imagem: string
-}
-
 const router = useRouter()
 const route = useRoute()
 
 const produtos = ref<Produto[]>([])
 const categorias = ref<Categoria[]>([])
 const categoriaSelecionada = ref<Categoria | null>(null)
-const carousel = ref<HTMLElement | null>(null)
 const heroIndex = ref(0)
 const highlightIndex = ref(0)
 
@@ -78,43 +70,6 @@ const heroSlides = ref<
 ])
 
 /* =========================================
-   ESTILOS DO CARROSSEL
-========================================= */
-
-const estilos = ref<Estilo[]>([
-  {
-    id: 1,
-    titulo: 'Vintage',
-    descricao: 'Peças com história e personalidade.',
-    imagem: '/vintage.jpg',
-  },
-  {
-    id: 2,
-    titulo: 'Minimal',
-    descricao: 'Menos é mais.',
-    imagem: '/minimal.jpg',
-  },
-  {
-    id: 3,
-    titulo: 'Streetwear',
-    descricao: 'Conforto e atitude.',
-    imagem: '/streetwear.jpg',
-  },
-  {
-    id: 4,
-    titulo: 'Y2K',
-    descricao: 'Diretamente dos anos 2000.',
-    imagem: '/y2k.jpg',
-  },
-  {
-    id: 5,
-    titulo: 'Clássico',
-    descricao: 'Peças que nunca saem de moda.',
-    imagem: '/classico.jpg',
-  },
-])
-
-/* =========================================
    NAVEGAÇÃO
 ========================================= */
 
@@ -128,39 +83,6 @@ const goToProduto = (id: number) => {
 const goToSearch = () => {
   router.push({
     name: 'search',
-  })
-}
-
-const goToCategory = (cat: Categoria) => {
-  router.push({
-    path: '/',
-    query: {
-      categoria: String(cat.id),
-    },
-  })
-}
-
-const goToEstilo = (estilo: Estilo) => {
-  router.push({
-    name: 'search',
-    query: {
-      estilo: estilo.titulo,
-    },
-  })
-}
-
-/* =========================================
-   CARROSSEL
-========================================= */
-
-const scrollCarousel = (direcao: 'left' | 'right') => {
-  if (!carousel.value) return
-
-  const distancia = 260
-
-  carousel.value.scrollBy({
-    left: direcao === 'right' ? distancia : -distancia,
-    behavior: 'smooth',
   })
 }
 
@@ -411,102 +333,6 @@ onMounted(() => {
 
         <button class="nav-arrow" @click="nextHeroSlide" aria-label="Próximo slide">
           <span class="material-symbols-outlined">chevron_right</span>
-        </button>
-      </div>
-    </section>
-
-    <!-- =========================================
-         SEARCH BAR
-    ========================================= -->
-
-    <div class="search-bar" @click="goToSearch">
-      <div class="search-input-wrapper">
-        <input type="text" placeholder="Pesquisar itens..." readonly />
-
-        <span class="search-icon" aria-hidden="true">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" />
-
-            <path
-              d="M16.5 16.5L21 21"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-            />
-          </svg>
-        </span>
-      </div>
-    </div>
-
-    <!-- =========================================
-         CARROSSEL DE ESTILOS
-    ========================================= -->
-
-    <section class="style-section">
-      <div class="section-header">
-        <div>
-          <span class="section-subtitle"> ENCONTRE O SEU </span>
-
-          <h2>Seu estilo, suas regras.</h2>
-        </div>
-
-        <button class="explore-btn" @click="goToSearch">
-          Explorar
-
-          <span class="material-symbols-outlined"> arrow_forward </span>
-        </button>
-      </div>
-
-      <!-- CONTAINER DO CARROSSEL -->
-
-      <div class="carousel-wrapper">
-        <!-- SETA ESQUERDA -->
-
-        <button
-          class="carousel-btn carousel-btn-left"
-          @click="scrollCarousel('left')"
-          aria-label="Estilo anterior"
-        >
-          <span class="material-symbols-outlined"> chevron_left </span>
-        </button>
-
-        <!-- CARROSSEL -->
-
-        <div ref="carousel" class="style-carousel">
-          <article
-            v-for="estilo in estilos"
-            :key="estilo.id"
-            class="style-card"
-            @click="goToEstilo(estilo)"
-          >
-            <img :src="estilo.imagem" :alt="estilo.titulo" />
-
-            <div class="style-overlay"></div>
-
-            <div class="style-content">
-              <h3>
-                {{ estilo.titulo }}
-              </h3>
-
-              <p>
-                {{ estilo.descricao }}
-              </p>
-
-              <span class="style-arrow">
-                <span class="material-symbols-outlined"> arrow_outward </span>
-              </span>
-            </div>
-          </article>
-        </div>
-
-        <!-- SETA DIREITA -->
-
-        <button
-          class="carousel-btn carousel-btn-right"
-          @click="scrollCarousel('right')"
-          aria-label="Próximo estilo"
-        >
-          <span class="material-symbols-outlined"> chevron_right </span>
         </button>
       </div>
     </section>
