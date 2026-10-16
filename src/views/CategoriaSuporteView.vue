@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 const router = useRouter()
+const route = useRoute()
 
 type Pergunta = {
   pergunta: string
@@ -10,35 +11,146 @@ type Pergunta = {
   avaliacao: 'sim' | 'nao' | null
 }
 
-const aberto = ref<number | null>(null)
+type CategoriaConfig = {
+  titulo: string
+  descricao: string
+  perguntas: Pergunta[]
+}
 
-const perguntas = ref<Pergunta[]>([
-  {
-    pergunta: 'Endereço incorreto e encomendas não entregues',
-    resposta: 'Se você inseriu o endereço errado, o pacote pode retornar.',
-    avaliacao: null,
+const aberto = ref<number | null>(null)
+const tipo = computed(() => String(route.params.tipo || 'pedido'))
+const categorias: Record<string, CategoriaConfig> = {
+  pedido: {
+    titulo: 'Informações do pedido',
+    descricao: 'Acompanhe os status, prazos e principais dúvidas sobre seus pedidos.',
+    perguntas: [
+      {
+        pergunta: 'Como rastrear meu pedido?',
+        resposta:
+          'Você pode acompanhar pelo painel de pedidos ou pelo código de rastreio enviado por e-mail.',
+        avaliacao: null,
+      },
+      {
+        pergunta: 'Quanto tempo demora para a confirmação?',
+        resposta: 'Normalmente, a confirmação acontece em até 24 horas após a compra.',
+        avaliacao: null,
+      },
+      {
+        pergunta: 'Posso alterar o endereço após a compra?',
+        resposta: 'É possível solicitar a alteração enquanto o pedido ainda não foi enviado.',
+        avaliacao: null,
+      },
+    ],
   },
-  {
-    pergunta: 'Quanto tempo demora para envio?',
-    resposta: 'De 2 a 5 dias úteis.',
-    avaliacao: null,
+  pagamento: {
+    titulo: 'Pagamento e segurança',
+    descricao: 'Entenda como funciona o pagamento, segurança e confirmação da compra.',
+    perguntas: [
+      {
+        pergunta: 'Como funciona o pagamento?',
+        resposta: 'Você pode pagar com cartão, pix ou outros meios disponíveis no checkout.',
+        avaliacao: null,
+      },
+      {
+        pergunta: 'Os dados do cartão são seguros?',
+        resposta:
+          'Sim. O pagamento é processado com segurança e não armazenamos os dados completos do cartão.',
+        avaliacao: null,
+      },
+      {
+        pergunta: 'Meu pagamento foi descontado e o pedido não foi confirmado?',
+        resposta:
+          'Em alguns casos a confirmação pode levar alguns minutos. Se persistir, contate o suporte.',
+        avaliacao: null,
+      },
+    ],
   },
-  {
-    pergunta: 'Como rastrear meu pedido?',
-    resposta: 'Você recebe um código por email.',
-    avaliacao: null,
+  entrega: {
+    titulo: 'Compras e entregas',
+    descricao: 'Confira prazos, rastreio e condições para entrega da sua compra.',
+    perguntas: [
+      {
+        pergunta: 'Qual o prazo de entrega?',
+        resposta:
+          'Os prazos variam conforme a região e o produto, mas normalmente ficam entre 2 e 7 dias úteis.',
+        avaliacao: null,
+      },
+      {
+        pergunta: 'Endereço incorreto e encomendas não entregues',
+        resposta:
+          'Se o endereço estiver incorreto, a entrega pode ser atrasada ou devolvida. Acesse seu pedido para verificar.',
+        avaliacao: null,
+      },
+      {
+        pergunta: 'Como rastrear a entrega?',
+        resposta:
+          'Você recebe um código de rastreio por e-mail ou pode acompanhar no painel de pedidos.',
+        avaliacao: null,
+      },
+    ],
   },
-])
+  produto: {
+    titulo: 'Produto e garantia',
+    descricao: 'Dúvidas sobre tamanho, material, uso e garantia dos nossos produtos.',
+    perguntas: [
+      {
+        pergunta: 'Como escolher o tamanho certo?',
+        resposta:
+          'Consulte a tabela de medidas da página do produto e compare com as suas medidas.',
+        avaliacao: null,
+      },
+      {
+        pergunta: 'A peça tem garantia?',
+        resposta: 'Sim. A garantia cobre defeitos de fabricação conforme as condições do produto.',
+        avaliacao: null,
+      },
+      {
+        pergunta: 'O produto está disponível em outra cor ou tamanho?',
+        resposta:
+          'Você pode verificar o estoque diretamente na página do produto ou entrar em contato com o suporte.',
+        avaliacao: null,
+      },
+    ],
+  },
+}
+
+const categoriaPadrao: CategoriaConfig = {
+  titulo: 'Informações do pedido',
+  descricao: 'Acompanhe os status, prazos e principais dúvidas sobre seus pedidos.',
+  perguntas: [
+    {
+      pergunta: 'Como rastrear meu pedido?',
+      resposta:
+        'Você pode acompanhar pelo painel de pedidos ou pelo código de rastreio enviado por e-mail.',
+      avaliacao: null,
+    },
+  ],
+}
+
+const getCategoria = (valor: string): CategoriaConfig => categorias[valor] ?? categoriaPadrao
+
+const categoriaAtual = computed<CategoriaConfig>(() => getCategoria(tipo.value))
+const perguntas = ref<Pergunta[]>([...categoriaAtual.value.perguntas])
+
+watch(
+  tipo,
+  (novoTipo) => {
+    const categoria = getCategoria(novoTipo)
+    perguntas.value = categoria.perguntas.map((item) => ({ ...item }))
+    aberto.value = null
+  },
+  { immediate: true },
+)
 
 function toggle(index: number) {
   aberto.value = aberto.value === index ? null : index
 }
 
-function avaliar(index: number, tipo: 'sim' | 'nao') {
+function avaliar(index: number, valor: 'sim' | 'nao') {
   const item = perguntas.value[index]
 
   if (item) {
-    item.avaliacao = tipo
+    item.avaliacao = valor
   }
 }
 
@@ -57,7 +169,7 @@ function voltar() {
 
       <div class="top-title">
         <span>SUPORTE</span>
-        <h1>Envio e entrega</h1>
+        <h1>{{ categoriaAtual.titulo }}</h1>
       </div>
     </header>
 
@@ -66,9 +178,9 @@ function voltar() {
       <div class="intro">
         <p class="eyebrow">DÚVIDAS FREQUENTES</p>
 
-        <h2>Envio e entrega</h2>
+        <h2>{{ categoriaAtual.titulo }}</h2>
 
-        <p>Encontre respostas para as principais dúvidas sobre seus pedidos.</p>
+        <p>{{ categoriaAtual.descricao }}</p>
       </div>
 
       <!-- FAQ -->
@@ -388,5 +500,62 @@ function voltar() {
   font-size: 11px;
   line-height: 1.5;
   color: var(--text-muted);
+}
+
+@media (min-width: 900px) {
+  .content {
+    grid-template-columns: minmax(250px, 320px) minmax(0, 1fr);
+    display: grid;
+    align-items: start;
+    padding-top: 28px;
+  }
+
+  .intro {
+    position: sticky;
+    top: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .top {
+    padding: 16px 14px 18px;
+  }
+
+  .back-button {
+    width: 38px;
+    height: 38px;
+    top: 14px;
+    left: 14px;
+  }
+
+  .top-title {
+    padding-left: 48px;
+  }
+
+  .content {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .intro,
+  .faq-card {
+    border-radius: 18px;
+  }
+
+  .pergunta {
+    padding-left: 14px;
+    padding-right: 14px;
+    font-size: 0.9rem;
+  }
+
+  .resposta-area {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .avaliacao {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 </style>

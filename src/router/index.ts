@@ -28,6 +28,7 @@ import NotificationsView from '../views/NotificationsView.vue'
 import CategoriaView from '../views/CategoriaView.vue'
 import EditProfileView from '../views/EditProfileView.vue'
 import FavoritosView from '../views/FavoritosView.vue'
+import SuporteView from '../views/SuporteView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -142,7 +143,7 @@ const router = createRouter({
     {
       path: '/suporte',
       name: 'suporte',
-      component: () => import('@/views/SuporteView.vue'),
+      component: SuporteView,
     },
     {
       path: '/notificacoes',
@@ -152,7 +153,8 @@ const router = createRouter({
 
     {
       path: '/suporte/categoria/:tipo',
-      component: CategoriaSuporteView
+      name: 'suporte-categoria',
+      component: CategoriaSuporteView,
     },
     // AUTH
     {
@@ -196,7 +198,6 @@ const router = createRouter({
       name: 'favoritos',
       component: FavoritesView,
     },
-
   ],
 })
 
