@@ -1,26 +1,36 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 const props = defineProps<{ isOpen: boolean }>()
 const emit = defineEmits(['close-menu'])
 const router = useRouter()
-const openSections = ref<string[]>([])
 const isLoggedIn = computed(() => !!localStorage.getItem('token'))
+const categorias = ref<Array<{ id: number; nome?: string; name?: string; title?: string }>>([])
 
 function closeMenu() {
   emit('close-menu')
 }
 
-function toggleSection(section: string) {
-  openSections.value = openSections.value.includes(section)
-    ? openSections.value.filter((item) => item !== section)
-    : [...openSections.value, section]
+async function fetchCategorias() {
+  try {
+    const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/categorias/`)
+    categorias.value = Array.isArray(res.data) ? res.data : res.data.results || []
+  } catch (error) {
+    console.error('Erro ao buscar categorias do menu mobile:', error)
+    categorias.value = []
+  }
 }
 
 function goToLogin() {
   closeMenu()
   router.push('/auth/email')
+}
+
+function goToCategory(categoryId: number) {
+  closeMenu()
+  router.push({ name: 'categoria', params: { id: String(categoryId) } })
 }
 
 watch(
@@ -29,6 +39,10 @@ watch(
     document.body.style.overflow = value ? 'hidden' : ''
   },
 )
+
+onMounted(() => {
+  fetchCategorias()
+})
 </script>
 
 <template>
@@ -42,47 +56,16 @@ watch(
           <div class="menu-content">
             <p v-if="!isLoggedIn" class="login" @click="goToLogin">Entrar/Cadastrar</p>
 
-            <div class="menu-item" @click="toggleSection('roupas')">
-              <span>Roupas</span>
-              <span>{{ openSections.includes('roupas') ? '−' : '+' }}</span>
+            <div v-if="categorias.length" class="category-list">
+              <button
+                v-for="item in categorias"
+                :key="item.id"
+                class="category-item"
+                @click="goToCategory(item.id)"
+              >
+                {{ item.nome || item.name || item.title }}
+              </button>
             </div>
-            <transition name="fade">
-              <div v-if="openSections.includes('roupas')" class="submenu">
-                <p>Camisetas</p>
-                <p>Calças</p>
-                <p>Vestidos</p>
-                <p>Saias</p>
-                <p>Shorts</p>
-                <p>Jaquetas</p>
-                <p>Moletons</p>
-              </div>
-            </transition>
-
-            <div class="menu-item" @click="toggleSection('calcados')">
-              <span>Calçados</span>
-              <span>{{ openSections.includes('calcados') ? '−' : '+' }}</span>
-            </div>
-            <transition name="fade">
-              <div v-if="openSections.includes('calcados')" class="submenu">
-                <p>Tênis</p>
-                <p>Botas</p>
-                <p>Sandálias</p>
-                <p>Sapatos</p>
-              </div>
-            </transition>
-
-            <div class="menu-item" @click="toggleSection('acessorios')">
-              <span>Acessórios</span>
-              <span>{{ openSections.includes('acessorios') ? '−' : '+' }}</span>
-            </div>
-            <transition name="fade">
-              <div v-if="openSections.includes('acessorios')" class="submenu">
-                <p>Bolsas</p>
-                <p>Bonés</p>
-                <p>Óculos</p>
-                <p>Bijuterias</p>
-              </div>
-            </transition>
           </div>
         </div>
       </div>
@@ -156,29 +139,27 @@ watch(
   cursor: pointer;
 }
 
-.menu-item {
+.category-list {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 0;
-  border-bottom: 1px solid #1f1f1f;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.category-item {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: white;
+  border-radius: 0;
+  padding: 12px 0;
+  text-align: left;
+  font-size: 14px;
   cursor: pointer;
   transition: 0.2s;
 }
 
-.menu-item:hover {
+.category-item:hover {
   opacity: 0.75;
-}
-
-.submenu {
-  padding: 10px 0 10px 12px;
-  color: #bdbdbd;
-  font-size: 14px;
-}
-
-.submenu p {
-  margin: 10px 0;
-  cursor: pointer;
 }
 
 .fade-enter-active,
