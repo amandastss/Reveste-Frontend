@@ -273,6 +273,13 @@ watch(
   padding: 10px;
 }
 
+.info h3 {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
 /* TABLET */
 @media (min-width: 600px) {
   .categoria-page {

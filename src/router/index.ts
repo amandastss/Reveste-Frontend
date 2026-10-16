@@ -17,7 +17,6 @@ import RegisterView from '../views/auth/RegisterView.vue'
 import ForgotPasswordView from '../views/auth/ForgotPasswordView.vue'
 import ResetPasswordView from '../views/auth/ResetPasswordView.vue'
 import VerifyCodeView from '../views/auth/VerifyCodeView.vue'
-import SeguindoView from '../views/SeguindoView.vue'
 import PedidosView from '../views/PedidosView.vue'
 import PedidoDetalheView from '../views/PedidoDetalheView.vue'
 import CartView from '../views/CartView.vue'
@@ -60,11 +59,6 @@ const router = createRouter({
       path: '/sell',
       name: 'sell',
       component: SellView,
-    },
-    {
-      path: '/seguindo',
-      name: 'seguindo',
-      component: SeguindoView,
     },
     {
       path: '/profile',
