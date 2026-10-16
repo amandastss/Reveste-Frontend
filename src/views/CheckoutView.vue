@@ -278,6 +278,15 @@ async function iniciarCheckout(lifecycle: number): Promise<void> {
 
   const checkout = await criarCheckout()
   if (!isCurrentLifecycle(lifecycle)) return
+  if (checkout.payment_in_progress) {
+    const activePedidoId = Number(checkout.pedido_id)
+    if (!Number.isSafeInteger(activePedidoId) || activePedidoId <= 0) {
+      throw new Error('O servidor retornou um pedido inválido com pagamento em andamento.')
+    }
+    pedidoId.value = activePedidoId
+    await marcarResultadoDoPedido(activePedidoId, lifecycle, checkout.payment_status)
+    return
+  }
   if (Number(checkout.pedido_id) !== preparedId)
     throw new Error('Não foi possível confirmar que o pagamento corresponde ao pedido preparado.')
   if (checkout.status?.toUpperCase() === 'PAGO') {
