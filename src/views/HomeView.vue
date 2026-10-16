@@ -597,10 +597,11 @@ onMounted(() => {
 
 .visual-backdrop {
   position: absolute;
-  width: 80%;
-  height: 80%;
-  right: 5%;
-  bottom: 5%;
+  width: min(100%, 260px);
+  height: 72%;
+  right: 50%;
+  bottom: 18%;
+  transform: translateX(50%);
   border-radius: 30px;
   background: linear-gradient(135deg, rgba(255, 214, 170, 0.2), rgba(255, 255, 255, 0.04));
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -748,6 +749,94 @@ onMounted(() => {
   }
 }
 
+@media (max-width: 1023px) {
+  .hero-banner {
+    padding: 18px 18px 10px;
+  }
+
+  .hero-slide {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    min-height: auto;
+    padding: 12px 8px 8px;
+    align-items: start;
+  }
+
+  .hero-content {
+    width: 100%;
+    padding-left: 0;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-content h1 {
+    max-width: 100%;
+    font-size: clamp(2.3rem, 5vw, 3.6rem);
+  }
+
+  .hero-copy {
+    max-width: 100%;
+    margin: 12px 0 0;
+    text-align: center;
+  }
+
+  .hero-actions {
+    justify-content: center;
+    align-self: center;
+    width: 100%;
+    margin-top: 18px;
+  }
+
+  .hero-visual {
+    width: 100%;
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .visual-backdrop {
+    width: min(100%, 260px);
+    height: 72%;
+    right: 50%;
+    bottom: 18%;
+    transform: translateX(50%);
+    box-shadow: none;
+  }
+
+  .main-card {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    width: min(100%, 260px);
+    max-width: 260px;
+    transform: none;
+    aspect-ratio: 0.82;
+    margin: 0 auto;
+    box-shadow: none;
+  }
+
+  .promo-card {
+    position: static;
+    left: auto;
+    bottom: auto;
+    min-width: 120px;
+    transform: none;
+    z-index: 2;
+    text-align: center;
+    margin-top: 0;
+    box-shadow: none;
+  }
+
+  .promo-card strong {
+    font-size: 1.2rem;
+  }
+}
+
 @media (max-width: 768px) {
   .shop-highlights {
     grid-template-columns: 1fr;
@@ -772,15 +861,8 @@ onMounted(() => {
   }
 
   .hero-slide {
-    grid-template-columns: 1fr;
-    gap: 16px;
-    min-height: auto;
+    gap: 14px;
     padding: 8px 4px 10px;
-  }
-
-  .hero-content {
-    padding-left: 2px;
-    text-align: center;
   }
 
   .eyebrow {
@@ -794,14 +876,14 @@ onMounted(() => {
   }
 
   .hero-copy {
-    margin: 14px auto 0;
+    margin: 12px 0 0;
     font-size: 0.92rem;
     line-height: 1.6;
   }
 
   .hero-actions {
-    justify-content: center;
-    margin-top: 20px;
+    margin-top: 16px;
+    gap: 8px;
   }
 
   .hero-primary,
@@ -813,33 +895,30 @@ onMounted(() => {
   }
 
   .hero-visual {
-    min-height: 280px;
+    min-height: 240px;
+    gap: 10px;
   }
 
   .visual-backdrop {
-    width: 92%;
-    height: 76%;
-    right: 4%;
+    width: min(100%, 220px);
+    height: 72%;
+    right: 50%;
+    bottom: 16%;
+    transform: translateX(50%);
   }
 
   .main-card {
-    right: 50%;
-    bottom: 10%;
-    width: min(100%, 300px);
-    max-width: 300px;
-    transform: translateX(50%);
+    width: min(100%, 220px);
+    max-width: 220px;
     aspect-ratio: 0.82;
   }
 
   .promo-card {
-    left: 10px;
-    bottom: 16px;
-    min-width: 120px;
-    z-index: 2;
+    min-width: 110px;
   }
 
   .promo-card strong {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
   }
 
   .hero-controls {
