@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import reviewsApi from '@/stores/reviewsApi'
+import { canDeleteReview, getLoggedUserId, normalizeId } from '@/utils/reviews'
 
 const router = useRouter()
 const route = useRoute()
@@ -11,6 +12,7 @@ const getPreview = (file: File) => {
 
 interface Review {
   id: number
+  userId?: number | null
   userName: string
   userAvatar: string
   stars: number
@@ -34,12 +36,37 @@ interface ApiImage {
 
 interface ApiReview {
   id: number
-  userName: string
-  userAvatar: string
+  userId?: number | null
+  user_id?: number | null
+  user?: {
+    id?: number | string | null
+    userId?: number | string | null
+    user_id?: number | string | null
+    name?: string
+    profile_image?: string
+    email?: string
+  } | null
+  userName?: string
+  user_name?: string
+  userAvatar?: string
   stars: number
   text: string
   created_at: string
   images?: ApiImage[]
+}
+
+const currentUserId = computed(() => getLoggedUserId())
+
+function extractReviewUserId(review: ApiReview): number | null {
+  const candidateIds = [
+    review.userId,
+    review.user_id,
+    review.user?.id,
+    review.user?.userId,
+    review.user?.user_id
+  ]
+
+  return candidateIds.map((value) => normalizeId(value)).find((value): value is number => value !== null) ?? null
 }
 
 async function fetchReviews() {
@@ -53,8 +80,9 @@ async function fetchReviews() {
 
     reviewsList.value = res.data.map((r: ApiReview) => ({
       id: r.id,
-      userName: r.userName,
-      userAvatar: r.userAvatar,
+      userId: extractReviewUserId(r),
+      userName: r.userName ?? r.user?.name ?? r.user_name ?? 'Usuário',
+      userAvatar: r.userAvatar ?? r.user?.profile_image ?? '',
       stars: r.stars,
       date: new Date(r.created_at).toLocaleDateString(),
       text: r.text,
@@ -68,6 +96,32 @@ async function fetchReviews() {
 onMounted(fetchReviews)
 
 const totalReviews = computed(() => reviewsList.value.length)
+const canDeleteSelectedReview = computed(() => canDeleteReview(selectedReview.value, currentUserId.value))
+
+async function deleteSelectedReview() {
+  if (!selectedReview.value) {
+    return
+  }
+
+  if (!canDeleteReview(selectedReview.value, currentUserId.value)) {
+    alert('Você só pode excluir uma avaliação que você publicou.')
+    return
+  }
+
+  const confirmed = window.confirm('Tem certeza que deseja excluir esta avaliação?')
+  if (!confirmed) {
+    return
+  }
+
+  try {
+    await reviewsApi.deleteReview(produtoId, selectedReview.value.id)
+    selectedReview.value = null
+    await fetchReviews()
+  } catch (err) {
+    console.error('Erro ao excluir avaliação:', err)
+    alert('Não foi possível excluir esta avaliação.')
+  }
+}
 
 // FORM
 const newStars = ref(5)
@@ -176,23 +230,20 @@ async function submitReview() {
 
           <div class="stars-display" style="margin-top: 12px">
             <span v-for="n in 5" :key="n">
-              {{ n <= selectedReview.stars ? '★' : '☆' }}
-            </span>
+              {{ n <= selectedReview.stars ? '★' : '☆' }} </span>
           </div>
 
           <p class="review-text">{{ selectedReview.text }}</p>
 
+          <div v-if="canDeleteSelectedReview" class="review-actions">
+            <button class="btn-delete-review" @click.stop="deleteSelectedReview">
+              EXCLUIR AVALIAÇÃO
+            </button>
+          </div>
+
           <!-- ✅ IMAGENS DO BACKEND -->
-          <div
-            v-if="selectedReview.images && selectedReview.images.length"
-            class="single-review-images"
-          >
-            <img
-              v-for="(img, idx) in selectedReview.images"
-              :key="idx"
-              :src="img"
-              class="single-review-large-img"
-            />
+          <div v-if="selectedReview.images && selectedReview.images.length" class="single-review-images">
+            <img v-for="(img, idx) in selectedReview.images" :key="idx" :src="img" class="single-review-large-img" />
           </div>
 
         </div>
@@ -213,13 +264,8 @@ async function submitReview() {
           <div class="form-group">
             <label class="form-label">Estrelas</label>
             <div class="interactive-stars">
-              <span
-                v-for="star in 5"
-                :key="star"
-                class="star"
-                :class="{ active: star <= newStars }"
-                @click="setRating(star)"
-              >
+              <span v-for="star in 5" :key="star" class="star" :class="{ active: star <= newStars }"
+                @click="setRating(star)">
                 ★
               </span>
             </div>
@@ -229,24 +275,15 @@ async function submitReview() {
             <label class="form-label">
               Your review <span class="required">*</span>
             </label>
-            <textarea
-              v-model="newText"
-              placeholder="O que você achou sobre o produto..."
-              class="review-textarea"
-            ></textarea>
+            <textarea v-model="newText" placeholder="O que você achou sobre o produto..."
+              class="review-textarea"></textarea>
           </div>
 
           <div class="form-group">
             <label class="form-label">Attach photo</label>
 
-            <input
-              type="file"
-              ref="fileInputRef"
-              accept="image/*"
-              multiple
-              class="hidden-file-input"
-              @change="handleFileSelected"
-            />
+            <input type="file" ref="fileInputRef" accept="image/*" multiple class="hidden-file-input"
+              @change="handleFileSelected" />
 
             <button class="btn-attach-photo" @click="triggerPhotoUpload">
               ADICIONE SUA FOTO
@@ -258,12 +295,7 @@ async function submitReview() {
 
             <!-- ✅ PREVIEW LOCAL -->
             <div v-if="uploadedImages.length" class="form-images-preview">
-              <img
-                v-for="(file, index) in uploadedImages"
-                :key="index"
-                :src="getPreview(file)"
-                class="preview-thumb"
-              />
+              <img v-for="(file, index) in uploadedImages" :key="index" :src="getPreview(file)" class="preview-thumb" />
             </div>
 
           </div>
@@ -304,23 +336,14 @@ async function submitReview() {
 
             <div class="stars-display">
               <span v-for="n in 5" :key="n">
-                {{ n <= review.stars ? '★' : '☆' }}
-              </span>
+                {{ n <= review.stars ? '★' : '☆' }} </span>
             </div>
 
             <p class="review-text">{{ review.text }}</p>
 
             <!-- ✅ IMAGENS DA LISTA -->
-            <div
-              v-if="review.images && review.images.length"
-              class="review-images-grid"
-            >
-              <img
-                v-for="(img, idx) in review.images"
-                :key="idx"
-                :src="img"
-                class="attached-review-img"
-              />
+            <div v-if="review.images && review.images.length" class="review-images-grid">
+              <img v-for="(img, idx) in review.images" :key="idx" :src="img" class="attached-review-img" />
             </div>
 
           </div>

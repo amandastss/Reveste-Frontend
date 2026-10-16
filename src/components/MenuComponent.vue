@@ -1,26 +1,21 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
-const props = defineProps<{
-  isOpen: boolean
-}>()
-
+const props = defineProps<{ isOpen: boolean }>()
 const emit = defineEmits(['close-menu'])
 const router = useRouter()
-
 const openSections = ref<string[]>([])
+const isLoggedIn = computed(() => !!localStorage.getItem('token'))
 
 function closeMenu() {
   emit('close-menu')
 }
 
 function toggleSection(section: string) {
-  if (openSections.value.includes(section)) {
-    openSections.value = openSections.value.filter((item: string) => item !== section)
-  } else {
-    openSections.value.push(section)
-  }
+  openSections.value = openSections.value.includes(section)
+    ? openSections.value.filter((item) => item !== section)
+    : [...openSections.value, section]
 }
 
 function goToLogin() {
@@ -38,61 +33,54 @@ watch(
 
 <template>
   <div>
-    <!-- overlay -->
     <transition name="overlay-fade">
       <div v-if="props.isOpen" class="overlay" @click="closeMenu">
-        <!-- sidebar -->
         <div class="menu-container" @click.stop>
-          <!-- botão fechar -->
           <button class="close-button" @click="closeMenu">✕</button>
-
           <p class="menu-title">menu</p>
 
           <div class="menu-content">
-            <p class="login" @click="goToLogin">Entrar/Cadastrar</p>
+            <p v-if="!isLoggedIn" class="login" @click="goToLogin">Entrar/Cadastrar</p>
 
-            <!-- masculino -->
-            <div class="menu-item" @click="toggleSection('masculino')">
-              <span>Masculino</span>
-              <span>
-                {{ openSections.includes('masculino') ? '−' : '+' }}
-              </span>
+            <div class="menu-item" @click="toggleSection('roupas')">
+              <span>Roupas</span>
+              <span>{{ openSections.includes('roupas') ? '−' : '+' }}</span>
             </div>
-
             <transition name="fade">
-              <div v-if="openSections.includes('masculino')" class="submenu">
+              <div v-if="openSections.includes('roupas')" class="submenu">
                 <p>Camisetas</p>
                 <p>Calças</p>
-              </div>
-            </transition>
-
-            <!-- feminino -->
-            <div class="menu-item" @click="toggleSection('feminino')">
-              <span>Feminino</span>
-              <span>
-                {{ openSections.includes('feminino') ? '−' : '+' }}
-              </span>
-            </div>
-
-            <transition name="fade">
-              <div v-if="openSections.includes('feminino')" class="submenu">
                 <p>Vestidos</p>
                 <p>Saias</p>
+                <p>Shorts</p>
+                <p>Jaquetas</p>
+                <p>Moletons</p>
               </div>
             </transition>
 
-            <!-- infantil -->
-            <div class="menu-item" @click="toggleSection('infantil')">
-              <span>Infantil</span>
-              <span>
-                {{ openSections.includes('infantil') ? '−' : '+' }}
-              </span>
+            <div class="menu-item" @click="toggleSection('calcados')">
+              <span>Calçados</span>
+              <span>{{ openSections.includes('calcados') ? '−' : '+' }}</span>
             </div>
-
             <transition name="fade">
-              <div v-if="openSections.includes('infantil')" class="submenu">
-                <p>Meninos</p>
-                <p>Meninas</p>
+              <div v-if="openSections.includes('calcados')" class="submenu">
+                <p>Tênis</p>
+                <p>Botas</p>
+                <p>Sandálias</p>
+                <p>Sapatos</p>
+              </div>
+            </transition>
+
+            <div class="menu-item" @click="toggleSection('acessorios')">
+              <span>Acessórios</span>
+              <span>{{ openSections.includes('acessorios') ? '−' : '+' }}</span>
+            </div>
+            <transition name="fade">
+              <div v-if="openSections.includes('acessorios')" class="submenu">
+                <p>Bolsas</p>
+                <p>Bonés</p>
+                <p>Óculos</p>
+                <p>Bijuterias</p>
               </div>
             </transition>
           </div>
@@ -103,14 +91,11 @@ watch(
 </template>
 
 <style scoped>
-/*OVERLAY */
 .overlay {
   position: fixed;
   inset: 0;
   z-index: 9999;
-
   background: rgba(0, 0, 0, 0.35);
-
   display: flex;
   justify-content: flex-start;
   align-items: stretch;
@@ -126,23 +111,17 @@ watch(
   opacity: 0;
 }
 
-/*SIDEBAR */
 .menu-container {
   width: 82%;
   max-width: 320px;
   height: 100vh;
-
   background: black;
   color: white;
-
   padding: 20px;
   box-sizing: border-box;
-
   font-family: 'Montserrat', sans-serif;
-
   overflow-y: auto;
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
-
   animation: slideIn 0.25s ease;
 }
 
@@ -150,13 +129,11 @@ watch(
   from {
     transform: translateX(-100%);
   }
-
   to {
     transform: translateX(0);
   }
 }
 
-/*BOTÃO FECHAR */
 .close-button {
   background: transparent;
   border: none;
@@ -166,7 +143,6 @@ watch(
   margin-bottom: 20px;
 }
 
-/*TEXTOS */
 .menu-title {
   font-size: 13px;
   color: var(--text-muted);
@@ -180,15 +156,12 @@ watch(
   cursor: pointer;
 }
 
-/*ITENS */
 .menu-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-
   padding: 16px 0;
   border-bottom: 1px solid #1f1f1f;
-
   cursor: pointer;
   transition: 0.2s;
 }
@@ -197,7 +170,6 @@ watch(
   opacity: 0.75;
 }
 
-/*SUBMENU */
 .submenu {
   padding: 10px 0 10px 12px;
   color: #bdbdbd;
@@ -209,7 +181,6 @@ watch(
   cursor: pointer;
 }
 
-/*ANIMAÇÃO SUBMENU */
 .fade-enter-active,
 .fade-leave-active {
   transition: all 0.2s ease;
@@ -221,7 +192,6 @@ watch(
   transform: translateY(-6px);
 }
 
-/*DESKTOP */
 @media (min-width: 768px) {
   .menu-container {
     width: 320px;

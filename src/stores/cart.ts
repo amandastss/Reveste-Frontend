@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
+
 import api from '@/api/config'
+import { getCartMutationBodies } from '@/utils/cartCompat'
 
 export interface CartItem {
   id: number
@@ -15,13 +17,19 @@ export interface CartItem {
 interface BackendCartItem {
   id: number
   quantidade: number
-  preco: string
+  preco: string | number
   nome: string | null
   cor: string | null
   tamanho: string | null
   imagem_url: string | null
-  pedido: number
   produto: number
+}
+
+interface BackendCartResponse {
+  pedido_id: number
+  status: string
+  itens: BackendCartItem[]
+  total: string | number
 }
 
 export const useCartStore = defineStore('cart', {
@@ -34,14 +42,14 @@ export const useCartStore = defineStore('cart', {
     totalItems: (state) => {
       return state.items.reduce(
         (total, item) => total + item.quantity,
-        0,
+        0
       )
     },
 
     totalPrice: (state) => {
       return state.items.reduce(
         (total, item) => total + item.price * item.quantity,
-        0,
+        0
       )
     },
   },
@@ -51,21 +59,28 @@ export const useCartStore = defineStore('cart', {
       this.loading = true
 
       try {
-        const response = await api.get<BackendCartItem[]>('/carrinho/')
+        const response = await api.get<BackendCartResponse>(
+          '/carrinho/'
+        )
 
-        const cartItems = response.data
+        console.log(
+          'CARRINHO VINDO DO BACKEND:',
+          response.data
+        )
+
+        const cartItems = response.data.itens ?? []
 
         const itemsWithProductData = await Promise.all(
           cartItems.map(async (item) => {
             try {
               const productResponse = await api.get(
-                `/produtos/${item.produto}/`,
+                `/produtos/${item.produto}/`
               )
 
               const produto = productResponse.data
 
               return {
-                id: produto.id,
+                id: item.produto,
                 itemPedidoId: item.id,
 
                 name:
@@ -98,77 +113,97 @@ export const useCartStore = defineStore('cart', {
             } catch (error) {
               console.error(
                 `Erro ao carregar produto ${item.produto}:`,
-                error,
+                error
               )
 
               return {
                 id: item.produto,
                 itemPedidoId: item.id,
+
                 name: item.nome ?? 'Produto',
+
                 color: item.cor ?? '',
+
                 size: item.tamanho ?? '',
+
                 price: Number(item.preco),
+
                 quantity: item.quantidade,
+
                 image: item.imagem_url ?? '',
               }
             }
-          }),
+          })
         )
 
         this.items = itemsWithProductData
       } catch (error) {
-        console.error('Erro ao carregar carrinho:', error)
+        console.error(
+          'Erro ao carregar carrinho:',
+          error
+        )
 
         this.items = []
+
+        throw error
       } finally {
         this.loading = false
       }
     },
 
     async addItem(productId: number) {
-      try {
-        await api.post('/carrinho/', {
-          productId,
-        })
+      let lastError: unknown = null
 
-        await this.loadCart()
-      } catch (error) {
-        console.error('Erro ao adicionar produto ao carrinho:', error)
-
-        throw error
+      for (const payload of getCartMutationBodies(productId)) {
+        try {
+          await api.post('/carrinho/', payload)
+          await this.loadCart()
+          return
+        } catch (error) {
+          lastError = error
+          console.warn(
+            'Formato de payload do carrinho falhou, tentando alternativa:',
+            payload,
+            error
+          )
+        }
       }
+
+      console.error('Erro ao adicionar produto ao carrinho:', lastError)
+      throw lastError ?? new Error('Não foi possível adicionar ao carrinho.')
     },
 
-    async removeItem(itemPedidoId: number) {
-      try {
-        await api.delete(`/carrinho/${itemPedidoId}/`)
+    async removeItem(productId: number) {
+      const payloads = [
+        { productId },
+        { product_id: productId },
+        { produto_id: productId },
+        { produto: productId },
+        { id: productId },
+      ]
 
-        await this.loadCart()
-      } catch (error) {
-        console.error('Erro ao remover item do carrinho:', error)
+      let lastError: unknown = null
 
-        throw error
+      for (const payload of payloads) {
+        try {
+          await api.delete('/carrinho/', {
+            data: payload,
+          })
+
+          this.items = this.items.filter((item) => item.id !== productId)
+          return
+        } catch (error) {
+          lastError = error
+          console.warn(
+            'Formato de remoção do carrinho falhou, tentando alternativa:',
+            payload,
+            error
+          )
+        }
       }
-    },
 
-    async updateQuantity(
-      itemPedidoId: number,
-      quantity: number,
-    ) {
-      try {
-        await api.patch(`/carrinho/${itemPedidoId}/`, {
-          quantidade: quantity,
-        })
-
-        await this.loadCart()
-      } catch (error) {
-        console.error(
-          'Erro ao atualizar quantidade do carrinho:',
-          error,
-        )
-
-        throw error
-      }
+      console.error('Erro ao remover item do carrinho:', lastError)
+      throw lastError ?? new Error('Não foi possível remover o item do carrinho.')
     },
 
     clearCart() {

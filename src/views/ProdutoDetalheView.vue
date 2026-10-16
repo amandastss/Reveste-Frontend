@@ -3,6 +3,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { useCartStore } from '@/stores/cart'
+import { hasCartAuthToken, getCartAuthRedirectPath } from '@/utils/cartAuth'
 import {
   isFavoriteProduct,
   toggleFavorite as toggleFavoriteProduct,
@@ -29,6 +30,7 @@ const productData = ref<Produto | null>(null),
   loading = ref(true),
   error = ref(''),
   showAddToCartConfirm = ref(false),
+  showLoginRequiredModal = ref(false),
   isAddingToCart = ref(false),
   addToCartError = ref(''),
   addToCartSuccess = ref(false),
@@ -66,6 +68,14 @@ const toggleFavorite = () => {
 const handleAddToCartSuccess = () => {
   addToCartSuccess.value = true
   setTimeout(() => (addToCartSuccess.value = false), 3000)
+}
+const closeLoginRequiredModal = () => {
+  showLoginRequiredModal.value = false
+}
+const redirectToAuth = (mode: 'login' | 'register') => {
+  localStorage.setItem('isLogin', mode === 'login' ? 'true' : 'false')
+  closeLoginRequiredModal()
+  router.push(getCartAuthRedirectPath())
 }
 const resolveCategoriaNome = async (produto: Produto) => {
   const categoria = produto.categoria
@@ -112,6 +122,11 @@ const fetchProduct = async () => {
 }
 const confirmAddToCart = async () => {
   if (!productData.value) return
+  if (!hasCartAuthToken()) {
+    closeAddToCartConfirm()
+    showLoginRequiredModal.value = true
+    return
+  }
   isAddingToCart.value = true
   addToCartError.value = ''
   try {
@@ -126,6 +141,10 @@ const confirmAddToCart = async () => {
 }
 const buyNow = async () => {
   if (!productData.value) return
+  if (!hasCartAuthToken()) {
+    showLoginRequiredModal.value = true
+    return
+  }
   isAddingToCart.value = true
   addToCartError.value = ''
   try {
@@ -251,6 +270,32 @@ onMounted(() => {
           ><button class="btn-primary" @click="confirmAddToCart">Adicionar</button>
         </div>
         <p v-if="addToCartError" class="error-message">{{ addToCartError }}</p>
+      </div>
+    </div>
+
+    <div
+      v-if="showLoginRequiredModal"
+      class="overlay auth-overlay"
+      @click.self="closeLoginRequiredModal"
+    >
+      <div class="auth-modal">
+        <div class="auth-modal-icon">🔒</div>
+
+        <h2>Faça login para continuar</h2>
+
+        <p>
+          Para adicionar ao carrinho ou comprar, você precisa entrar na sua conta ou criar uma nova.
+        </p>
+
+        <div class="actions auth-actions">
+          <button class="btn-secondary auth-btn" @click="redirectToAuth('login')">
+            Fazer login
+          </button>
+
+          <button class="btn-primary auth-btn" @click="redirectToAuth('register')">
+            Criar conta
+          </button>
+        </div>
       </div>
     </div>
   </div>

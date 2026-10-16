@@ -125,16 +125,21 @@ const publicarPeca = async () => {
       formData.append('imagem', form.value.foto)
     }
 
+    const token = localStorage.getItem('token')
     const response = await fetch(`${import.meta.env.VITE_API_URL}/api/produtos/`, {
       method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
       body: formData,
     })
 
-    if (!response.ok) {
-      throw new Error('Erro ao cadastrar produto')
-    }
+    const data = await response.json().catch(() => null)
 
-    const data = await response.json()
+    if (!response.ok) {
+      const detail = data ? JSON.stringify(data) : 'sem detalhes retornados pela API'
+      throw new Error(`Erro ao cadastrar produto (${response.status}): ${detail}`)
+    }
 
     console.log('Produto criado:', data)
 
@@ -155,7 +160,7 @@ const publicarPeca = async () => {
     podePublicar.value = false
   } catch (error) {
     console.error(error)
-    alert('Erro ao publicar produto.')
+    alert(error instanceof Error ? error.message : 'Erro ao publicar produto.')
   }
 }
 </script>
@@ -195,7 +200,8 @@ const publicarPeca = async () => {
 
       <div class="field-group">
         <label>DESCRIÇÃO</label>
-        <textarea v-model="form.descricao"></textarea>
+        <textarea v-model="form.descricao" maxlength="100"></textarea>
+        <p class="character-count">{{ form.descricao.length }}/100</p>
       </div>
 
       <div class="field-group">
@@ -240,14 +246,8 @@ const publicarPeca = async () => {
 
         <button type="button" class="icon-btn" @click="abrirGaleria">Escolher foto</button>
 
-        <input
-          ref="fileInput"
-          type="file"
-          accept="image/*"
-          capture="environment"
-          class="hidden-input"
-          @change="previewImagem"
-        />
+        <input ref="fileInput" type="file" accept="image/*" capture="environment" class="hidden-input"
+          @change="previewImagem" />
 
         <div v-if="preview" class="preview-box">
           <img :src="preview" alt="Preview" />
