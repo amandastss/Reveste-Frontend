@@ -45,6 +45,36 @@ const mainImage = computed(() =>
 )
 const goBack = () => router.back(),
   openReviews = () => router.push({ name: 'produto-avaliacoes', params: { id: productId } })
+const handleImageEnter = (event: MouseEvent) => {
+  const wrapper = event.currentTarget as HTMLElement
+  const image = wrapper.querySelector('.main-product-image') as HTMLImageElement | null
+  if (!image) return
+
+  image.style.transition = 'transform 180ms cubic-bezier(0.22, 1, 0.36, 1)'
+  image.style.transform = 'translate3d(0px, 0px, 0px) scale(1.08)'
+}
+const handleImageMove = (event: MouseEvent) => {
+  const wrapper = event.currentTarget as HTMLElement
+  const image = wrapper.querySelector('.main-product-image') as HTMLImageElement | null
+  if (!image) return
+
+  const rect = wrapper.getBoundingClientRect()
+  const x = (event.clientX - rect.left) / rect.width
+  const y = (event.clientY - rect.top) / rect.height
+  const translateX = (x - 0.5) * 170
+  const translateY = (y - 0.5) * 140
+
+  image.style.transition = 'transform 100ms ease-out'
+  image.style.transform = `translate3d(${translateX}px, ${translateY}px, 0px) scale(1.85)`
+}
+const resetImageZoom = (event: MouseEvent) => {
+  const wrapper = event.currentTarget as HTMLElement
+  const image = wrapper.querySelector('.main-product-image') as HTMLImageElement | null
+  if (!image) return
+
+  image.style.transition = 'transform 180ms cubic-bezier(0.22, 1, 0.36, 1)'
+  image.style.transform = 'translate3d(0px, 0px, 0px) scale(1)'
+}
 const closeAddToCartConfirm = () => {
   showAddToCartConfirm.value = false
   addToCartError.value = ''
@@ -180,7 +210,12 @@ onMounted(() => {
       </div></Transition
     >
     <main class="scrollable-content">
-      <div class="image-wrapper">
+      <div
+        class="image-wrapper"
+        @mouseenter="handleImageEnter"
+        @mousemove="handleImageMove"
+        @mouseleave="resetImageZoom"
+      >
         <img :src="mainImage" class="main-product-image" /><button
           class="back-btn"
           @click="goBack"
