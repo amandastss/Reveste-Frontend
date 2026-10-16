@@ -774,14 +774,19 @@ onMounted(() => {
   aspect-ratio: 0.92;
   border-radius: 24px;
   overflow: hidden;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .main-card img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  background: linear-gradient(180deg, #f6f1ea 0%, #ece5dd 100%);
+  object-fit: cover;
+  object-position: center;
+  background: transparent;
   display: block;
+  transform: scale(1.18);
 }
 
 .floating-card {
@@ -1395,12 +1400,14 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   display: block;
+  transform: scale(1.08);
   transition: transform 0.3s ease;
 }
 
 .card:hover img {
-  transform: scale(1.03);
+  transform: scale(1.12);
 }
 
 /* =========================================

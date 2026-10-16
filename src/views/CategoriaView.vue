@@ -147,7 +147,14 @@ onMounted(() => {
   <div class="categoria-page">
     <div class="header">
       <button class="back" @click="voltar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
           <polyline points="15 18 9 12 15 6"></polyline>
         </svg>
       </button>
@@ -237,6 +244,8 @@ onMounted(() => {
   width: 100%;
   height: 170px;
   object-fit: cover;
+  object-position: center;
+  transform: scale(1.08);
 }
 
 /* INFO */
