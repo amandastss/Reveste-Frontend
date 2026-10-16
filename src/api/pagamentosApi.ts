@@ -31,6 +31,8 @@ export interface CheckoutResponse {
   payer_email?: string
   preference_id?: string
   status?: string
+  payment_in_progress?: boolean
+  payment_status?: string | null
 }
 
 export interface PaymentBrickFormData {
