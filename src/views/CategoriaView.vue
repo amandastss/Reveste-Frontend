@@ -98,10 +98,7 @@ const carregarCategoria = async () => {
   carregando.value = true
 
   try {
-    const [resCategorias, resProdutos] = await Promise.all([
-      axios.get(`${import.meta.env.VITE_API_URL}/api/categorias/`),
-      axios.get(`${import.meta.env.VITE_API_URL}/api/produtos/`),
-    ])
+    const resCategorias = await axios.get(`${import.meta.env.VITE_API_URL}/api/categorias/`)
 
     const categoriasApi = Array.isArray(resCategorias.data?.results)
       ? resCategorias.data.results
@@ -109,17 +106,36 @@ const carregarCategoria = async () => {
         ? resCategorias.data
         : []
 
-    const produtosApi = Array.isArray(resProdutos.data?.results)
-      ? resProdutos.data.results
-      : Array.isArray(resProdutos.data)
-        ? resProdutos.data
-        : []
-
     const categoriaId = Number(route.params.id)
     categoria.value =
       categoriasApi.find((item: Categoria) => Number(item.id) === categoriaId) || null
 
-    produtos.value = produtosApi.filter((produto: Produto) =>
+    const apiBase = `${import.meta.env.VITE_API_URL}/api/produtos/`
+    const todosProdutos: Produto[] = []
+    let nextUrl: string | null = apiBase
+
+    while (nextUrl) {
+      const resProdutos = await axios.get<{ results?: Produto[]; next?: string | null }>(nextUrl, {
+        params: { page_size: 1000 },
+      })
+
+      const payload = resProdutos.data as { results?: Produto[]; next?: string | null }
+      const paginaProdutos = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.results)
+          ? payload.results
+          : []
+
+      todosProdutos.push(...paginaProdutos)
+
+      nextUrl = payload?.next
+        ? payload.next.startsWith('http')
+          ? payload.next
+          : `${import.meta.env.VITE_API_URL}${payload.next}`
+        : null
+    }
+
+    produtos.value = todosProdutos.filter((produto: Produto) =>
       produtoPertenceCategoria(produto, categoria.value),
     )
   } catch (error) {

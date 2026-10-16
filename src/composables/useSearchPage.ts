@@ -151,10 +151,31 @@ export function useSearchPage() {
 
   const carregarProdutos = async (q?: string) => {
     try {
-      const response = await axios.get(`${API_BASE}/api/produtos/`, {
-        params: q ? { search: q } : {},
-      })
-      produtos.value = getResponseList<Produto>(response.data)
+      const itens: Produto[] = []
+      let nextUrl: string | null = `${API_BASE}/api/produtos/`
+
+      while (nextUrl) {
+        const response = await axios.get<{ results?: Produto[]; next?: string | null }>(nextUrl, {
+          params: q ? { search: q, page_size: 1000 } : { page_size: 1000 },
+        })
+
+        const payload = response.data as { results?: Produto[]; next?: string | null }
+        const pageItems = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.results)
+            ? payload.results
+            : []
+
+        itens.push(...(pageItems as Produto[]))
+
+        nextUrl = payload?.next
+          ? payload.next.startsWith('http')
+            ? payload.next
+            : `${API_BASE}${payload.next}`
+          : null
+      }
+
+      produtos.value = itens
     } catch (error) {
       console.warn('API indisponível. Nenhum produto carregado.', error)
       produtos.value = []

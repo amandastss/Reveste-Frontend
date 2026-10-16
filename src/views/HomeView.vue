@@ -146,10 +146,32 @@ const nextHighlight = () => {
 
 const fetchProdutos = async () => {
   try {
-    const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/produtos/`)
+    const apiBase = `${import.meta.env.VITE_API_URL}/api/produtos/`
+    const itens: Produto[] = []
+    let nextUrl: string | null = apiBase
 
-    produtos.value = Array.isArray(res.data) ? res.data : res.data.results || []
+    while (nextUrl) {
+      const res = await axios.get<{ results?: Produto[]; next?: string | null }>(nextUrl, {
+        params: { page_size: 1000 },
+      })
 
+      const payload = res.data as { results?: Produto[]; next?: string | null }
+      const pageItems = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.results)
+          ? payload.results
+          : []
+
+      itens.push(...pageItems)
+
+      nextUrl = payload?.next
+        ? payload.next.startsWith('http')
+          ? payload.next
+          : `${import.meta.env.VITE_API_URL}${payload.next}`
+        : null
+    }
+
+    produtos.value = itens
     buildHeroSlides()
   } catch (err) {
     console.error('Erro ao buscar produtos:', err)
