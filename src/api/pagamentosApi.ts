@@ -7,6 +7,10 @@ export interface CheckoutPreparado {
   payer_email: string
   payment_in_progress?: boolean
   payment_status?: string | null
+  payment_method_id?: string
+  qr_code?: string
+  qr_code_base64?: string
+  ticket_url?: string
 }
 
 export interface DadosPagamento {
