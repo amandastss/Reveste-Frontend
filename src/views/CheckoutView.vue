@@ -247,6 +247,18 @@ async function iniciarPagamento() {
     if (!Number.isFinite(Number(checkout.amount)) || Number(checkout.amount) <= 0) {
       throw new Error('O valor total do pedido retornado pelo servidor é inválido.')
     }
+    if (checkout.payment_in_progress) {
+      const statusExistente = String(checkout.payment_status || '').toLowerCase()
+      resultadoPagamento.value = {
+        state: statusExistente === 'rejected' || statusExistente === 'cancelled' ? 'failure' : 'pending',
+        pedidoId: String(checkout.pedido_id),
+        status: statusExistente || 'pending',
+        message: 'Este pedido já possui uma tentativa de pagamento. Consulte Meus pedidos antes de tentar novamente para evitar uma cobrança duplicada.',
+      }
+      carregando.value = false
+      return
+    }
+
     checkoutPreparado.value = checkout
     await montarPaymentBrick(checkout)
   } catch (error: unknown) {
