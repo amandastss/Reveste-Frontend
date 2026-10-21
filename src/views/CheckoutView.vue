@@ -299,16 +299,18 @@ async function iniciarPagamento() {
           ticket_url: checkout.ticket_url,
         }
       }
-      const finalizado = statusExistente === 'approved'
+      // A aprovação do gateway não basta para declarar o pedido pago:
+      // o backend precisa confirmar e conciliar a venda também.
+      const aguardandoConciliacao = statusExistente === 'approved'
       const falhou = statusExistente === 'rejected' || statusExistente === 'cancelled'
       resultadoPagamento.value = {
-        state: finalizado ? 'success' : falhou ? 'failure' : 'pending',
+        state: falhou ? 'failure' : 'pending',
         pedidoId: String(checkout.pedido_id),
         status: statusExistente || 'pending',
-        message: finalizado
-          ? 'O Mercado Pago confirmou o pagamento. Se o pedido ainda não aparecer como pago, atualize Meus pedidos.'
-          : falhou
-            ? 'A tentativa anterior foi recusada ou cancelada. Consulte Meus pedidos antes de iniciar outra tentativa.'
+        message: falhou
+          ? 'A tentativa anterior foi recusada ou cancelada. Consulte Meus pedidos antes de iniciar outra tentativa.'
+          : aguardandoConciliacao
+            ? 'O Mercado Pago informa aprovação, mas o backend ainda precisa confirmar a venda. Consulte Meus pedidos e não tente pagar novamente.'
             : 'Este pedido já possui uma tentativa de pagamento. Conclua o Pix/boleto abaixo ou consulte Meus pedidos. Não inicie outra cobrança para evitar pagamento duplicado.',
       }
       carregando.value = false
