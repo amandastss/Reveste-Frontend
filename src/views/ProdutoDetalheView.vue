@@ -2,6 +2,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
+import { API_BASE } from '@/api/config'
 import { useCartStore } from '@/stores/cart'
 import { hasCartAuthToken, getCartAuthRedirectPath } from '@/utils/cartAuth'
 import {
@@ -41,7 +42,7 @@ const mainImage = computed(() =>
     ? 'https://via.placeholder.com/600x600?text=Sem+imagem'
     : productData.value.imagem_url.startsWith('http')
       ? productData.value.imagem_url
-      : `${import.meta.env.VITE_API_URL}/api${productData.value.imagem_url}`,
+      : `${API_BASE}/api${productData.value.imagem_url}`,
 )
 const goBack = () => router.back(),
   openReviews = () => router.push({ name: 'produto-avaliacoes', params: { id: productId } })
@@ -128,7 +129,7 @@ const resolveCategoriaNome = async (produto: Produto) => {
     return
   }
   try {
-    const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/categorias/`)
+    const res = await axios.get(`${API_BASE}/api/categorias/`)
     const categorias = Array.isArray(res.data?.results)
       ? res.data.results
       : Array.isArray(res.data)
@@ -149,7 +150,7 @@ const fetchProduct = async () => {
   error.value = ''
   categoriaNome.value = ''
   try {
-    const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/produtos/${productId}/`)
+    const res = await axios.get(`${API_BASE}/api/produtos/${productId}/`)
     productData.value = res.data
     await resolveCategoriaNome(res.data)
   } catch (err) {
@@ -213,55 +214,30 @@ onMounted(() => {
       <div></div>
       <div class="header-actions"></div>
     </header>
-    <Transition name="fade"
-      ><div v-if="addToCartSuccess" class="success-message">
+    <Transition name="fade">
+      <div v-if="addToCartSuccess" class="success-message">
         ✓ Adicionado ao carrinho!
-      </div></Transition
-    >
+      </div>
+    </Transition>
     <main class="scrollable-content">
-      <div
-        class="image-wrapper"
-        @mouseenter="handleImageEnter"
-        @mousemove="handleImageMove"
-        @mouseleave="resetImageZoom"
-      >
-        <img :src="mainImage" class="main-product-image" /><button
-          class="back-btn"
-          @click="goBack"
-          title="Voltar"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
+      <div class="image-wrapper" @mouseenter="handleImageEnter" @mousemove="handleImageMove"
+        @mouseleave="resetImageZoom">
+        <img :src="mainImage" class="main-product-image" /><button class="back-btn" @click="goBack" title="Voltar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"></polyline>
-          </svg></button
-        ><button
-          class="favorite-btn"
-          :class="{ 'is-favorite': isFavorite, 'is-animating': isAnimating }"
-          @click="toggleFavorite"
-          title="Adicionar aos favoritos"
-        >
-          <svg
-            v-if="!isFavorite"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
+          </svg></button><button class="favorite-btn"
+          :class="{ 'is-favorite': isFavorite, 'is-animating': isAnimating }" @click="toggleFavorite"
+          title="Adicionar aos favoritos">
+          <svg v-if="!isFavorite" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
             <path
-              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-            ></path></svg
-          ><svg v-else viewBox="0 0 24 24" fill="currentColor">
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+            </path>
+          </svg><svg v-else viewBox="0 0 24 24" fill="currentColor">
             <path
-              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-            ></path>
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+            </path>
           </svg>
         </button>
       </div>
@@ -291,37 +267,25 @@ onMounted(() => {
       </div>
     </main>
     <div class="bottom-bar">
-      <button
-        class="cart-btn"
-        :disabled="isAddingToCart || !productData"
-        @click="showAddToCartConfirm = true"
-      >
-        Adicionar ao carrinho</button
-      ><button class="buy-now-btn" :disabled="isAddingToCart || !productData" @click="buyNow">
+      <button class="cart-btn" :disabled="isAddingToCart || !productData" @click="showAddToCartConfirm = true">
+        Adicionar ao carrinho</button><button class="buy-now-btn" :disabled="isAddingToCart || !productData"
+        @click="buyNow">
         <span v-if="isAddingToCart">Processando...</span><span v-else>Comprar agora</span>
       </button>
     </div>
-    <div
-      v-if="showAddToCartConfirm && productData"
-      class="overlay"
-      @click.self="closeAddToCartConfirm"
-    >
+    <div v-if="showAddToCartConfirm && productData" class="overlay" @click.self="closeAddToCartConfirm">
       <div class="modal">
         <h2>Adicionar ao carrinho?</h2>
         <p>Esse produto possui apenas 1 unidade.</p>
         <div class="actions">
-          <button class="btn-secondary" @click="closeAddToCartConfirm">Cancelar</button
-          ><button class="btn-primary" @click="confirmAddToCart">Adicionar</button>
+          <button class="btn-secondary" @click="closeAddToCartConfirm">Cancelar</button><button class="btn-primary"
+            @click="confirmAddToCart">Adicionar</button>
         </div>
         <p v-if="addToCartError" class="error-message">{{ addToCartError }}</p>
       </div>
     </div>
 
-    <div
-      v-if="showLoginRequiredModal"
-      class="overlay auth-overlay"
-      @click.self="closeLoginRequiredModal"
-    >
+    <div v-if="showLoginRequiredModal" class="overlay auth-overlay" @click.self="closeLoginRequiredModal">
       <div class="auth-modal">
         <div class="auth-modal-icon">🔒</div>
 
