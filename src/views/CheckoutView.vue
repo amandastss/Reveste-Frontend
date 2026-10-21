@@ -87,10 +87,19 @@ const metodoEscolhido = ref<'cartao' | 'pix' | 'boleto'>('cartao')
 const cepValidado = ref(false)
 let cepRequestId = 0
 
-async function consultarCep() {
-  // Mantém apenas dígitos enquanto a pessoa digita para não deslocar o cursor.
-  const cep = boletoAddress.zip_code.replace(/\D/g, '').slice(0, 8)
-  if (boletoAddress.zip_code !== cep) boletoAddress.zip_code = cep
+async function consultarCep(event?: Event) {
+  // Normaliza diretamente o campo DOM; isso remove hífens inseridos por autofill
+  // ou por máscaras e garante que os oito dígitos possam ser digitados.
+  const input = event?.target instanceof HTMLInputElement ? event.target : null
+  const rawValue = input ? input.value : boletoAddress.zip_code
+  const cep = rawValue.replace(/\D/g, '').slice(0, 8)
+  if (input && input.value !== cep) {
+    const cursor = input.selectionStart ?? input.value.length
+    const digitsBeforeCursor = input.value.slice(0, cursor).replace(/\D/g, '').length
+    input.value = cep
+    input.setSelectionRange(digitsBeforeCursor, digitsBeforeCursor)
+  }
+  boletoAddress.zip_code = cep
   cepValidado.value = false
   if (cep.length !== 8) return
 
@@ -506,7 +515,7 @@ onBeforeUnmount(async () => {
         <fieldset v-if="metodoEscolhido === 'boleto'" class="boleto-address">
           <legend>Endereço para boleto bancário</legend>
           <p class="address-hint">Preencha estes dados somente se escolher boleto. São exigidos pelo Mercado Pago para emitir a cobrança.</p>
-          <label>CEP<input v-model.trim="boletoAddress.zip_code" autocomplete="postal-code" inputmode="numeric" maxlength="8" @input="consultarCep" /> <small v-if="buscandoCep">Consultando CEP...</small><small v-else-if="cepValidado">CEP localizado</small></label>
+          <label>CEP<input v-model.trim="boletoAddress.zip_code" autocomplete="postal-code" inputmode="numeric" maxlength="9" @input="consultarCep($event)" /> <small v-if="buscandoCep">Consultando CEP...</small><small v-else-if="cepValidado">CEP localizado</small></label>
           <label>Rua<input v-model.trim="boletoAddress.street_name" autocomplete="address-line1" /></label>
           <label>Número<input v-model.trim="boletoAddress.street_number" autocomplete="address-line2" /></label>
           <label>Bairro<input v-model.trim="boletoAddress.neighborhood" autocomplete="address-level3" /></label>
