@@ -83,6 +83,7 @@ async function copiarCodigoPix() {
 
 const buscandoCep = ref(false)
 const cpfPagador = ref('')
+const metodoEscolhido = ref<'cartao' | 'pix' | 'boleto'>('cartao')
 const cepValidado = ref(false)
 let cepRequestId = 0
 
@@ -216,13 +217,11 @@ async function processarEnvioBrick(payload: BrickFormData): Promise<void> {
     const payer = payload.payer && typeof payload.payer === 'object'
       ? { ...(payload.payer as NonNullable<DadosPagamento['payer']>) }
       : {}
-    if (paymentMethod === 'pix' || paymentMethod === 'bolbradesco') {
+    if (paymentMethod === 'bolbradesco') {
       if (!cpfValido(cpfPagador.value)) {
-        throw new Error('Informe um CPF válido de 11 números para pagar com Pix ou boleto.')
+        throw new Error('Informe um CPF válido de 11 números para gerar o boleto.')
       }
       payer.identification = { type: 'CPF', number: cpfPagador.value.replace(/\\D/g, '') }
-    }
-    if (paymentMethod === 'bolbradesco') {
       if (Object.values(boletoAddress).some((value) => !value.trim())) {
         throw new Error('Preencha todos os campos de endereço para gerar o boleto.')
       }
@@ -303,11 +302,11 @@ async function montarPaymentBrick(checkout: CheckoutPreparado) {
     },
     customization: {
       paymentMethods: {
-        creditCard: 'all',
-        debitCard: 'all',
-        prepaidCard: 'all',
-        bankTransfer: 'all',
-        ticket: 'all',
+        creditCard: metodoEscolhido.value === 'cartao' ? 'all' : [],
+        debitCard: metodoEscolhido.value === 'cartao' ? 'all' : [],
+        prepaidCard: metodoEscolhido.value === 'cartao' ? 'all' : [],
+        bankTransfer: metodoEscolhido.value === 'pix' ? ['pix'] : [],
+        ticket: metodoEscolhido.value === 'boleto' ? ['bolbradesco'] : [],
       },
       visual: { style: { theme: 'default' } },
     },
@@ -323,6 +322,27 @@ async function montarPaymentBrick(checkout: CheckoutPreparado) {
       },
     },
   })
+}
+
+async function selecionarMetodo(metodo: 'cartao' | 'pix' | 'boleto') {
+  if (metodoEscolhido.value === metodo || submetendo.value) return
+  metodoEscolhido.value = metodo
+  mensagemErro.value = ''
+  if (brickController) {
+    await Promise.resolve(brickController.unmount()).catch(() => undefined)
+    brickController = null
+  }
+  if (checkoutPreparado.value) {
+    carregando.value = true
+    try {
+      await montarPaymentBrick(checkoutPreparado.value)
+    } catch (error: unknown) {
+      mensagemErro.value = error instanceof Error
+        ? error.message
+        : 'Não foi possível carregar este método de pagamento.'
+      carregando.value = false
+    }
+  }
 }
 
 async function iniciarPagamento() {
@@ -471,10 +491,18 @@ onBeforeUnmount(async () => {
       <div class="payment-section">
         <h2>Pagamento seguro</h2>
         <p class="payment-intro">Escolha entre cartão, Pix ou boleto. Os dados do cartão são processados pelo Mercado Pago; a Reveste não armazena os dados do cartão.</p>
-        <label class="payer-cpf">CPF do pagador
-          <input v-model.trim="cpfPagador" autocomplete="off" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" />
-        </label>
-        <fieldset class="boleto-address">
+        <div class="payment-choice" role="group" aria-label="Escolha o método de pagamento">
+          <button type="button" :class="{ selected: metodoEscolhido === 'cartao' }" :disabled="submetendo" @click="selecionarMetodo('cartao')">Cartão</button>
+          <button type="button" :class="{ selected: metodoEscolhido === 'pix' }" :disabled="submetendo" @click="selecionarMetodo('pix')">Pix</button>
+          <button type="button" :class="{ selected: metodoEscolhido === 'boleto' }" :disabled="submetendo" @click="selecionarMetodo('boleto')">Boleto</button>
+        </div>
+        <p v-if="metodoEscolhido === 'pix'" class="address-hint">Ao selecionar Pix, o Mercado Pago exibirá o QR Code e o código Copia e Cola após a solicitação de pagamento.</p>
+        <template v-if="metodoEscolhido === 'boleto'">
+          <label class="payer-cpf">CPF do pagador
+            <input v-model.trim="cpfPagador" autocomplete="off" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" />
+          </label>
+        </template>
+        <fieldset v-if="metodoEscolhido === 'boleto'" class="boleto-address">
           <legend>Endereço para boleto bancário</legend>
           <p class="address-hint">Preencha estes dados somente se escolher boleto. São exigidos pelo Mercado Pago para emitir a cobrança.</p>
           <label>CEP<input v-model.trim="boletoAddress.zip_code" autocomplete="postal-code" inputmode="numeric" maxlength="9" @input="consultarCep" /> <small v-if="buscandoCep">Consultando CEP...</small><small v-else-if="cepValidado">CEP localizado</small></label>
@@ -571,6 +599,10 @@ onBeforeUnmount(async () => {
 }
 .payment-intro, .secure-note { color: #555; line-height: 1.5; font-size: 14px; }
 .loading { padding: 24px 0; text-align: center; }
+.payment-choice { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0; }
+.payment-choice button { flex: 1; min-width: 90px; padding: 12px; border: 1px solid #ccc; border-radius: 8px; background: #fff; cursor: pointer; }
+.payment-choice button.selected { border-color: #1d1d1d; background: #1d1d1d; color: #fff; }
+.payment-choice button:disabled { opacity: .6; cursor: wait; }
 .payer-cpf { display: grid; gap: 6px; margin-top: 16px; font-size: 14px; }
 .payer-cpf input { width: 100%; max-width: 320px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; }
 .boleto-address { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 18px 0; padding: 14px; border: 1px solid #ddd; border-radius: 8px; }
