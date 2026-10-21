@@ -1,17 +1,2 @@
-import axios from 'axios'
-
-const api = axios.create({
-  baseURL: 'https://reveste-backend.class.fabricadesoftware.ifc.edu.br/api',
-})
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-
-  return config
-})
-
-export default api
+// Keep every frontend request on the same API base URL and auth interceptor.
+export { default } from '@/api/config'
