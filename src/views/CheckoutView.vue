@@ -87,19 +87,9 @@ const metodoEscolhido = ref<'cartao' | 'pix' | 'boleto'>('cartao')
 const cepValidado = ref(false)
 let cepRequestId = 0
 
-async function consultarCep(event?: Event) {
-  // Normaliza diretamente o campo DOM; isso remove hífens inseridos por autofill
-  // ou por máscaras e garante que os oito dígitos possam ser digitados.
-  const input = event?.target instanceof HTMLInputElement ? event.target : null
-  const rawValue = input ? input.value : boletoAddress.zip_code
-  const cep = rawValue.replace(/\D/g, '').slice(0, 8)
-  if (input && input.value !== cep) {
-    const cursor = input.selectionStart ?? input.value.length
-    const digitsBeforeCursor = input.value.slice(0, cursor).replace(/\D/g, '').length
-    input.value = cep
-    input.setSelectionRange(digitsBeforeCursor, digitsBeforeCursor)
-  }
-  boletoAddress.zip_code = cep
+async function consultarCep() {
+  const cep = boletoAddress.zip_code.replace(/\D/g, '').slice(0, 8)
+  if (boletoAddress.zip_code !== cep) boletoAddress.zip_code = cep
   cepValidado.value = false
   if (cep.length !== 8) return
 
@@ -111,18 +101,18 @@ async function consultarCep(event?: Event) {
     const data = await response.json()
     if (requestId !== cepRequestId) return
     if (data.erro) {
-      mensagemErro.value = 'CEP não encontrado. Confira o número informado.'
+      cepValidado.value = false
+      mensagemErro.value = 'CEP não encontrado. Confira os números digitados.'
       return
     }
     boletoAddress.street_name = data.logradouro || boletoAddress.street_name
     boletoAddress.neighborhood = data.bairro || boletoAddress.neighborhood
-    boletoAddress.city = data.localidade || ''
-    boletoAddress.federal_unit = data.uf || ''
+    boletoAddress.city = data.localidade || boletoAddress.city
+    boletoAddress.federal_unit = data.uf || boletoAddress.federal_unit
     cepValidado.value = true
-    mensagemErro.value = ''
   } catch {
     if (requestId === cepRequestId) {
-      mensagemErro.value = 'Não foi possível validar o CEP agora. Confira sua conexão e tente novamente.'
+      mensagemErro.value = 'Não foi possível consultar o CEP agora. Confira sua conexão e tente novamente.'
     }
   } finally {
     if (requestId === cepRequestId) buscandoCep.value = false
