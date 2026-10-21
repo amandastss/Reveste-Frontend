@@ -48,22 +48,6 @@ let brickController: BrickController | null = null
 
 const temRetornoPagamento = computed(() => resultadoPagamento.value !== null)
 
-function getHeaders() {
-  const token = localStorage.getItem('token')
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  }
-}
-
-function obterMensagemErro(data: unknown, fallback: string): string {
-  if (typeof data === 'object' && data !== null) {
-    const erro = data as Record<string, unknown>
-    return String(erro.detail || erro.message || erro.erro || erro.error || fallback)
-  }
-  return fallback
-}
-
 function voltarParaCarrinho() {
   router.push('/carrinho')
 }
