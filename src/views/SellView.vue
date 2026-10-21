@@ -369,7 +369,7 @@ function axiosErrorMessage(error: unknown): string | null {
         />
 
         <p class="character-count">
-          {{ form.descricao.length }}/100
+          {{ form.descricao.length }}/300
         </p>
       </div>
 
