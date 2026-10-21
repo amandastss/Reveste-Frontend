@@ -66,6 +66,18 @@ function formatarValor(valor: number) {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
+function obterErroPagamento(error: unknown): string {
+  if (typeof error === 'object' && error !== null && 'response' in error) {
+    const response = (error as { response?: { data?: unknown } }).response
+    if (typeof response?.data === 'object' && response.data !== null) {
+      const data = response.data as Record<string, unknown>
+      const detail = data.detail ?? data.error_message ?? data.message
+      if (typeof detail === 'string' && detail.trim()) return detail
+    }
+  }
+  return error instanceof Error ? error.message : 'Não foi possível processar o pagamento.'
+}
+
 async function carregarRetornoPagamento() {
   const params = new URLSearchParams(window.location.search)
   if (!params.has('status')) return false
@@ -174,8 +186,7 @@ async function processarEnvioBrick(payload: BrickFormData): Promise<void> {
       }
     }
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Não foi possível processar o pagamento.'
-    mensagemErro.value = message
+    mensagemErro.value = obterErroPagamento(error)
     throw error
   } finally {
     submetendo.value = false
@@ -194,7 +205,7 @@ async function montarPaymentBrick(checkout: CheckoutPreparado) {
   }
 
   await nextTick()
-  const mp = new MercadoPago(API_PUBLIC_KEY, { locale: 'pt-BR' })
+  const mp = new MercadoPago(API_PUBLIC_KEY)
   brickController = await mp.bricks().create('payment', 'paymentBrick_container', {
     initialization: {
       amount: Number(checkout.amount),
@@ -211,6 +222,7 @@ async function montarPaymentBrick(checkout: CheckoutPreparado) {
       },
       visual: { style: { theme: 'default' } },
     },
+    locale: 'pt-BR',
     callbacks: {
       onReady: () => { carregando.value = false },
       onSubmit: async ({ formData }: { formData: BrickFormData }) => processarEnvioBrick(formData),
