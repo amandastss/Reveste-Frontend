@@ -4,6 +4,8 @@ export interface CheckoutPreparado {
   status: string
   amount: number
   payer_email: string
+  payment_in_progress?: boolean
+  payment_status?: string | null
 }
 export interface DadosPagamento {
   pedido_id: number
