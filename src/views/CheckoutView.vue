@@ -292,11 +292,24 @@ async function iniciarPagamento() {
     }
     if (checkout.payment_in_progress) {
       const statusExistente = String(checkout.payment_status || '').toLowerCase()
+      if (checkout.qr_code || checkout.qr_code_base64 || checkout.ticket_url) {
+        paymentInstructions.value = {
+          qr_code: checkout.qr_code,
+          qr_code_base64: checkout.qr_code_base64,
+          ticket_url: checkout.ticket_url,
+        }
+      }
+      const finalizado = statusExistente === 'approved'
+      const falhou = statusExistente === 'rejected' || statusExistente === 'cancelled'
       resultadoPagamento.value = {
-        state: statusExistente === 'rejected' || statusExistente === 'cancelled' ? 'failure' : 'pending',
+        state: finalizado ? 'success' : falhou ? 'failure' : 'pending',
         pedidoId: String(checkout.pedido_id),
         status: statusExistente || 'pending',
-        message: 'Este pedido já possui uma tentativa de pagamento. Consulte Meus pedidos antes de tentar novamente para evitar uma cobrança duplicada.',
+        message: finalizado
+          ? 'O Mercado Pago confirmou o pagamento. Se o pedido ainda não aparecer como pago, atualize Meus pedidos.'
+          : falhou
+            ? 'A tentativa anterior foi recusada ou cancelada. Consulte Meus pedidos antes de iniciar outra tentativa.'
+            : 'Este pedido já possui uma tentativa de pagamento. Conclua o Pix/boleto abaixo ou consulte Meus pedidos. Não inicie outra cobrança para evitar pagamento duplicado.',
       }
       carregando.value = false
       return
