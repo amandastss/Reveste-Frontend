@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { loadMercadoPago } from '@mercadopago/sdk-js'
 import api from '@/api/config'
@@ -14,6 +14,7 @@ interface BrickFormData {
   installments?: unknown
   issuer_id?: unknown
   payer?: unknown
+  selectedPaymentMethod?: unknown
 }
 
 interface BrickController {
@@ -44,6 +45,15 @@ const mensagemErro = ref('')
 const checkoutPreparado = ref<CheckoutPreparado | null>(null)
 const resultadoPagamento = ref<CheckoutResult | null>(null)
 const showLoginRequiredModal = ref(false)
+const paymentInstructions = ref<{ qr_code?: string; qr_code_base64?: string; ticket_url?: string } | null>(null)
+const boletoAddress = reactive({
+  street_name: '',
+  street_number: '',
+  neighborhood: '',
+  city: '',
+  federal_unit: '',
+  zip_code: '',
+})
 let brickController: BrickController | null = null
 
 const temRetornoPagamento = computed(() => resultadoPagamento.value !== null)
@@ -136,31 +146,44 @@ async function processarEnvioBrick(payload: BrickFormData): Promise<void> {
   mensagemErro.value = ''
 
   try {
-    if (typeof payload.token !== 'string' || !payload.token.trim()) {
-      throw new Error('O Mercado Pago não gerou o token do cartão. Confira os dados e tente novamente.')
-    }
     if (typeof payload.payment_method_id !== 'string' || !payload.payment_method_id.trim()) {
       throw new Error('Não foi possível identificar o método de pagamento selecionado.')
+    }
+    const paymentMethod = payload.payment_method_id.trim()
+    const isCard = !['pix', 'bolbradesco'].includes(paymentMethod)
+    if (isCard && (typeof payload.token !== 'string' || !payload.token.trim())) {
+      throw new Error('O Mercado Pago não gerou o token do cartão. Confira os dados e tente novamente.')
+    }
+
+    const payer = payload.payer && typeof payload.payer === 'object'
+      ? { ...(payload.payer as NonNullable<DadosPagamento['payer']>) }
+      : {}
+    if (paymentMethod === 'bolbradesco') {
+      if (Object.values(boletoAddress).some((value) => !value.trim())) {
+        throw new Error('Preencha todos os campos de endereço para gerar o boleto.')
+      }
+      payer.address = { ...boletoAddress }
     }
 
     const dadosPagamento: DadosPagamento = {
       pedido_id: checkoutPreparado.value.pedido_id,
-      token: payload.token,
-      payment_method_id: payload.payment_method_id,
-      installments: Number(payload.installments ?? 1),
+      payment_method_id: paymentMethod,
+      ...(typeof payload.token === 'string' && payload.token.trim() ? { token: payload.token } : {}),
+      ...(payload.installments != null ? { installments: Number(payload.installments) } : {}),
       ...(payload.issuer_id ? { issuer_id: String(payload.issuer_id) } : {}),
-      ...(payload.payer && typeof payload.payer === 'object'
-        ? { payer: payload.payer as DadosPagamento['payer'] }
-        : {}),
+      ...(Object.keys(payer).length ? { payer } : {}),
     }
 
-    const resposta = await processarPagamento(dadosPagamento) as {
-      status?: string
-      pedido_id?: number | string
-      detail?: string
-    }
+    const resposta = await processarPagamento(dadosPagamento)
     const statusPagamento = String(resposta.status || '').toLowerCase()
     const pedidoId = String(resposta.pedido_id ?? checkoutPreparado.value.pedido_id)
+    if (statusPagamento === 'pending' && (resposta.qr_code || resposta.qr_code_base64 || resposta.ticket_url)) {
+      paymentInstructions.value = {
+        qr_code: resposta.qr_code,
+        qr_code_base64: resposta.qr_code_base64,
+        ticket_url: resposta.ticket_url,
+      }
+    }
 
     if (statusPagamento === 'approved') {
       resultadoPagamento.value = {
@@ -216,6 +239,8 @@ async function montarPaymentBrick(checkout: CheckoutPreparado) {
         creditCard: 'all',
         debitCard: 'all',
         prepaidCard: 'all',
+        bankTransfer: ['pix'],
+        ticket: ['bolbradesco'],
       },
       visual: { style: { theme: 'default' } },
     },
@@ -355,7 +380,24 @@ onBeforeUnmount(async () => {
 
       <div class="payment-section">
         <h2>Pagamento seguro</h2>
-        <p class="payment-intro">Os dados do cartão são processados pelo Mercado Pago. A Reveste não armazena os dados do cartão.</p>
+        <p class="payment-intro">Escolha entre cartão, Pix ou boleto. Os dados do cartão são processados pelo Mercado Pago; a Reveste não armazena os dados do cartão.</p>
+        <fieldset class="boleto-address">
+          <legend>Endereço para boleto bancário</legend>
+          <p class="address-hint">Preencha estes dados somente se escolher boleto. São exigidos pelo Mercado Pago para emitir a cobrança.</p>
+          <label>CEP<input v-model.trim="boletoAddress.zip_code" autocomplete="postal-code" /></label>
+          <label>Rua<input v-model.trim="boletoAddress.street_name" autocomplete="address-line1" /></label>
+          <label>Número<input v-model.trim="boletoAddress.street_number" autocomplete="address-line2" /></label>
+          <label>Bairro<input v-model.trim="boletoAddress.neighborhood" autocomplete="address-level3" /></label>
+          <label>Cidade<input v-model.trim="boletoAddress.city" autocomplete="address-level2" /></label>
+          <label>UF<input v-model.trim="boletoAddress.federal_unit" maxlength="2" autocomplete="address-level1" /></label>
+        </fieldset>
+        <div v-if="paymentInstructions" class="payment-instructions">
+          <h3>Conclua seu pagamento</h3>
+          <img v-if="paymentInstructions.qr_code_base64" :src="`data:image/png;base64,${paymentInstructions.qr_code_base64}`" alt="QR Code Pix" />
+          <label v-if="paymentInstructions.qr_code">Pix Copia e Cola<input readonly :value="paymentInstructions.qr_code" /></label>
+          <button v-if="paymentInstructions.qr_code" type="button" @click="navigator.clipboard.writeText(paymentInstructions.qr_code)">Copiar código Pix</button>
+          <a v-if="paymentInstructions.ticket_url" :href="paymentInstructions.ticket_url" target="_blank" rel="noopener noreferrer">Abrir boleto / instruções de pagamento</a>
+        </div>
         <div v-if="mensagemErro" class="checkout-error" role="alert">{{ mensagemErro }}</div>
         <div v-if="submetendo" class="loading">Enviando pagamento com segurança...</div>
         <div v-if="checkoutPreparado" id="paymentBrick_container"></div>
@@ -436,6 +478,16 @@ onBeforeUnmount(async () => {
 }
 .payment-intro, .secure-note { color: #555; line-height: 1.5; font-size: 14px; }
 .loading { padding: 24px 0; text-align: center; }
+.boleto-address { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 18px 0; padding: 14px; border: 1px solid #ddd; border-radius: 8px; }
+.boleto-address legend { padding: 0 6px; font-weight: 600; }
+.boleto-address label, .payment-instructions label { display: grid; gap: 5px; font-size: 13px; }
+.boleto-address input, .payment-instructions input { width: 100%; min-width: 0; padding: 9px; border: 1px solid #ccc; border-radius: 6px; }
+.address-hint { grid-column: 1 / -1; margin: 0; color: #555; font-size: 13px; }
+.payment-instructions { display: grid; gap: 12px; margin: 20px 0; padding: 16px; border: 1px solid #ddd; border-radius: 8px; overflow-wrap: anywhere; }
+.payment-instructions img { width: min(100%, 260px); margin: 0 auto; }
+.payment-instructions a { color: #222; text-decoration: underline; }
+.payment-instructions button { padding: 10px; border: 0; border-radius: 6px; cursor: pointer; }
+@media (max-width: 520px) { .boleto-address { grid-template-columns: 1fr; } }
 .checkout-error {
   margin: 16px 0;
   padding: 14px;
