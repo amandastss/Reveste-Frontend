@@ -82,6 +82,7 @@ async function copiarCodigoPix() {
 }
 
 const buscandoCep = ref(false)
+const cpfPagador = ref('')
 const cepValidado = ref(false)
 let cepRequestId = 0
 
@@ -185,6 +186,18 @@ async function carregarRetornoPagamento() {
   return true
 }
 
+function cpfValido(valor: string): boolean {
+  const cpf = valor.replace(/\\D/g, '')
+  if (cpf.length !== 11 || /^([0-9])\\1{10}$/.test(cpf)) return false
+  const calcularDigito = (base: string, pesoInicial: number) => {
+    const soma = [...base].reduce((total, digito, index) => total + Number(digito) * (pesoInicial - index), 0)
+    const resto = (soma * 10) % 11
+    return resto === 10 ? 0 : resto
+  }
+  return calcularDigito(cpf.slice(0, 9), 10) === Number(cpf[9])
+    && calcularDigito(cpf.slice(0, 10), 11) === Number(cpf[10])
+}
+
 async function processarEnvioBrick(payload: BrickFormData): Promise<void> {
   if (!checkoutPreparado.value || submetendo.value) return
   submetendo.value = true
@@ -203,6 +216,12 @@ async function processarEnvioBrick(payload: BrickFormData): Promise<void> {
     const payer = payload.payer && typeof payload.payer === 'object'
       ? { ...(payload.payer as NonNullable<DadosPagamento['payer']>) }
       : {}
+    if (paymentMethod === 'pix' || paymentMethod === 'bolbradesco') {
+      if (!cpfValido(cpfPagador.value)) {
+        throw new Error('Informe um CPF válido de 11 números para pagar com Pix ou boleto.')
+      }
+      payer.identification = { type: 'CPF', number: cpfPagador.value.replace(/\\D/g, '') }
+    }
     if (paymentMethod === 'bolbradesco') {
       if (Object.values(boletoAddress).some((value) => !value.trim())) {
         throw new Error('Preencha todos os campos de endereço para gerar o boleto.')
@@ -452,6 +471,9 @@ onBeforeUnmount(async () => {
       <div class="payment-section">
         <h2>Pagamento seguro</h2>
         <p class="payment-intro">Escolha entre cartão, Pix ou boleto. Os dados do cartão são processados pelo Mercado Pago; a Reveste não armazena os dados do cartão.</p>
+        <label class="payer-cpf">CPF do pagador
+          <input v-model.trim="cpfPagador" autocomplete="off" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" />
+        </label>
         <fieldset class="boleto-address">
           <legend>Endereço para boleto bancário</legend>
           <p class="address-hint">Preencha estes dados somente se escolher boleto. São exigidos pelo Mercado Pago para emitir a cobrança.</p>
@@ -549,6 +571,8 @@ onBeforeUnmount(async () => {
 }
 .payment-intro, .secure-note { color: #555; line-height: 1.5; font-size: 14px; }
 .loading { padding: 24px 0; text-align: center; }
+.payer-cpf { display: grid; gap: 6px; margin-top: 16px; font-size: 14px; }
+.payer-cpf input { width: 100%; max-width: 320px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; }
 .boleto-address { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 18px 0; padding: 14px; border: 1px solid #ddd; border-radius: 8px; }
 .boleto-address legend { padding: 0 6px; font-weight: 600; }
 .boleto-address label, .payment-instructions label { display: grid; gap: 5px; font-size: 13px; }
