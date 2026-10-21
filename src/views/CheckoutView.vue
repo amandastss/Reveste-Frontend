@@ -72,6 +72,15 @@ function redirectToAuth(mode: 'login' | 'register') {
   router.push(getCartAuthRedirectPath())
 }
 
+async function copiarCodigoPix() {
+  if (!paymentInstructions.value?.qr_code) return
+  try {
+    await navigator.clipboard.writeText(paymentInstructions.value.qr_code)
+  } catch {
+    mensagemErro.value = 'Não foi possível copiar automaticamente. Selecione e copie o código Pix manualmente.'
+  }
+}
+
 function formatarValor(valor: number) {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
@@ -353,6 +362,14 @@ onBeforeUnmount(async () => {
       <h2 v-else>Pagamento não concluído</h2>
       <p>{{ resultadoPagamento.message }}</p>
       <p v-if="resultadoPagamento.pedidoId">Pedido #{{ resultadoPagamento.pedidoId }}</p>
+      <div v-if="paymentInstructions" class="payment-instructions">
+        <h3>Conclua seu pagamento</h3>
+        <img v-if="paymentInstructions.qr_code_base64" :src="`data:image/png;base64,${paymentInstructions.qr_code_base64}`" alt="QR Code Pix" />
+        <label v-if="paymentInstructions.qr_code">Pix Copia e Cola<input readonly :value="paymentInstructions.qr_code" /></label>
+        <button v-if="paymentInstructions.qr_code" type="button" @click="copiarCodigoPix">Copiar código Pix</button>
+        <a v-if="paymentInstructions.ticket_url" :href="paymentInstructions.ticket_url" target="_blank" rel="noopener noreferrer">Abrir boleto / instruções de pagamento</a>
+        <p>Após pagar, a confirmação pode levar algum tempo. Consulte Meus pedidos para acompanhar o status.</p>
+      </div>
       <button @click="router.push('/pedidos')">Ver meus pedidos</button>
       <button v-if="resultadoPagamento.state === 'failure'" class="secondary-btn" @click="router.push('/carrinho')">
         Voltar ao carrinho
@@ -395,7 +412,7 @@ onBeforeUnmount(async () => {
           <h3>Conclua seu pagamento</h3>
           <img v-if="paymentInstructions.qr_code_base64" :src="`data:image/png;base64,${paymentInstructions.qr_code_base64}`" alt="QR Code Pix" />
           <label v-if="paymentInstructions.qr_code">Pix Copia e Cola<input readonly :value="paymentInstructions.qr_code" /></label>
-          <button v-if="paymentInstructions.qr_code" type="button" @click="navigator.clipboard.writeText(paymentInstructions.qr_code)">Copiar código Pix</button>
+          <button v-if="paymentInstructions.qr_code" type="button" @click="copiarCodigoPix">Copiar código Pix</button>
           <a v-if="paymentInstructions.ticket_url" :href="paymentInstructions.ticket_url" target="_blank" rel="noopener noreferrer">Abrir boleto / instruções de pagamento</a>
         </div>
         <div v-if="mensagemErro" class="checkout-error" role="alert">{{ mensagemErro }}</div>
