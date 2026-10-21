@@ -364,7 +364,7 @@ function axiosErrorMessage(error: unknown): string | null {
         <textarea
           id="descricao"
           v-model="form.descricao"
-          maxlength="100"
+          maxlength="300"
           required
         />
 
