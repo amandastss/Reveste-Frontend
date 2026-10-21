@@ -88,7 +88,7 @@ const cepValidado = ref(false)
 let cepRequestId = 0
 
 async function consultarCep() {
-  const cep = boletoAddress.zip_code.replace(/\\D/g, '')
+  const cep = boletoAddress.zip_code.replace(/\D/g, '')
   boletoAddress.zip_code = cep.length > 5 ? `${cep.slice(0, 5)}-${cep.slice(5, 8)}` : cep
   cepValidado.value = false
   if (cep.length !== 8) return
@@ -188,7 +188,7 @@ async function carregarRetornoPagamento() {
 }
 
 function cpfValido(valor: string): boolean {
-  const cpf = valor.replace(/\\D/g, '')
+  const cpf = valor.replace(/\D/g, '')
   if (cpf.length !== 11 || /^([0-9])\\1{10}$/.test(cpf)) return false
   const calcularDigito = (base: string, pesoInicial: number) => {
     const soma = [...base].reduce((total, digito, index) => total + Number(digito) * (pesoInicial - index), 0)
@@ -221,7 +221,7 @@ async function processarEnvioBrick(payload: BrickFormData): Promise<void> {
       if (!cpfValido(cpfPagador.value)) {
         throw new Error('Informe um CPF válido de 11 números para gerar o boleto.')
       }
-      payer.identification = { type: 'CPF', number: cpfPagador.value.replace(/\\D/g, '') }
+      payer.identification = { type: 'CPF', number: cpfPagador.value.replace(/\D/g, '') }
       if (Object.values(boletoAddress).some((value) => !value.trim())) {
         throw new Error('Preencha todos os campos de endereço para gerar o boleto.')
       }
