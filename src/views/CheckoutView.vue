@@ -208,7 +208,6 @@ async function montarPaymentBrick(checkout: CheckoutPreparado) {
         ticket: 'none',
         bankTransfer: 'none',
         mercadoPago: 'none',
-        atm: 'none',
       },
       visual: { style: { theme: 'default' } },
     },
