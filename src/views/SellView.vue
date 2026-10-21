@@ -11,7 +11,7 @@ const mostrarLoginAviso = ref(false)
 type FormPeca = {
   titulo: string
   descricao: string
-  preco: string
+  preco: string | number
   condicao: string
   marca: string
   categoria: string
@@ -167,9 +167,11 @@ const publicarPeca = async () => {
     return
   }
 
-  const preco = Number(form.value.preco.replace(',', '.'))
+  const precoInformado = form.value.preco
+  const precoTexto = String(precoInformado).trim()
+  const preco = Number(precoTexto.replace(',', '.'))
 
-  if (!form.value.preco.trim() || !Number.isFinite(preco) || preco <= 0) {
+  if (!precoTexto || !Number.isFinite(preco) || preco <= 0) {
     alert('Informe um preço válido maior que zero.')
     return
   }
