@@ -81,6 +81,42 @@ async function copiarCodigoPix() {
   }
 }
 
+const buscandoCep = ref(false)
+const cepValidado = ref(false)
+let cepRequestId = 0
+
+async function consultarCep() {
+  const cep = boletoAddress.zip_code.replace(/\\D/g, '')
+  boletoAddress.zip_code = cep.length > 5 ? `${cep.slice(0, 5)}-${cep.slice(5, 8)}` : cep
+  cepValidado.value = false
+  if (cep.length !== 8) return
+
+  const requestId = ++cepRequestId
+  buscandoCep.value = true
+  try {
+    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
+    if (!response.ok) throw new Error('Não foi possível consultar o CEP.')
+    const data = await response.json()
+    if (requestId !== cepRequestId) return
+    if (data.erro) {
+      mensagemErro.value = 'CEP não encontrado. Confira o número informado.'
+      return
+    }
+    boletoAddress.street_name = data.logradouro || boletoAddress.street_name
+    boletoAddress.neighborhood = data.bairro || boletoAddress.neighborhood
+    boletoAddress.city = data.localidade || ''
+    boletoAddress.federal_unit = data.uf || ''
+    cepValidado.value = true
+    mensagemErro.value = ''
+  } catch {
+    if (requestId === cepRequestId) {
+      mensagemErro.value = 'Não foi possível validar o CEP agora. Confira sua conexão e tente novamente.'
+    }
+  } finally {
+    if (requestId === cepRequestId) buscandoCep.value = false
+  }
+}
+
 function formatarValor(valor: number) {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
@@ -170,6 +206,9 @@ async function processarEnvioBrick(payload: BrickFormData): Promise<void> {
     if (paymentMethod === 'bolbradesco') {
       if (Object.values(boletoAddress).some((value) => !value.trim())) {
         throw new Error('Preencha todos os campos de endereço para gerar o boleto.')
+      }
+      if (!cepValidado.value) {
+        throw new Error('Informe um CEP válido e aguarde a validação automática antes de gerar o boleto.')
       }
       payer.address = { ...boletoAddress }
     }
@@ -416,7 +455,7 @@ onBeforeUnmount(async () => {
         <fieldset class="boleto-address">
           <legend>Endereço para boleto bancário</legend>
           <p class="address-hint">Preencha estes dados somente se escolher boleto. São exigidos pelo Mercado Pago para emitir a cobrança.</p>
-          <label>CEP<input v-model.trim="boletoAddress.zip_code" autocomplete="postal-code" /></label>
+          <label>CEP<input v-model.trim="boletoAddress.zip_code" autocomplete="postal-code" inputmode="numeric" maxlength="9" @input="consultarCep" /> <small v-if="buscandoCep">Consultando CEP...</small><small v-else-if="cepValidado">CEP localizado</small></label>
           <label>Rua<input v-model.trim="boletoAddress.street_name" autocomplete="address-line1" /></label>
           <label>Número<input v-model.trim="boletoAddress.street_number" autocomplete="address-line2" /></label>
           <label>Bairro<input v-model.trim="boletoAddress.neighborhood" autocomplete="address-level3" /></label>
