@@ -45,7 +45,7 @@ const mainImage = computed(() =>
       : `${API_BASE}/api${productData.value.imagem_url}`,
 )
 const goBack = () => router.back(),
-  openReviews = () => router.push({ name: 'produto-avaliacoes', params: { id: productId } })
+  openQuestions = () => router.push({ name: 'produto-perguntas', params: { id: productId } })
 const isDesktopHoverZoomEnabled = () =>
   window.matchMedia('(hover: hover) and (pointer: fine)').matches
 
@@ -261,8 +261,8 @@ onMounted(() => {
             <span class="badge-condition">{{ productData?.condicao || 'Não informado' }}</span>
           </div>
         </div>
-        <div class="reviews-card" @click="openReviews">
-          <span>Ver avaliações</span><span>→</span>
+        <div class="questions-card" @click="openQuestions">
+          <span>Perguntas ao vendedor</span><span>→</span>
         </div>
       </div>
     </main>

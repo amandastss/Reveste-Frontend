@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import authApi from '../../api/authApi'
+import { persistToken } from '../../api/config'
 
 const router = useRouter()
 
@@ -87,10 +88,17 @@ async function register() {
     localStorage.setItem('user', JSON.stringify(userData))
     localStorage.setItem('isLogin', 'true')
 
-    const token = typeof responseData.token === 'string' ? responseData.token : undefined
+    const token =
+      typeof responseData.token === 'string'
+        ? responseData.token
+        : typeof responseData.access === 'string'
+          ? responseData.access
+          : typeof responseData.access_token === 'string'
+            ? responseData.access_token
+            : undefined
 
     if (token) {
-      localStorage.setItem('token', token)
+      persistToken(token)
     }
 
     // Exibe o overlay de sucesso

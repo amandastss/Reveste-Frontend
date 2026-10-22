@@ -129,6 +129,12 @@ const router = createRouter({
       props: true,
     },
     {
+      path: '/produto/:id/perguntas',
+      name: 'produto-perguntas',
+      component: ReviewsView,
+      props: true,
+    },
+    {
       path: '/aparencia',
       name: 'aparencia',
       component: AppearanceView,

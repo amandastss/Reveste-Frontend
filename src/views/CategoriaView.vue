@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
+import { API_BASE } from '@/api/config'
 
 interface Categoria {
   id: number
@@ -36,7 +37,7 @@ const carregando = ref(true)
 
 const formatMediaUrl = (url?: string | null) => {
   if (!url) return '/default.png'
-  return url.startsWith('http') ? url : `${import.meta.env.VITE_API_URL}${url}`
+  return url.startsWith('http') ? url : `${API_BASE}${url}`
 }
 
 const normalizar = (valor?: string | null) => {
@@ -98,7 +99,7 @@ const carregarCategoria = async () => {
   carregando.value = true
 
   try {
-    const resCategorias = await axios.get(`${import.meta.env.VITE_API_URL}/api/categorias/`)
+    const resCategorias = await axios.get(`${API_BASE}/api/categorias/`)
 
     const categoriasApi = Array.isArray(resCategorias.data?.results)
       ? resCategorias.data.results
@@ -110,7 +111,7 @@ const carregarCategoria = async () => {
     categoria.value =
       categoriasApi.find((item: Categoria) => Number(item.id) === categoriaId) || null
 
-    const apiBase = `${import.meta.env.VITE_API_URL}/api/produtos/`
+    const apiBase = `${API_BASE}/api/produtos/`
     const todosProdutos: Produto[] = []
     let nextUrl: string | null = apiBase
 
@@ -131,7 +132,7 @@ const carregarCategoria = async () => {
       nextUrl = payload?.next
         ? payload.next.startsWith('http')
           ? payload.next
-          : `${import.meta.env.VITE_API_URL}${payload.next}`
+          : `${API_BASE}${payload.next}`
         : null
     }
 

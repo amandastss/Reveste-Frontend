@@ -4,6 +4,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import authApi from '../../api/authApi'
+import { getStoredToken, persistToken } from '../../api/config'
 
 const password = ref('')
 const showPassword = ref(false)
@@ -30,9 +31,10 @@ async function login() {
 
     // Login - email já existe
     const res = await authApi.login(email.value, password.value)
-    if (res.data && res.data.access) {
+    const token = res.data?.access ?? res.data?.token ?? res.data?.access_token ?? res.data?.jwt ?? res.data?.authToken
+    if (token) {
       try {
-        localStorage.setItem('token', res.data.access)
+        persistToken(token)
       } catch {}
     }
     const userData = await authApi.fetchUserProfile()
@@ -59,9 +61,9 @@ async function login() {
     localStorage.setItem('email', email.value)
 
     try {
-      const token = res.data?.token || localStorage.getItem('token')
+      const token = res.data?.token || res.data?.access || res.data?.access_token || getStoredToken()
       const candidateId =
-        res.data?.user_id || res.data?.user?.id || mergedUser.user_id || mergedUser.id
+        res.data?.user_id || res.data?.user?.id || existingUser?.user_id || existingUser?.id
       if (token) {
         const serverUser = await authApi.fetchUserFromCandidates(token, candidateId)
         if (serverUser) {

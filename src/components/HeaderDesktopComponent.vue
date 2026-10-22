@@ -2,6 +2,7 @@
 import { useRouter } from 'vue-router'
 import { onMounted, ref } from 'vue'
 import axios from 'axios'
+import { API_BASE } from '@/api/config'
 
 const router = useRouter()
 const showMenu = ref(false)
@@ -35,7 +36,7 @@ function handleNavClick(item: NavItem) {
 
 async function fetchCategorias() {
   try {
-    const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/categorias/`)
+    const res = await axios.get(`${API_BASE}/api/categorias/`)
     categorias.value = Array.isArray(res.data) ? res.data : res.data.results || []
   } catch (error) {
     console.error('Erro ao buscar categorias do header:', error)

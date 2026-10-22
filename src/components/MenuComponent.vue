@@ -2,11 +2,12 @@
 import { ref, watch, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { API_BASE, getStoredToken } from '@/api/config'
 
 const props = defineProps<{ isOpen: boolean }>()
 const emit = defineEmits(['close-menu'])
 const router = useRouter()
-const isLoggedIn = computed(() => !!localStorage.getItem('token'))
+const isLoggedIn = computed(() => !!getStoredToken())
 const categorias = ref<Array<{ id: number; nome?: string; name?: string; title?: string }>>([])
 
 function closeMenu() {
@@ -15,7 +16,7 @@ function closeMenu() {
 
 async function fetchCategorias() {
   try {
-    const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/categorias/`)
+    const res = await axios.get(`${API_BASE}/api/categorias/`)
     categorias.value = Array.isArray(res.data) ? res.data : res.data.results || []
   } catch (error) {
     console.error('Erro ao buscar categorias do menu mobile:', error)

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
+import { getStoredToken } from '@/api/config'
 
 export interface Notification {
   id: number
@@ -26,7 +27,7 @@ export const useNotificationsStore = defineStore('notifications', {
 
   actions: {
     async loadNotifications() {
-      const token = localStorage.getItem('token')
+      const token = getStoredToken()
 
       if (!token) {
         this.notifications = []
@@ -71,7 +72,7 @@ export const useNotificationsStore = defineStore('notifications', {
     },
 
     async markAsRead(id: number) {
-      const token = localStorage.getItem('token')
+      const token = getStoredToken()
 
       if (!token) return
 

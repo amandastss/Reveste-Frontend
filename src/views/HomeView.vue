@@ -251,6 +251,18 @@ watch(
   { immediate: true },
 )
 
+const selecionarCategoria = (categoriaId: number | null) => {
+  const nextQuery = { ...route.query }
+
+  if (categoriaId === null) {
+    delete nextQuery.categoria
+  } else {
+    nextQuery.categoria = String(categoriaId)
+  }
+
+  router.push({ name: 'home', query: nextQuery })
+}
+
 const produtosFiltrados = computed(() => {
   if (!categoriaSelecionada.value) return produtos.value
 

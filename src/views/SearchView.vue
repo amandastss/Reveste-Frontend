@@ -5,7 +5,7 @@ import axios from 'axios'
 
 const router = useRouter()
 const route = useRoute()
-const API_BASE = import.meta.env.VITE_API_URL ?? ''
+import { API_BASE } from '@/api/config'
 
 interface Categoria {
   id: number

@@ -1,10 +1,10 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
-import api from '@/api/config'
+import api, { getStoredToken } from '@/api/config'
 import '../css/sell.css'
 
-const estaLogado = () => Boolean(localStorage.getItem('token'))
+const estaLogado = () => Boolean(getStoredToken())
 
 const mostrarLoginAviso = ref(false)
 
@@ -207,6 +207,18 @@ const publicarPeca = async () => {
     const response = await api.post('/produtos/', formData)
 
     console.log('Produto criado:', response.data)
+
+    const sellerKey = localStorage.getItem('user_id') || localStorage.getItem('user_email') || 'usuario_atual'
+    const sellerProducts = JSON.parse(localStorage.getItem('reveste_seller_products_v1') || '{}') as Record<string, string[]>
+    const productId = String(response.data?.id ?? Date.now())
+
+    sellerProducts[sellerKey] = Array.from(new Set([...(sellerProducts[sellerKey] || []), productId]))
+
+    const productSellers = JSON.parse(localStorage.getItem('reveste_product_sellers_v1') || '{}') as Record<string, string[]>
+    productSellers[productId] = Array.from(new Set([...(productSellers[productId] || []), sellerKey]))
+
+    localStorage.setItem('reveste_seller_products_v1', JSON.stringify(sellerProducts))
+    localStorage.setItem('reveste_product_sellers_v1', JSON.stringify(productSellers))
 
     alert('Produto publicado com sucesso!')
 

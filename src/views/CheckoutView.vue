@@ -87,7 +87,7 @@ const metodoEscolhido = ref<'cartao' | 'pix' | 'boleto'>('cartao')
 const cepValidado = ref(false)
 let cepRequestId = 0
 
-async function consultarCep() {
+async function consultarCep(_event?: Event) {
   const cep = boletoAddress.zip_code.replace(/\D/g, '').slice(0, 8)
   if (boletoAddress.zip_code !== cep) boletoAddress.zip_code = cep
   cepValidado.value = false

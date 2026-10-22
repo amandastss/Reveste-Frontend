@@ -1,5 +1,7 @@
+import { getStoredToken } from '@/api/config'
+
 export function hasCartAuthToken() {
-  return Boolean(localStorage.getItem('token'))
+  return Boolean(getStoredToken())
 }
 
 export function getCartAuthMessage() {

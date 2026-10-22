@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { getStoredToken } from '@/api/config'
 import { getFavoriteCount } from '@/utils/favorites'
 
 const router = useRouter()
@@ -27,7 +28,7 @@ const isLoggedIn = computed(() => {
     return false
   }
 
-  const token = localStorage.getItem('token')
+  const token = getStoredToken()
   const storedUser = getStoredUser()
 
   return Boolean(token || Object.keys(storedUser).length)
@@ -78,7 +79,8 @@ function openAuth() {
 }
 
 function logout() {
-  localStorage.removeItem('token')
+  const tokenKeys = ['token', 'access', 'access_token', 'jwt', 'authToken']
+  tokenKeys.forEach((key) => localStorage.removeItem(key))
   localStorage.removeItem('user')
   localStorage.removeItem('isLogin')
   router.push('/auth/email')
