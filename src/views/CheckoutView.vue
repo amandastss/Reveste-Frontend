@@ -399,7 +399,7 @@ async function iniciarPagamento() {
     await montarPaymentBrick(checkout)
   } catch (error: unknown) {
     console.error('Erro ao iniciar pagamento:', error)
-    mensagemErro.value = error instanceof Error ? error.message : 'Não foi possível iniciar o pagamento.'
+    mensagemErro.value = obterErroPagamento(error)
     checkoutPreparado.value = null
     carregando.value = false
     if (brickController) {
