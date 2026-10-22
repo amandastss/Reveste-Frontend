@@ -399,7 +399,7 @@ async function iniciarPagamento() {
     await montarPaymentBrick(checkout)
   } catch (error: unknown) {
     console.error('Erro ao iniciar pagamento:', error)
-    mensagemErro.value = error instanceof Error ? error.message : 'Não foi possível iniciar o pagamento.'
+    mensagemErro.value = obterErroPagamento(error)
     checkoutPreparado.value = null
     carregando.value = false
     if (brickController) {
@@ -603,13 +603,15 @@ onBeforeUnmount(async () => {
 .payment-choice button { flex: 1; min-width: 90px; padding: 12px; border: 1px solid #ccc; border-radius: 8px; background: #fff; cursor: pointer; }
 .payment-choice button.selected { border-color: #1d1d1d; background: #1d1d1d; color: #fff; }
 .payment-choice button:disabled { opacity: .6; cursor: wait; }
-.payer-cpf { display: grid; gap: 6px; margin-top: 16px; font-size: 14px; }
-.payer-cpf input { width: 100%; max-width: 320px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; }
-.boleto-address { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 18px 0; padding: 14px; border: 1px solid #ddd; border-radius: 8px; }
-.boleto-address legend { padding: 0 6px; font-weight: 600; }
-.boleto-address label, .payment-instructions label { display: grid; gap: 5px; font-size: 13px; }
-.boleto-address input, .payment-instructions input { width: 100%; min-width: 0; padding: 9px; border: 1px solid #ccc; border-radius: 6px; }
-.address-hint { grid-column: 1 / -1; margin: 0; color: #555; font-size: 13px; }
+.payer-cpf { display: grid; gap: 7px; margin-top: 18px; font-size: 14px; font-weight: 600; }
+.payer-cpf input { box-sizing: border-box; width: 100%; max-width: 360px; padding: 12px; border: 1px solid #cfcfcf; border-radius: 8px; font: inherit; font-weight: 400; }
+.boleto-address { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; margin: 18px 0; padding: 18px; border: 1px solid #dedede; border-radius: 10px; min-width: 0; }
+.boleto-address legend { padding: 0 8px; font-weight: 600; }
+.boleto-address label, .payment-instructions label { display: grid; align-content: start; gap: 7px; min-width: 0; font-size: 13px; font-weight: 600; }
+.boleto-address input, .payment-instructions input { box-sizing: border-box; width: 100%; min-width: 0; padding: 11px 12px; border: 1px solid #cfcfcf; border-radius: 8px; background: #fff; color: #222; font: inherit; font-weight: 400; }
+.boleto-address input:focus, .payer-cpf input:focus { outline: 2px solid #333; outline-offset: 1px; border-color: #333; }
+.boleto-address small { color: #555; font-weight: 400; }
+.address-hint { grid-column: 1 / -1; margin: 0; color: #555; font-size: 13px; line-height: 1.5; }
 .payment-instructions { display: grid; gap: 12px; margin: 20px 0; padding: 16px; border: 1px solid #ddd; border-radius: 8px; overflow-wrap: anywhere; }
 .payment-instructions img { width: min(100%, 260px); margin: 0 auto; }
 .payment-instructions a { color: #222; text-decoration: underline; }
