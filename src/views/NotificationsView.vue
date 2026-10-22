@@ -18,19 +18,46 @@ const unreadCount = computed(() => {
   return notifications.value.filter((notification) => !notification.lida).length
 })
 
+function resolveNotificationTarget(notification: Notificacao): string | null {
+  const produtoId = notification.produto_id ?? null
+  const perguntaId = notification.pergunta_id ?? null
+
+  if (produtoId) {
+    const query = perguntaId ? `?pergunta_id=${encodeURIComponent(String(perguntaId))}` : ''
+    return `/produto/${produtoId}/perguntas${query}`
+  }
+
+  if (notification.link) {
+    const link = notification.link.trim()
+    if (link.startsWith('http://') || link.startsWith('https://')) {
+      try {
+        const url = new URL(link)
+        return url.pathname + url.search
+      } catch {
+        return link.startsWith('/') ? link : `/${link}`
+      }
+    }
+
+    return link.startsWith('/') ? link : `/${link}`
+  }
+
+  if (notification.route) {
+    const route = notification.route.trim()
+    return route.startsWith('/') ? route : `/${route}`
+  }
+
+  return null
+}
+
 async function carregarNotificacoes() {
   loading.value = true
   error.value = false
 
   try {
     const resultado = await buscarNotificacoes()
-
     notifications.value = Array.isArray(resultado) ? resultado : []
-
-    console.log('Notificações carregadas:', notifications.value)
   } catch (err) {
     console.error('Erro ao carregar notificações:', err)
-
     error.value = true
   } finally {
     loading.value = false
@@ -38,20 +65,21 @@ async function carregarNotificacoes() {
 }
 
 async function handleNotificationClick(notification: Notificacao) {
-  if (notification.lida) {
-    return
+  const targetRoute = resolveNotificationTarget(notification)
+
+  if (!notification.lida) {
+    notification.lida = true
+
+    try {
+      await marcarNotificacaoComoLida(notification.id)
+    } catch (err) {
+      console.error('Erro ao marcar notificação como lida:', err)
+      notification.lida = false
+    }
   }
 
-  // muda imediatamente na tela
-  notification.lida = true
-
-  try {
-    await marcarNotificacaoComoLida(notification.id)
-  } catch (err) {
-    console.error('Erro ao marcar notificação como lida:', err)
-
-    // desfaz caso dê erro
-    notification.lida = false
+  if (targetRoute) {
+    await router.push(targetRoute)
   }
 }
 
@@ -61,7 +89,6 @@ async function marcarTodasComoLidas() {
   for (const notification of naoLidas) {
     try {
       await marcarNotificacaoComoLida(notification.id)
-
       notification.lida = true
     } catch (err) {
       console.error('Erro ao marcar notificação:', notification.id, err)

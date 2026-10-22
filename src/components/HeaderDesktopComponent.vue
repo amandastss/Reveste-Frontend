@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { onMounted, ref } from 'vue'
+import { onMounted, onBeforeUnmount, ref } from 'vue'
 import axios from 'axios'
 import { API_BASE } from '@/api/config'
+import { buscarNotificacoes } from '@/services/notificacoesApi'
 
 const router = useRouter()
 const showMenu = ref(false)
 const showCategoriesMenu = ref(false)
 const categorias = ref<Array<{ id: number; nome?: string; name?: string; title?: string }>>([])
+const hasUnreadNotifications = ref(false)
+let notificationSyncTimer: number | undefined
 
 interface NavItem {
   aria: string
@@ -60,8 +63,27 @@ function goToCategory(categoryId: number) {
   showCategoriesMenu.value = false
 }
 
+async function syncNotificationState() {
+  try {
+    const result = await buscarNotificacoes()
+    hasUnreadNotifications.value = Array.isArray(result) ? result.some((item) => !item.lida) : false
+  } catch {
+    hasUnreadNotifications.value = false
+  }
+}
+
 onMounted(() => {
   fetchCategorias()
+  void syncNotificationState()
+  notificationSyncTimer = window.setInterval(() => {
+    void syncNotificationState()
+  }, 15000)
+})
+
+onBeforeUnmount(() => {
+  if (notificationSyncTimer) {
+    window.clearInterval(notificationSyncTimer)
+  }
 })
 </script>
 
@@ -138,11 +160,12 @@ onMounted(() => {
         <button
           v-for="(item, index) in rightItems"
           :key="index"
-          class="headerdesktop-button"
+          class="headerdesktop-button notification-button"
           :aria-label="item.aria"
           @click="handleNavClick(item)"
         >
           <span class="material-symbols-outlined">{{ item.icon }}</span>
+          <span v-if="item.route === '/notificacoes' && hasUnreadNotifications" class="notification-dot" />
         </button>
       </div>
     </div>

@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { buscarNotificacoes } from '@/services/notificacoesApi'
 
 const router = useRouter()
+const hasUnreadNotifications = ref(false)
+let notificationSyncTimer: number | undefined
 
 /* emit para abrir o menu lateral */
 const emit = defineEmits(['open-menu'])
@@ -31,6 +35,28 @@ function handleClick(item: MenuItem) {
 function goHome() {
   router.push('/')
 }
+
+async function syncNotificationState() {
+  try {
+    const result = await buscarNotificacoes()
+    hasUnreadNotifications.value = Array.isArray(result) ? result.some((item) => !item.lida) : false
+  } catch {
+    hasUnreadNotifications.value = false
+  }
+}
+
+onMounted(() => {
+  void syncNotificationState()
+  notificationSyncTimer = window.setInterval(() => {
+    void syncNotificationState()
+  }, 15000)
+})
+
+onBeforeUnmount(() => {
+  if (notificationSyncTimer) {
+    window.clearInterval(notificationSyncTimer)
+  }
+})
 </script>
 
 <template>
@@ -60,12 +86,13 @@ function goHome() {
       <button
         v-for="(item, index) in items"
         :key="index"
-        class="headermobile-button"
+        class="headermobile-button notification-button"
         @click="handleClick(item)"
       >
         <span class="material-symbols-outlined">
           {{ item.icon }}
         </span>
+        <span v-if="item.route === '/notificacoes' && hasUnreadNotifications" class="notification-dot" />
       </button>
     </div>
   </header>
@@ -124,8 +151,24 @@ function goHome() {
   background: transparent;
   border: none;
   cursor: pointer;
+  position: relative;
 
   padding: 4px 0 0 15px;
+}
+
+.notification-button {
+  overflow: visible;
+}
+
+.notification-dot {
+  position: absolute;
+  top: 3px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff3b30;
+  border: 2px solid var(--surface-bg);
 }
 
 /*ÍCONES*/

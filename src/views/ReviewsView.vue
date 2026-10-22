@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import api, { getStoredToken } from '@/api/config'
+import api, { API_BASE, getStoredToken } from '@/api/config'
 
 interface UsuarioResumo {
   id?: number | string
@@ -19,8 +19,20 @@ interface PerguntaApi {
   text?: string
   resposta?: string | null
   answer?: string | null
-  usuario?: UsuarioResumo | null
-  user?: UsuarioResumo | null
+  usuario?: UsuarioResumo & {
+    foto?: string
+    photo?: string
+    profile_image?: string
+    avatar?: string
+    image?: string
+  } | null
+  user?: UsuarioResumo & {
+    foto?: string
+    photo?: string
+    profile_image?: string
+    avatar?: string
+    image?: string
+  } | null
   usuario_id?: number | string | null
   user_id?: number | string | null
   created_at?: string
@@ -33,6 +45,7 @@ interface Pergunta {
   productId: number
   userName: string
   userId: string
+  userPhoto: string
   text: string
   answer: string
   createdAt: string
@@ -45,6 +58,7 @@ const isAddingQuestion = ref(false)
 const newQuestionText = ref('')
 const answerDrafts = ref<Record<number, string>>({})
 const perguntas = ref<Pergunta[]>([])
+const perguntaSelecionadaId = ref<number | null>(null)
 const isLoggedIn = computed(() => Boolean(getStoredToken()))
 
 const ensureAuthenticated = () => {
@@ -70,6 +84,13 @@ const currentUser = computed(() => {
 const normalizePergunta = (item: PerguntaApi): Pergunta => {
   const user = item.usuario ?? item.user ?? null
   const productId = Number(item.produto_id ?? item.produto ?? produtoId)
+  const rawUserPhoto =
+    user?.foto ??
+    user?.photo ??
+    user?.profile_image ??
+    user?.avatar ??
+    user?.image ??
+    ''
 
   return {
     id: Number(item.id),
@@ -80,6 +101,7 @@ const normalizePergunta = (item: PerguntaApi): Pergunta => {
       user?.username ??
       'Usuário',
     userId: String(item.usuario_id ?? item.user_id ?? user?.id ?? 'usuario'),
+    userPhoto: rawUserPhoto.startsWith('http') ? rawUserPhoto : rawUserPhoto ? `${API_BASE}${rawUserPhoto}` : '/default.png',
     text: item.texto ?? item.text ?? 'Pergunta sem texto.',
     answer: item.resposta ?? item.answer ?? '',
     createdAt:
@@ -172,7 +194,20 @@ const responderPergunta = async (perguntaId: number) => {
 const voltar = () => router.back()
 
 onMounted(() => {
-  void carregarPerguntas()
+  const focoPergunta = Number(route.query.pergunta_id || 0)
+  if (focoPergunta) {
+    perguntaSelecionadaId.value = focoPergunta
+  }
+
+  void carregarPerguntas().then(() => {
+    const targetId = Number(route.query.pergunta_id || 0)
+    if (!targetId) return
+
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`pergunta-${targetId}`)
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
+  })
 })
 </script>
 
@@ -229,8 +264,16 @@ onMounted(() => {
             Ainda não há perguntas para este produto.
           </div>
 
-          <div v-for="pergunta in perguntas" :key="pergunta.id" class="review-item">
+          <div
+            v-for="pergunta in perguntas"
+            :key="pergunta.id"
+            :id="`pergunta-${pergunta.id}`"
+            :class="['review-item', { 'selected-question': perguntaSelecionadaId === pergunta.id }]"
+          >
             <div class="review-user-row">
+              <div class="user-avatar-wrap">
+                <img :src="pergunta.userPhoto" :alt="pergunta.userName" class="user-avatar" />
+              </div>
               <div class="user-meta">
                 <span class="user-name">{{ pergunta.userName }}</span>
                 <span class="review-date">
@@ -280,6 +323,36 @@ onMounted(() => {
   font-size: 0.95rem;
 }
 
+.review-user-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.user-avatar-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(148, 163, 184, 0.15);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  flex-shrink: 0;
+}
+
+.user-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.user-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .answer-box {
   margin-top: 12px;
   padding: 12px 14px;
@@ -304,5 +377,12 @@ onMounted(() => {
 
 .seller-answer-box {
   margin-top: 12px;
+}
+
+.selected-question {
+  background: rgba(59, 130, 246, 0.04);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.12);
 }
 </style>

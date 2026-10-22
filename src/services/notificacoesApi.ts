@@ -7,6 +7,22 @@ export interface Notificacao {
   mensagem: string
   lida: boolean
   data_envio: string
+  produto_id?: number | string
+  pergunta_id?: number | string
+  tipo?: string
+  link?: string
+  route?: string
+  usuario_info?: {
+    id?: number | string
+    nome?: string
+    name?: string
+    username?: string
+    foto?: string
+    photo?: string
+    profile_image?: string
+    avatar?: string
+    image?: string
+  }
 }
 
 const LOCAL_NOTIFICATIONS_KEY = 'reveste_notifications_v1'
