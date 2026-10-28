@@ -26,6 +26,8 @@ interface PaymentBrickSettings {
       creditCard: string
       debitCard: string
       prepaidCard: string
+      bankTransfer: string
+      ticket: string
     }
   }
   callbacks: {
@@ -72,6 +74,7 @@ const erro = ref('')
 const pedidoId = ref<number | null>(null)
 const totalServidor = ref<number | null>(null)
 const submitEmAndamento = ref(false)
+const paymentInfo = ref<{ paymentMethodId?: string; qrCode?: string; qrCodeBase64?: string; ticketUrl?: string } | null>(null)
 const consultaEmAndamento = computed(() => estado.value === 'consultando')
 const brickContainer = ref<HTMLElement | null>(null)
 const resumoItens = ref<Array<{ id: number; nome: string; imagem: string; tamanho: string }>>([])
@@ -171,6 +174,12 @@ async function enviarPagamento(formData: PaymentBrickFormData, lifecycle: number
   try {
     const resposta: PaymentResponse = await processarPagamento(pedidoId.value, formData)
     if (!isCurrentLifecycle(lifecycle)) return
+    paymentInfo.value = {
+      paymentMethodId: resposta.payment_method_id || formData.payment_method_id,
+      qrCode: resposta.qr_code,
+      qrCodeBase64: resposta.qr_code_base64,
+      ticketUrl: resposta.ticket_url,
+    }
     // Um HTTP 200/status do gateway não confirma a compra: o pedido é a fonte oficial.
     if (Number(resposta.pedido_id) !== pedidoId.value) {
       estado.value = 'desconhecido'
@@ -217,6 +226,8 @@ async function montarBrick(checkout: CheckoutResponse, lifecycle: number): Promi
         creditCard: 'all',
         debitCard: 'all',
         prepaidCard: 'all',
+        bankTransfer: 'all',
+        ticket: 'all',
       },
     },
     callbacks: {
@@ -262,7 +273,7 @@ async function iniciarCheckout(lifecycle: number): Promise<void> {
   const preparado = await finalizarCarrinho()
   if (!isCurrentLifecycle(lifecycle)) return
   const preparedId = Number(preparado.pedido_id)
-  if (!Number.isSafeInteger(preparedId) || preparado.status.toUpperCase() !== 'PENDENTE') {
+  if (!Number.isSafeInteger(preparedId) || !['PENDENTE', 'AGUARDANDO_PAGAMENTO'].includes(preparado.status.toUpperCase())) {
     if (preparado.status.toUpperCase() === 'PAGO') {
       pedidoId.value = preparedId
       await marcarResultadoDoPedido(preparedId, lifecycle)
@@ -284,6 +295,12 @@ async function iniciarCheckout(lifecycle: number): Promise<void> {
       throw new Error('O servidor retornou um pedido inválido com pagamento em andamento.')
     }
     pedidoId.value = activePedidoId
+    paymentInfo.value = {
+      paymentMethodId: checkout.payment_method_id,
+      qrCode: checkout.qr_code,
+      qrCodeBase64: checkout.qr_code_base64,
+      ticketUrl: checkout.ticket_url,
+    }
     await marcarResultadoDoPedido(activePedidoId, lifecycle, checkout.payment_status)
     return
   }
@@ -387,6 +404,12 @@ onBeforeUnmount(() => {
     <section v-else-if="estado === 'pendente'" class="payment-result pending" role="status">
       <h2>Pagamento em processamento</h2>
       <p>O pedido #{{ pedidoId }} ainda aguarda confirmação. Não é necessário pagar novamente.</p>
+      <div v-if="paymentInfo?.qrCode || paymentInfo?.qrCodeBase64" class="payment-instructions">
+        <h3>Pagamento via Pix</h3>
+        <img v-if="paymentInfo.qrCodeBase64" :src="`data:image/png;base64,${paymentInfo.qrCodeBase64}`" alt="QR Code Pix" />
+        <p v-if="paymentInfo.qrCode" class="pix-code">{{ paymentInfo.qrCode }}</p>
+      </div>
+      <p v-if="paymentInfo?.ticketUrl"><a :href="paymentInfo.ticketUrl" target="_blank" rel="noopener noreferrer">Abrir boleto bancário</a></p>
       <button type="button" :disabled="consultaEmAndamento" @click="consultarNovamente">
         CONSULTAR PEDIDO
       </button>
@@ -548,7 +571,7 @@ onBeforeUnmount(() => {
   border-radius: 8px;
   cursor: pointer;
 }
-.payment-result {
+.payment-instructions {\n  margin: 24px auto;\n  max-width: 360px;\n  overflow-wrap: anywhere;\n}\n.payment-instructions img {\n  display: block;\n  width: 220px;\n  max-width: 100%;\n  margin: 12px auto;\n}\n.pix-code {\n  padding: 12px;\n  background: #fff;\n  border: 1px solid #ddd;\n  border-radius: 8px;\n}\n.payment-result {
   max-width: 600px;
   margin: 60px auto;
   padding: 40px;

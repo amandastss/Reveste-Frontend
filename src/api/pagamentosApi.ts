@@ -33,16 +33,30 @@ export interface CheckoutResponse {
   status?: string
   payment_in_progress?: boolean
   payment_status?: string | null
+  payment_method_id?: string
+  qr_code?: string
+  qr_code_base64?: string
+  ticket_url?: string
 }
 
 export interface PaymentBrickFormData {
-  token: string
-  installments: number
+  token?: string
+  installments?: number
   payment_method_id: string
   issuer_id?: string | number
   payer?: {
     email?: string
+    first_name?: string
+    last_name?: string
     identification?: { type?: string; number?: string }
+    address?: {
+      city?: string
+      federal_unit?: string
+      neighborhood?: string
+      street_name?: string
+      street_number?: string
+      zip_code?: string
+    }
   }
 }
 
@@ -51,6 +65,10 @@ export interface PaymentResponse {
   id: string | number | null
   status: string | null
   status_detail?: string | null
+  payment_method_id?: string
+  qr_code?: string
+  qr_code_base64?: string
+  ticket_url?: string
 }
 
 export interface PedidoStatusResponse {
@@ -159,13 +177,11 @@ export function processarPagamento(
 ): Promise<PaymentResponse> {
   const payload = {
     pedido_id: pedidoId,
-    token: formData.token,
-    installments: formData.installments,
     payment_method_id: formData.payment_method_id,
+    ...(formData.token ? { token: formData.token } : {}),
+    ...(formData.installments ? { installments: formData.installments } : {}),
     ...(formData.issuer_id ? { issuer_id: formData.issuer_id } : {}),
-    ...(formData.payer?.identification
-      ? { payer: { identification: formData.payer.identification } }
-      : {}),
+    ...(formData.payer ? { payer: formData.payer } : {}),
   }
   return request<PaymentResponse>(() =>
     api.post('/pagamentos/processar/', payload).then((response) => response.data),
