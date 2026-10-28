@@ -571,7 +571,24 @@ onBeforeUnmount(() => {
   border-radius: 8px;
   cursor: pointer;
 }
-.payment-instructions {\n  margin: 24px auto;\n  max-width: 360px;\n  overflow-wrap: anywhere;\n}\n.payment-instructions img {\n  display: block;\n  width: 220px;\n  max-width: 100%;\n  margin: 12px auto;\n}\n.pix-code {\n  padding: 12px;\n  background: #fff;\n  border: 1px solid #ddd;\n  border-radius: 8px;\n}\n.payment-result {
+.payment-instructions {
+  margin: 24px auto;
+  max-width: 360px;
+  overflow-wrap: anywhere;
+}
+.payment-instructions img {
+  display: block;
+  width: 220px;
+  max-width: 100%;
+  margin: 12px auto;
+}
+.pix-code {
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+.payment-result {
   max-width: 600px;
   margin: 60px auto;
   padding: 40px;
