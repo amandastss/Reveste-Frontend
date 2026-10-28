@@ -88,6 +88,7 @@ const totalFormatado = computed(() =>
 )
 
 let brickController: BrickController | null = null
+let lastCheckout: CheckoutResponse | null = null
 let lifecycleId = 0
 let initializationPromise: Promise<void> | null = null
 
@@ -307,6 +308,7 @@ async function iniciarCheckout(lifecycle: number): Promise<void> {
     await marcarResultadoDoPedido(preparedId, lifecycle)
     return
   }
+  lastCheckout = checkout
   totalServidor.value = Number(checkout.amount)
   await montarBrick(checkout, lifecycle)
 }
