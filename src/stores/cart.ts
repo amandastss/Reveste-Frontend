@@ -25,7 +25,7 @@ interface BackendCartItem {
 }
 
 interface BackendCartResponse {
-  pedido_id: number
+  pedido_id: number | null
   status: string
   itens: BackendCartItem[]
   total: string | number
