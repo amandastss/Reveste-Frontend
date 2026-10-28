@@ -56,53 +56,16 @@ export const useCartStore = defineStore('cart', {
 
         const cartItems = response.data.itens ?? []
 
-        const itemsWithProductData = await Promise.all(
-          cartItems.map(async (item) => {
-            try {
-              const productResponse = await api.get(`/produtos/${item.produto}/`)
-
-              const produto = productResponse.data
-
-              return {
-                id: item.produto,
-                itemPedidoId: item.id,
-
-                name: item.nome ?? produto.nome ?? produto.titulo ?? 'Produto',
-
-                color: item.cor ?? produto.cor ?? '',
-
-                size: item.tamanho ?? produto.tamanho ?? '',
-
-                price: Number(item.preco),
-
-                // Cada anúncio representa uma única peça; a API é a fonte oficial.
-                quantity: 1,
-
-                image:
-                  item.imagem_url ?? produto.imagem_url ?? produto.imagem ?? produto.foto ?? '',
-              }
-            } catch {
-              return {
-                id: item.produto,
-                itemPedidoId: item.id,
-
-                name: item.nome ?? 'Produto',
-
-                color: item.cor ?? '',
-
-                size: item.tamanho ?? '',
-
-                price: Number(item.preco),
-
-                quantity: 1,
-
-                image: item.imagem_url ?? '',
-              }
-            }
-          }),
-        )
-
-        this.items = itemsWithProductData
+        this.items = cartItems.map((item) => ({
+          id: item.produto,
+          itemPedidoId: item.id,
+          name: item.nome ?? 'Produto',
+          color: item.cor ?? '',
+          size: item.tamanho ?? '',
+          price: Number(item.preco),
+          quantity: 1,
+          image: item.imagem_url ?? '',
+        }))
       } finally {
         this.loading = false
       }

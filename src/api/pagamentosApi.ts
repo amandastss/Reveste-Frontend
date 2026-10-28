@@ -13,7 +13,7 @@ export interface PedidoItemBackend {
 }
 
 export interface CarrinhoBackend {
-  pedido_id: number
+  pedido_id: number | null
   status: string
   itens: PedidoItemBackend[]
   total: string | number
