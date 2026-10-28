@@ -78,7 +78,6 @@ const paymentInfo = ref<{ paymentMethodId?: string; qrCode?: string; qrCodeBase6
 const consultaEmAndamento = computed(() => estado.value === 'consultando')
 const brickContainer = ref<HTMLElement | null>(null)
 const resumoItens = ref<Array<{ id: number; nome: string; imagem: string; tamanho: string }>>([])
-const apiUrlConfigured = Boolean(import.meta.env.VITE_API_URL)
 const publicKey = import.meta.env.VITE_MERCADO_PAGO_PUBLIC_KEY || ''
 const totalFormatado = computed(() =>
   totalServidor.value === null
@@ -89,7 +88,6 @@ const totalFormatado = computed(() =>
 )
 
 let brickController: BrickController | null = null
-let lastCheckout: CheckoutResponse | null = null
 let lifecycleId = 0
 let initializationPromise: Promise<void> | null = null
 
@@ -258,7 +256,6 @@ async function montarBrick(checkout: CheckoutResponse, lifecycle: number): Promi
 }
 
 async function iniciarCheckout(lifecycle: number): Promise<void> {
-  if (!apiUrlConfigured) throw new Error('A API não está configurada para este ambiente.')
   estado.value = 'carregando'
   erro.value = ''
   await cartStore.loadCart()
@@ -310,7 +307,6 @@ async function iniciarCheckout(lifecycle: number): Promise<void> {
     await marcarResultadoDoPedido(preparedId, lifecycle)
     return
   }
-  lastCheckout = checkout
   totalServidor.value = Number(checkout.amount)
   await montarBrick(checkout, lifecycle)
 }
