@@ -16,7 +16,6 @@ import RegisterView from '../views/auth/RegisterView.vue'
 import ForgotPasswordView from '../views/auth/ForgotPasswordView.vue'
 import ResetPasswordView from '../views/auth/ResetPasswordView.vue'
 import VerifyCodeView from '../views/auth/VerifyCodeView.vue'
-import SeguindoView from '../views/SeguindoView.vue'
 import PedidosView from '../views/PedidosView.vue'
 import PedidoDetalheView from '../views/PedidoDetalheView.vue'
 import CartView from '../views/CartView.vue'
@@ -27,6 +26,7 @@ import NotificationsView from '../views/NotificationsView.vue'
 import CategoriaView from '../views/CategoriaView.vue'
 import EditProfileView from '../views/EditProfileView.vue'
 import FavoritosView from '../views/FavoritosView.vue'
+import SuporteView from '../views/SuporteView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -58,11 +58,6 @@ const router = createRouter({
       path: '/sell',
       name: 'sell',
       component: SellView,
-    },
-    {
-      path: '/seguindo',
-      name: 'seguindo',
-      component: SeguindoView,
     },
     {
       path: '/profile',
@@ -133,6 +128,12 @@ const router = createRouter({
       props: true,
     },
     {
+      path: '/produto/:id/perguntas',
+      name: 'produto-perguntas',
+      component: ReviewsView,
+      props: true,
+    },
+    {
       path: '/aparencia',
       name: 'aparencia',
       component: AppearanceView,
@@ -141,7 +142,7 @@ const router = createRouter({
     {
       path: '/suporte',
       name: 'suporte',
-      component: () => import('@/views/SuporteView.vue'),
+      component: SuporteView,
     },
     {
       path: '/notificacoes',
@@ -151,7 +152,8 @@ const router = createRouter({
 
     {
       path: '/suporte/categoria/:tipo',
-      component: CategoriaSuporteView
+      name: 'suporte-categoria',
+      component: CategoriaSuporteView,
     },
 
     // AUTH
@@ -190,6 +192,12 @@ const router = createRouter({
       path: '/auth/verify-code',
       name: 'auth-verify-code',
       component: VerifyCodeView,
+    },
+
+    {
+      path: '/favoritos',
+      name: 'favoritos',
+      component: FavoritosView,
     },
   ],
 })

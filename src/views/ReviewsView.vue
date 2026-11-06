@@ -1,336 +1,388 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import reviewsApi from '@/stores/reviewsApi'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import api, { API_BASE, getStoredToken } from '@/api/config'
+
+interface UsuarioResumo {
+  id?: number | string
+  name?: string
+  nome?: string
+  email?: string
+  username?: string
+}
+
+interface PerguntaApi {
+  id: number
+  produto?: number | string | { id?: number | string }
+  produto_id?: number | string
+  texto?: string
+  text?: string
+  resposta?: string | null
+  answer?: string | null
+  usuario?: UsuarioResumo & {
+    foto?: string
+    photo?: string
+    profile_image?: string
+    avatar?: string
+    image?: string
+  } | null
+  user?: UsuarioResumo & {
+    foto?: string
+    photo?: string
+    profile_image?: string
+    avatar?: string
+    image?: string
+  } | null
+  usuario_id?: number | string | null
+  user_id?: number | string | null
+  created_at?: string
+  createdAt?: string
+  data_criacao?: string
+}
+
+interface Pergunta {
+  id: number
+  productId: number
+  userName: string
+  userId: string
+  userPhoto: string
+  text: string
+  answer: string
+  createdAt: string
+}
 
 const router = useRouter()
 const route = useRoute()
-const getPreview = (file: File) => {
-  return URL.createObjectURL(file)
+const produtoId = Number(route.params.id || 0)
+const isAddingQuestion = ref(false)
+const newQuestionText = ref('')
+const answerDrafts = ref<Record<number, string>>({})
+const perguntas = ref<Pergunta[]>([])
+const perguntaSelecionadaId = ref<number | null>(null)
+const isLoggedIn = computed(() => Boolean(getStoredToken()))
+
+const ensureAuthenticated = () => {
+  if (!isLoggedIn.value) {
+    alert('Você precisa entrar para ver ou enviar perguntas.')
+    router.push('/auth/email')
+    return false
+  }
+
+  return true
 }
 
-interface Review {
-  id: number
-  userName: string
-  userAvatar: string
-  stars: number
-  date: string
-  text: string
-  images?: string[]
+const currentUser = computed(() => {
+  try {
+    const rawUser = localStorage.getItem('user')
+    if (!rawUser) return null
+    return JSON.parse(rawUser) as { id?: number | string; name?: string; email?: string }
+  } catch {
+    return null
+  }
+})
+
+const normalizePergunta = (item: PerguntaApi): Pergunta => {
+  const user = item.usuario ?? item.user ?? null
+  const productId = Number(item.produto_id ?? item.produto ?? produtoId)
+  const rawUserPhoto =
+    user?.foto ??
+    user?.photo ??
+    user?.profile_image ??
+    user?.avatar ??
+    user?.image ??
+    ''
+
+  return {
+    id: Number(item.id),
+    productId: Number.isFinite(productId) ? productId : produtoId,
+    userName:
+      user?.name ??
+      user?.nome ??
+      user?.username ??
+      'Usuário',
+    userId: String(item.usuario_id ?? item.user_id ?? user?.id ?? 'usuario'),
+    userPhoto: rawUserPhoto.startsWith('http') ? rawUserPhoto : rawUserPhoto ? `${API_BASE}${rawUserPhoto}` : '/default.png',
+    text: item.texto ?? item.text ?? 'Pergunta sem texto.',
+    answer: item.resposta ?? item.answer ?? '',
+    createdAt:
+      item.created_at ?? item.createdAt ?? item.data_criacao ?? new Date().toISOString(),
+  }
 }
 
-// NAV
-const isAddingReview = ref(false)
-const selectedReview = ref<Review | null>(null)
+const totalPerguntas = computed(() => perguntas.value.length)
 
-// LISTA
-const reviewsList = ref<Review[]>([])
-const produtoId = Number(route.params.id)
-console.log('Produto ID:', produtoId)
-
-interface ApiImage {
-  image: string
-}
-
-interface ApiReview {
-  id: number
-  userName: string
-  userAvatar: string
-  stars: number
-  text: string
-  created_at: string
-  images?: ApiImage[]
-}
-
-async function fetchReviews() {
-  if (!produtoId) {
-    console.error('Produto ID inválido')
+const carregarPerguntas = async () => {
+  if (!produtoId) return
+  if (!ensureAuthenticated()) {
+    perguntas.value = []
     return
   }
 
   try {
-    const res = await reviewsApi.getReviews(produtoId)
-
-    reviewsList.value = res.data.map((r: ApiReview) => ({
-      id: r.id,
-      userName: r.userName,
-      userAvatar: r.userAvatar,
-      stars: r.stars,
-      date: new Date(r.created_at).toLocaleDateString(),
-      text: r.text,
-      images: r.images?.map((img) => img.image),
-    }))
-  } catch (err) {
-    console.error('Erro ao buscar reviews:', err)
-  }
-}
-
-onMounted(fetchReviews)
-
-const totalReviews = computed(() => reviewsList.value.length)
-
-// FORM
-const newStars = ref(5)
-const newText = ref('')
-
-const uploadedImages = ref<File[]>([])
-
-const fileInputRef = ref<HTMLInputElement | null>(null)
-
-const setRating = (rating: number) => {
-  newStars.value = rating
-}
-
-const openReview = (review: Review) => {
-  selectedReview.value = review
-}
-
-const triggerPhotoUpload = () => {
-  if (uploadedImages.value.length >= 5) {
-    alert('Máximo 5 fotos')
-    return
-  }
-  fileInputRef.value?.click()
-}
-
-const handleFileSelected = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  const files = target.files
-
-  if (!files) return
-
-  for (let i = 0; i < files.length; i++) {
-    if (uploadedImages.value.length >= 5) break
-
-    const file = files[i]
-    if (file) {
-      uploadedImages.value.push(file)
-    }
-  }
-
-  target.value = ''
-}
-
-const handleBackAction = () => {
-  if (selectedReview.value) {
-    selectedReview.value = null
-  } else if (isAddingReview.value) {
-    isAddingReview.value = false
-  } else {
-    router.back()
-  }
-}
-
-//  SUBMIT
-async function submitReview() {
-  if (!newText.value.trim()) {
-    alert('Escreva algo')
-    return
-  }
-
-  try {
-    const formData = new FormData()
-    formData.append('stars', String(newStars.value))
-    formData.append('text', newText.value)
-
-    uploadedImages.value.forEach((file) => {
-      formData.append('images', file)
+    const response = await api.get('/perguntas/', {
+      params: { produto_id: produtoId },
     })
 
-    await reviewsApi.createReview(produtoId, formData)
+    const payload = response.data
+    const items: PerguntaApi[] = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.results)
+        ? payload.results
+        : []
 
-    await fetchReviews()
-
-    newText.value = ''
-    newStars.value = 5
-    uploadedImages.value = []
-    isAddingReview.value = false
-  } catch (err) {
-    console.error(err)
-    alert('Erro ao enviar avaliação')
+    perguntas.value = items
+      .map((item: PerguntaApi) => normalizePergunta(item))
+      .sort((a: Pergunta, b: Pergunta) => {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      })
+  } catch (error) {
+    console.error('Erro ao buscar perguntas:', error)
+    perguntas.value = []
   }
 }
+
+const enviarPergunta = async () => {
+  const texto = newQuestionText.value.trim()
+  if (!texto) {
+    alert('Escreva sua pergunta antes de enviar.')
+    return
+  }
+
+  if (!ensureAuthenticated()) {
+    return
+  }
+
+  try {
+    await api.post('/perguntas/', {
+      produto: produtoId,
+      texto,
+    })
+
+    newQuestionText.value = ''
+    isAddingQuestion.value = false
+    await carregarPerguntas()
+  } catch (error) {
+    console.error('Erro ao enviar pergunta:', error)
+    alert('Não foi possível enviar a pergunta. Tente novamente.')
+  }
+}
+
+const responderPergunta = async (perguntaId: number) => {
+  const resposta = (answerDrafts.value[perguntaId] || '').trim()
+  if (!resposta) {
+    alert('Escreva uma resposta antes de enviar.')
+    return
+  }
+
+  if (!ensureAuthenticated()) {
+    return
+  }
+
+  try {
+    await api.patch(`/perguntas/${perguntaId}/responder/`, {
+      resposta,
+    })
+
+    answerDrafts.value = { ...answerDrafts.value, [perguntaId]: '' }
+    await carregarPerguntas()
+  } catch (error) {
+    console.error('Erro ao responder pergunta:', error)
+    alert('Não foi possível salvar a resposta.')
+  }
+}
+
+const voltar = () => router.back()
+
+onMounted(() => {
+  const focoPergunta = Number(route.query.pergunta_id || 0)
+  if (focoPergunta) {
+    perguntaSelecionadaId.value = focoPergunta
+  }
+
+  void carregarPerguntas().then(() => {
+    const targetId = Number(route.query.pergunta_id || 0)
+    if (!targetId) return
+
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`pergunta-${targetId}`)
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
+  })
+})
 </script>
 
 <template>
   <div class="reviews-page-container">
-    
-    <!-- DETALHE -->
-    <template v-if="selectedReview">
-      <header class="reviews-header">
-        <button class="btn-back" @click="handleBackAction">←</button>
-        <h1>DETALHES DA AVALIAÇÃO</h1>
-        <div style="width: 40px"></div>
-      </header>
+    <header class="reviews-header">
+      <button class="btn-back" @click="voltar">←</button>
+      <h1>Perguntas ao vendedor</h1>
+      <button v-if="isLoggedIn" class="btn-action" @click="isAddingQuestion = true">
+        ENVIAR
+      </button>
+    </header>
 
-      <main class="reviews-content">
-        <div class="form-container-desktop single-review-container">
-          
-          <div class="review-user-row">
-            <img :src="selectedReview.userAvatar" class="user-avatar" />
-            <div class="user-meta">
-              <span class="user-name">{{ selectedReview.userName }}</span>
-              <span class="review-date">{{ selectedReview.date }}</span>
-            </div>
-          </div>
-
-          <div class="stars-display" style="margin-top: 12px">
-            <span v-for="n in 5" :key="n">
-              {{ n <= selectedReview.stars ? '★' : '☆' }}
-            </span>
-          </div>
-
-          <p class="review-text">{{ selectedReview.text }}</p>
-
-          <!-- ✅ IMAGENS DO BACKEND -->
-          <div
-            v-if="selectedReview.images && selectedReview.images.length"
-            class="single-review-images"
-          >
-            <img
-              v-for="(img, idx) in selectedReview.images"
-              :key="idx"
-              :src="img"
-              class="single-review-large-img"
-            />
-          </div>
-
-        </div>
-      </main>
-    </template>
-
-    <!-- FORM -->
-    <template v-else-if="isAddingReview">
-      <header class="reviews-header">
-        <button class="btn-back" @click="handleBackAction">✕</button>
-        <h1>ADICIONE SUA AVALIAÇÃO</h1>
-        <button class="btn-action" @click="submitReview">DONE</button>
-      </header>
-
-      <main class="reviews-content">
+    <main class="reviews-content">
+      <template v-if="!isLoggedIn">
         <div class="form-container-desktop">
-
-          <div class="form-group">
-            <label class="form-label">Estrelas</label>
-            <div class="interactive-stars">
-              <span
-                v-for="star in 5"
-                :key="star"
-                class="star"
-                :class="{ active: star <= newStars }"
-                @click="setRating(star)"
-              >
-                ★
-              </span>
-            </div>
+          <div class="empty-state-box">
+            Faça login para ver e enviar perguntas sobre este produto.
           </div>
+          <div class="form-group" style="margin-top: 16px;">
+            <button class="btn-action full-width" @click="router.push('/auth/email')">
+              Entrar
+            </button>
+          </div>
+        </div>
+      </template>
 
+      <template v-else-if="isAddingQuestion">
+        <div class="form-container-desktop">
           <div class="form-group">
             <label class="form-label">
-              Your review <span class="required">*</span>
+              Sua pergunta <span class="required">*</span>
             </label>
             <textarea
-              v-model="newText"
-              placeholder="O que você achou sobre o produto..."
+              v-model="newQuestionText"
+              placeholder="Ex.: Esse produto vem no tamanho M ou G?"
               class="review-textarea"
-            ></textarea>
+            />
           </div>
 
           <div class="form-group">
-            <label class="form-label">Attach photo</label>
-
-            <input
-              type="file"
-              ref="fileInputRef"
-              accept="image/*"
-              multiple
-              class="hidden-file-input"
-              @change="handleFileSelected"
-            />
-
-            <button class="btn-attach-photo" @click="triggerPhotoUpload">
-              ADICIONE SUA FOTO
-            </button>
-
-            <span class="attach-subtext">
-              You can add up to 5 files
-            </span>
-
-            <!-- ✅ PREVIEW LOCAL -->
-            <div v-if="uploadedImages.length" class="form-images-preview">
-              <img
-                v-for="(file, index) in uploadedImages"
-                :key="index"
-                :src="getPreview(file)"
-                class="preview-thumb"
-              />
-            </div>
-
+            <button class="btn-action full-width" @click="enviarPergunta">Enviar pergunta</button>
           </div>
         </div>
-      </main>
-    </template>
+      </template>
 
-    <!-- LISTA -->
-    <template v-else>
-      <header class="reviews-header">
-        <button class="btn-back" @click="handleBackAction">←</button>
-        <h1>AVALIAÇÃO</h1>
-        <button class="btn-action" @click="isAddingReview = true">
-          ADD
-        </button>
-      </header>
-
-      <main class="reviews-content">
-        <h2 class="reviews-count-title">
-          {{ totalReviews }} reviews
-        </h2>
-
+      <template v-else>
         <div class="reviews-list">
+          <div class="reviews-count-title">
+            {{ totalPerguntas }} pergunta{{ totalPerguntas === 1 ? '' : 's' }}
+          </div>
+
+          <div v-if="!perguntas.length" class="empty-state-box">
+            Ainda não há perguntas para este produto.
+          </div>
+
           <div
-            v-for="review in reviewsList"
-            :key="review.id"
-            class="review-item clickable-review"
-            @click="openReview(review)"
+            v-for="pergunta in perguntas"
+            :key="pergunta.id"
+            :id="`pergunta-${pergunta.id}`"
+            :class="['review-item', { 'selected-question': perguntaSelecionadaId === pergunta.id }]"
           >
-            
             <div class="review-user-row">
-              <img :src="review.userAvatar" class="user-avatar" />
+              <div class="user-avatar-wrap">
+                <img :src="pergunta.userPhoto" :alt="pergunta.userName" class="user-avatar" />
+              </div>
               <div class="user-meta">
-                <span class="user-name">{{ review.userName }}</span>
-                <span class="review-date">{{ review.date }}</span>
+                <span class="user-name">{{ pergunta.userName }}</span>
+                <span class="review-date">
+                  {{ new Date(pergunta.createdAt).toLocaleDateString('pt-BR') }}
+                </span>
               </div>
             </div>
 
-            <div class="stars-display">
-              <span v-for="n in 5" :key="n">
-                {{ n <= review.stars ? '★' : '☆' }}
-              </span>
+            <p class="review-text">{{ pergunta.text }}</p>
+
+            <div v-if="pergunta.answer" class="answer-box">
+              <strong>Resposta do vendedor:</strong>
+              <p>{{ pergunta.answer }}</p>
             </div>
 
-            <p class="review-text">{{ review.text }}</p>
-
-            <!-- ✅ IMAGENS DA LISTA -->
-            <div
-              v-if="review.images && review.images.length"
-              class="review-images-grid"
-            >
-              <img
-                v-for="(img, idx) in review.images"
-                :key="idx"
-                :src="img"
-                class="attached-review-img"
+            <div v-else-if="isLoggedIn" class="seller-answer-box">
+              <textarea
+                v-model="answerDrafts[pergunta.id]"
+                rows="3"
+                placeholder="Escreva a resposta do vendedor..."
+                class="review-textarea"
               />
+              <button class="btn-action full-width" @click="responderPergunta(pergunta.id)">
+                Responder
+              </button>
             </div>
-
           </div>
         </div>
-      </main>
-    </template>
-
+      </template>
+    </main>
   </div>
 </template>
 
-    <style scoped>
-      @import '../css/reviews.css';
-    </style>
+<style scoped>
+@import '../css/reviews.css';
+
+.full-width {
+  width: 100%;
+}
+
+.empty-state-box {
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 16px;
+  padding: 18px 16px;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.review-user-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.user-avatar-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(148, 163, 184, 0.15);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  flex-shrink: 0;
+}
+
+.user-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.user-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.answer-box {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.12);
+}
+
+.answer-box strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #1b8a5a;
+}
+
+.answer-box p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.seller-answer-box {
+  margin-top: 12px;
+}
+
+.selected-question {
+  background: rgba(59, 130, 246, 0.04);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.12);
+}
+</style>

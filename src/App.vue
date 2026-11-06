@@ -68,7 +68,6 @@ function closeMenu() {
   }
 }
 
-/* estrutura principal */
 .app-container {
   display: flex;
   flex-direction: column;
@@ -77,15 +76,20 @@ function closeMenu() {
   color: var(--text-color);
 }
 
-/* conteúdo principal */
 .content {
   flex: 1;
   min-width: 0;
   background: var(--app-bg);
 }
 
-/* centralização */
 .content > * {
   width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: 'Manrope', sans-serif;
 }
 </style>

@@ -1,25 +1,57 @@
 import axios from 'axios'
 
-const configuredBase =
-  import.meta.env.VITE_API_URL ?? 'https://reveste-backend.class.fabricadesoftware.ifc.edu.br'
-const API_BASE = configuredBase.replace(/\/+$/, '').replace(/\/api$/i, '')
+const getViteApiUrl = () =>
+  typeof import.meta !== 'undefined'
+    ? import.meta.env?.VITE_API_URL
+    : undefined
+
+export const resolveApiBaseUrl = (configUrl = getViteApiUrl()) =>
+  (configUrl || 'https://reveste-backend.class.fabricadesoftware.ifc.edu.br')
+    .replace(/\/+$/, '')
+    .replace(/\/api$/i, '')
+
+export const API_BASE = resolveApiBaseUrl()
+
+export const getStoredToken = () => {
+  const candidateKeys = ['token', 'access', 'access_token', 'jwt', 'authToken']
+
+  for (const key of candidateKeys) {
+    const value = localStorage.getItem(key)
+
+    if (value && value !== 'null' && value !== 'undefined') {
+      return value
+    }
+  }
+
+  return null
+}
+
+export const persistToken = (value) => {
+  const token = typeof value === 'string' ? value.trim() : ''
+
+  if (!token) return null
+
+  const candidateKeys = ['token', 'access', 'access_token', 'jwt', 'authToken']
+  candidateKeys.forEach((key) => localStorage.setItem(key, token))
+
+  return token
+}
 
 const api = axios.create({
   baseURL: `${API_BASE}/api`,
   timeout: 20000,
 })
 
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`
-    }
-    return config
-  },
-  (error) => {
-    return Promise.reject(error)
-  },
-)
+api.interceptors.request.use((config) => {
+  const token = getStoredToken()
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  } else {
+    delete config.headers.Authorization
+  }
+
+  return config
+})
 
 export default api

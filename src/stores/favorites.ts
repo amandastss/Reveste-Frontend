@@ -1,10 +1,7 @@
 import { defineStore } from 'pinia'
+import { getUserFavoritesStorageKey, readFavorites, type FavoriteProduct, writeFavorites } from '@/utils/favorites'
 
-export interface FavoriteItem {
-  id: number
-  nome: string
-  preco: number
-  imagem_url?: string | null
+export interface FavoriteItem extends FavoriteProduct {
   marca?: string
 }
 
@@ -15,88 +12,46 @@ export const useFavoritesStore = defineStore('favorites', {
 
   actions: {
     getFavoritesKey() {
-      const savedUser = localStorage.getItem('user')
-
-      if (!savedUser) {
-        return 'favorites_guest'
-      }
-
-      try {
-        const user = JSON.parse(savedUser)
-
-        // Usa o ID do usuário para criar favoritos separados
-        if (user?.id) {
-          return `favorites_${user.id}`
-        }
-
-        // Caso não tenha ID, usa o email
-        if (user?.email) {
-          return `favorites_${user.email}`
-        }
-
-        return 'favorites_guest'
-      } catch (error) {
-        console.error('Erro ao identificar usuário:', error)
-
-        return 'favorites_guest'
-      }
+      return getUserFavoritesStorageKey()
     },
 
     loadFavorites() {
-      const key = this.getFavoritesKey()
-
-      const saved = localStorage.getItem(key)
-
-      try {
-        this.items = saved
-          ? JSON.parse(saved)
-          : []
-      } catch (error) {
-        console.error('Erro ao carregar favoritos:', error)
-
-        this.items = []
-      }
+      this.items = readFavorites() as FavoriteItem[]
     },
 
     saveFavorites() {
-      const key = this.getFavoritesKey()
-
-      localStorage.setItem(
-        key,
-        JSON.stringify(this.items),
-      )
+      writeFavorites(this.items as FavoriteProduct[])
     },
 
     isFavorite(id: number) {
-      return this.items.some(
-        item => item.id === id,
-      )
+      return this.items.some(item => Number(item.id) === Number(id))
     },
 
     toggleFavorite(product: FavoriteItem) {
-      const index = this.items.findIndex(
-        item => item.id === product.id,
-      )
+      const itemId = Number(product.id)
+      const index = this.items.findIndex(item => Number(item.id) === itemId)
 
       if (index !== -1) {
         this.items.splice(index, 1)
       } else {
-        this.items.push(product)
+        this.items.push({
+          ...product,
+          id: itemId,
+          preco: Number(product.preco || 0),
+        })
       }
 
       this.saveFavorites()
     },
 
     removeFavorite(id: number) {
-      this.items = this.items.filter(
-        item => item.id !== id,
-      )
-
+      this.items = this.items.filter(item => Number(item.id) !== Number(id))
       this.saveFavorites()
     },
 
     clearFavorites() {
       this.items = []
+      this.saveFavorites()
     },
   },
 })

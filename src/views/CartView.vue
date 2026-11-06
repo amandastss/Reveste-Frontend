@@ -2,12 +2,14 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
+import { hasCartAuthToken, getCartAuthRedirectPath } from '@/utils/cartAuth'
 
 const router = useRouter()
 const cartStore = useCartStore()
 
 const mensagemErro = ref('')
 const carregando = ref(true)
+const showLoginRequiredModal = ref(false)
 
 const cartItems = computed(() => cartStore.items)
 const subtotal = computed(() => cartStore.totalPrice)
@@ -53,7 +55,22 @@ function irParaPagamento() {
     return
   }
 
+  if (!hasCartAuthToken()) {
+    showLoginRequiredModal.value = true
+    return
+  }
+
   router.push('/checkout')
+}
+
+function closeLoginRequiredModal() {
+  showLoginRequiredModal.value = false
+}
+
+function redirectToAuth(mode: 'login' | 'register') {
+  localStorage.setItem('isLogin', mode === 'login' ? 'true' : 'false')
+  closeLoginRequiredModal()
+  router.push(getCartAuthRedirectPath())
 }
 
 async function carregarCarrinho() {
@@ -163,6 +180,32 @@ onMounted(() => {
 
       <button class="checkout-btn" @click="irParaPagamento">SEGUIR PARA PAGAMENTO</button>
     </footer>
+
+    <div
+      v-if="showLoginRequiredModal"
+      class="auth-overlay"
+      @click.self="closeLoginRequiredModal"
+    >
+      <div class="auth-modal">
+        <div class="auth-modal-icon">🔒</div>
+
+        <h2>Faça login para continuar</h2>
+
+        <p>
+          Para seguir para o pagamento, você precisa entrar na sua conta ou criar uma nova.
+        </p>
+
+        <div class="auth-actions">
+          <button class="btn-secondary auth-btn" @click="redirectToAuth('login')">
+            Fazer login
+          </button>
+
+          <button class="btn-primary auth-btn" @click="redirectToAuth('register')">
+            Criar conta
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 

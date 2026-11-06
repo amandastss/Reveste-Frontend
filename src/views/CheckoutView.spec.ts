@@ -91,20 +91,31 @@ describe('CheckoutView / Payment Brick', () => {
     expect(wrapper.text()).not.toContain('0,01')
     wrapper.unmount()
   })
-
   it('consulta pedido com pagamento em andamento sem montar outro Brick', async () => {
+    mocks.finalizarCarrinho.mockResolvedValue({
+      pedido_id: 88,
+      status: 'PENDENTE',
+    })
+
     mocks.criarCheckout.mockResolvedValue({
       pedido_id: 88,
       amount: '89.90',
       payment_in_progress: true,
       payment_status: 'pending',
     })
-    mocks.consultarPedido.mockResolvedValue({ id: 88, status: 'AGUARDANDO_PAGAMENTO' })
+
+    mocks.consultarPedido.mockResolvedValue({
+      id: 88,
+      status: 'AGUARDANDO_PAGAMENTO',
+    })
+
     const wrapper = mountCheckout()
     await flushPromises()
+
     expect(mocks.consultarPedido).toHaveBeenCalledWith(88)
     expect(mocks.brickCreate).not.toHaveBeenCalled()
     expect(wrapper.text()).toContain('Pagamento em processamento')
+
     wrapper.unmount()
   })
 

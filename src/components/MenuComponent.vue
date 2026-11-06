@@ -1,27 +1,26 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
+import { API_BASE, getStoredToken } from '@/api/config'
 
-const props = defineProps<{
-  isOpen: boolean
-}>()
-
+const props = defineProps<{ isOpen: boolean }>()
 const emit = defineEmits(['close-menu'])
 const router = useRouter()
-
-const openSections = ref<string[]>([])
+const isLoggedIn = computed(() => !!getStoredToken())
+const categorias = ref<Array<{ id: number; nome?: string; name?: string; title?: string }>>([])
 
 function closeMenu() {
   emit('close-menu')
 }
 
-function toggleSection(section: string) {
-  if (openSections.value.includes(section)) {
-    openSections.value = openSections.value.filter(
-      (item: string) => item !== section
-    )
-  } else {
-    openSections.value.push(section)
+async function fetchCategorias() {
+  try {
+    const res = await axios.get(`${API_BASE}/api/categorias/`)
+    categorias.value = Array.isArray(res.data) ? res.data : res.data.results || []
+  } catch (error) {
+    console.error('Erro ao buscar categorias do menu mobile:', error)
+    categorias.value = []
   }
 }
 
@@ -30,115 +29,44 @@ function goToLogin() {
   router.push('/auth/email')
 }
 
+function goToCategory(categoryId: number) {
+  closeMenu()
+  router.push({ name: 'categoria', params: { id: String(categoryId) } })
+}
+
 watch(
   () => props.isOpen,
   (value) => {
     document.body.style.overflow = value ? 'hidden' : ''
-  }
+  },
 )
+
+onMounted(() => {
+  fetchCategorias()
+})
 </script>
 
 <template>
   <div>
-    <!-- overlay -->
     <transition name="overlay-fade">
-      <div
-        v-if="props.isOpen"
-        class="overlay"
-        @click="closeMenu"
-      >
-        <!-- sidebar -->
-        <div
-          class="menu-container"
-          @click.stop
-        >
-          <!-- botão fechar -->
-          <button
-            class="close-button"
-            @click="closeMenu"
-          >
-            ✕
-          </button>
-
+      <div v-if="props.isOpen" class="overlay" @click="closeMenu">
+        <div class="menu-container" @click.stop>
+          <button class="close-button" @click="closeMenu">✕</button>
           <p class="menu-title">menu</p>
 
           <div class="menu-content">
-            <p class="login" @click="goToLogin">Entrar/Cadastrar</p>
+            <p v-if="!isLoggedIn" class="login" @click="goToLogin">Entrar/Cadastrar</p>
 
-            <!-- masculino -->
-            <div
-              class="menu-item"
-              @click="toggleSection('masculino')"
-            >
-              <span>Masculino</span>
-              <span>
-                {{
-                  openSections.includes('masculino')
-                    ? '−'
-                    : '+'
-                }}
-              </span>
-            </div>
-
-            <transition name="fade">
-              <div
-                v-if="openSections.includes('masculino')"
-                class="submenu"
+            <div v-if="categorias.length" class="category-list">
+              <button
+                v-for="item in categorias"
+                :key="item.id"
+                class="category-item"
+                @click="goToCategory(item.id)"
               >
-                <p>Camisetas</p>
-                <p>Calças</p>
-              </div>
-            </transition>
-
-            <!-- feminino -->
-            <div
-              class="menu-item"
-              @click="toggleSection('feminino')"
-            >
-              <span>Feminino</span>
-              <span>
-                {{
-                  openSections.includes('feminino')
-                    ? '−'
-                    : '+'
-                }}
-              </span>
+                {{ item.nome || item.name || item.title }}
+              </button>
             </div>
-
-            <transition name="fade">
-              <div
-                v-if="openSections.includes('feminino')"
-                class="submenu"
-              >
-                <p>Vestidos</p>
-                <p>Saias</p>
-              </div>
-            </transition>
-
-            <!-- infantil -->
-            <div
-              class="menu-item"
-              @click="toggleSection('infantil')"
-            >
-              <span>Infantil</span>
-              <span>
-                {{
-                  openSections.includes('infantil')
-                    ? '−'
-                    : '+'
-                }}
-              </span>
-            </div>
-
-            <transition name="fade">
-              <div
-                v-if="openSections.includes('infantil')"
-                class="submenu"
-              >
-                <p>Meninos</p>
-                <p>Meninas</p>
-              </div>
-            </transition>
           </div>
         </div>
       </div>
@@ -147,14 +75,11 @@ watch(
 </template>
 
 <style scoped>
-/*OVERLAY */
 .overlay {
   position: fixed;
   inset: 0;
   z-index: 9999;
-
   background: rgba(0, 0, 0, 0.35);
-
   display: flex;
   justify-content: flex-start;
   align-items: stretch;
@@ -170,23 +95,17 @@ watch(
   opacity: 0;
 }
 
-/*SIDEBAR */
 .menu-container {
   width: 82%;
   max-width: 320px;
   height: 100vh;
-
   background: black;
   color: white;
-
   padding: 20px;
   box-sizing: border-box;
-
-  font-family: "Montserrat", sans-serif;
-
+  font-family: 'Montserrat', sans-serif;
   overflow-y: auto;
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
-
   animation: slideIn 0.25s ease;
 }
 
@@ -194,13 +113,11 @@ watch(
   from {
     transform: translateX(-100%);
   }
-
   to {
     transform: translateX(0);
   }
 }
 
-/*BOTÃO FECHAR */
 .close-button {
   background: transparent;
   border: none;
@@ -210,7 +127,6 @@ watch(
   margin-bottom: 20px;
 }
 
-/*TEXTOS */
 .menu-title {
   font-size: 13px;
   color: var(--text-muted);
@@ -224,36 +140,29 @@ watch(
   cursor: pointer;
 }
 
-/*ITENS */
-.menu-item {
+.category-list {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 8px;
+}
 
-  padding: 16px 0;
-  border-bottom: 1px solid #1f1f1f;
-
+.category-item {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: white;
+  border-radius: 0;
+  padding: 12px 0;
+  text-align: left;
+  font-size: 14px;
   cursor: pointer;
   transition: 0.2s;
 }
 
-.menu-item:hover {
+.category-item:hover {
   opacity: 0.75;
 }
 
-/*SUBMENU */
-.submenu {
-  padding: 10px 0 10px 12px;
-  color: #bdbdbd;
-  font-size: 14px;
-}
-
-.submenu p {
-  margin: 10px 0;
-  cursor: pointer;
-}
-
-/*ANIMAÇÃO SUBMENU */
 .fade-enter-active,
 .fade-leave-active {
   transition: all 0.2s ease;
@@ -265,7 +174,6 @@ watch(
   transform: translateY(-6px);
 }
 
-/*DESKTOP */
 @media (min-width: 768px) {
   .menu-container {
     width: 320px;

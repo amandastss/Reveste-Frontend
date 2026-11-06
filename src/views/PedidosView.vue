@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
+import { getStoredToken } from '@/api/config'
 
 const router = useRouter()
 const API = import.meta.env.VITE_API_URL
@@ -54,7 +55,7 @@ const pedidos = ref<Pedido[]>([])
 // LOAD
 async function loadPedidos() {
   try {
-    const token = localStorage.getItem('token')
+    const token = getStoredToken()
 
     const res = await axios.get(`${API}/api/pedidos/`, {
       headers: {

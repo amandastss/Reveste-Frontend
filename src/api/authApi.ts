@@ -1,7 +1,9 @@
+
 import api from './config'
 import axios, { type AxiosResponse } from 'axios'
 
 type AuthResponse<T = unknown> = Promise<AxiosResponse<T>>
+
 type UserProfile = {
   id: number
   email: string
@@ -34,37 +36,54 @@ type ProfileUpdatePayload = {
   profile_image?: File | string
 }
 
-const checkEmail = (email: string): AuthResponse => {
-  return api.post('/check-email/', { email })
+const post = <T = unknown>(
+  url: string,
+  data: unknown,
+): AuthResponse<T> => api.post(url, data)
+
+const buildProfileForm = (payload: ProfileUpdatePayload) => {
+  if (!(payload.profile_image instanceof File)) return payload
+
+  const formData = new FormData()
+
+  if (payload.name) formData.append('name', payload.name)
+  if (payload.email) formData.append('email', payload.email)
+  if (payload.phone) formData.append('phone', payload.phone)
+  if (payload.birth_date) formData.append('birth_date', payload.birth_date)
+  if (payload.bio) formData.append('bio', payload.bio)
+
+  formData.append('profile_image', payload.profile_image)
+
+  return formData
 }
 
-const sendEmail = (email: string): AuthResponse => {
-  return api.post('/send-email/', { email })
-}
+const checkEmail = (email: string): AuthResponse =>
+  post('/check-email/', { email })
 
-const login = (email: string, password: string): AuthResponse => {
-  return api.post('/token/', { email, password })
-}
+const sendEmail = (email: string): AuthResponse =>
+  post('/send-email/', { email })
 
-const fetchUserProfile = async () => {
-  const profile = await api.get('/usuarios/me/')
-  return profile.data as UserProfile
-}
+const login = (email: string, password: string): AuthResponse =>
+  post('/token/', { email, password })
+
+const fetchUserProfile = async () =>
+  (await api.get('/usuarios/me/')).data as UserProfile
 
 async function fetchUserFromCandidates(
   token: string,
   userId?: string | number,
 ): Promise<Record<string, unknown> | null> {
-  // const authHeaders = (scheme: 'Token' | 'Bearer') => ({
-  //   headers: {
-  //     Authorization: `${scheme} ${token}`
-  //   }
-  // })
-
   try {
-    const res = await api.get('/usuarios/me/')
+    const res = await api.get('/usuarios/me/', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
     if (res?.data) return res.data
-  } catch {}
+  } catch {
+    // Tenta os demais endpoints disponíveis.
+  }
 
   const candidates: string[] = []
 
@@ -80,22 +99,26 @@ async function fetchUserFromCandidates(
     )
   }
 
-  candidates.push('/profile/', '/user/', '/usuario/', '/usuarios/', '/users/')
+  candidates.push(
+    '/profile/',
+    '/user/',
+    '/usuario/',
+    '/usuarios/',
+    '/users/',
+  )
 
   for (const url of candidates) {
     try {
-      let response
+      const response = await api.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
 
-      try {
-        response = await api.get(url)
-      } catch {
-        console.error(`Failed to fetch user from ${url}`)
-      }
-
-      if (response?.data) {
-        return response.data
-      }
-    } catch {}
+      if (response?.data) return response.data
+    } catch {
+      console.error(`Failed to fetch user from ${url}`)
+    }
   }
 
   return null
@@ -146,20 +169,14 @@ const register = (
   return api.post('/registro/', data)
 }
 
-const sendUpdateRequest = async (
-  method: 'patch' | 'put',
-  url: string,
-  body: FormData | ProfileUpdatePayload,
-) => {
-  if (body instanceof FormData) {
-    return api[method](url, body)
-  }
-  return api[method](url, body)
-}
-
-const updateProfile = async (payload: ProfileUpdatePayload): Promise<Record<string, unknown>> => {
+const updateProfile = async (
+  payload: ProfileUpdatePayload,
+): Promise<Record<string, unknown>> => {
   const rawUser = localStorage.getItem('user')
-  const storedUser = rawUser ? (JSON.parse(rawUser) as Record<string, unknown>) : {}
+  const storedUser = rawUser
+    ? (JSON.parse(rawUser) as Record<string, unknown>)
+    : {}
+
   const userId = storedUser?.id
 
   const candidateUrls = [
@@ -182,33 +199,25 @@ const updateProfile = async (payload: ProfileUpdatePayload): Promise<Record<stri
     )
   }
 
-  const requestBody = (() => {
-    if (!(payload.profile_image instanceof File)) {
-      return payload
-    }
-
-    const formData = new FormData()
-    if (payload.name) formData.append('name', payload.name)
-    if (payload.email) formData.append('email', payload.email)
-    if (payload.phone) formData.append('phone', payload.phone)
-    if (payload.birth_date) formData.append('birth_date', payload.birth_date)
-    if (payload.bio) formData.append('bio', payload.bio)
-    formData.append('profile_image', payload.profile_image)
-    return formData
-  })()
-
+  const requestBody = buildProfileForm(payload)
   const methods: Array<'patch' | 'put'> = ['patch', 'put']
 
-  let lastError: unknown = new Error('Nenhum endpoint de atualização disponível')
+  let lastError: unknown = new Error(
+    'Nenhum endpoint de atualização disponível',
+  )
 
   for (const url of candidateUrls) {
     for (const method of methods) {
       try {
-        const response = await sendUpdateRequest(method, url, requestBody)
+        const response = await api[method](url, requestBody)
+
         return response.data as Record<string, unknown>
       } catch (error: unknown) {
         lastError = error
-        const status = axios.isAxiosError(error) ? error.response?.status : undefined
+
+        const status = axios.isAxiosError(error)
+          ? error.response?.status
+          : undefined
 
         if (status === 401) {
           throw error
@@ -226,21 +235,22 @@ const updateProfile = async (payload: ProfileUpdatePayload): Promise<Record<stri
   throw lastError
 }
 
-const verifyCode = (email: string, code: string): AuthResponse => {
-  return api.post('/verify-code/', { email, code })
-}
+const verifyCode = (email: string, code: string): AuthResponse =>
+  post('/verify-code/', { email, code })
 
-const requestPasswordReset = (email: string): AuthResponse => {
-  return api.post('/forgot-password/', { email })
-}
+const requestPasswordReset = (email: string): AuthResponse =>
+  post('/forgot-password/', { email })
 
-const resetPassword = (email: string, code: string, newPassword: string): AuthResponse => {
-  return api.post('/reset-password/', {
+const resetPassword = (
+  email: string,
+  code: string,
+  newPassword: string,
+): AuthResponse =>
+  post('/reset-password/', {
     email,
     code,
     new_password: newPassword,
   })
-}
 
 export default {
   checkEmail,

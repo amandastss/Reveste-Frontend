@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
-    "test": "vitest run && node scripts/check-payment-security.mjs",
+    "test": "vitest run && node --test tests/api-config.test.ts tests/checkout-payment.test.ts tests/favorites-storage.test.ts tests/reviews-permissions.test.ts && node scripts/check-payment-security.mjs",
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint src scripts --fix",
     "lint:eslint": "eslint src scripts --fix --cache",

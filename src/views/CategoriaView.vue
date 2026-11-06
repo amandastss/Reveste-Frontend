@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
+import { API_BASE } from '@/api/config'
 
 interface Categoria {
   id: number
@@ -36,7 +37,7 @@ const carregando = ref(true)
 
 const formatMediaUrl = (url?: string | null) => {
   if (!url) return '/default.png'
-  return url.startsWith('http') ? url : `${import.meta.env.VITE_API_URL}${url}`
+  return url.startsWith('http') ? url : `${API_BASE}${url}`
 }
 
 const normalizar = (valor?: string | null) => {
@@ -98,10 +99,7 @@ const carregarCategoria = async () => {
   carregando.value = true
 
   try {
-    const [resCategorias, resProdutos] = await Promise.all([
-      axios.get(`${import.meta.env.VITE_API_URL}/api/categorias/`),
-      axios.get(`${import.meta.env.VITE_API_URL}/api/produtos/`),
-    ])
+    const resCategorias = await axios.get(`${API_BASE}/api/categorias/`)
 
     const categoriasApi = Array.isArray(resCategorias.data?.results)
       ? resCategorias.data.results
@@ -109,17 +107,36 @@ const carregarCategoria = async () => {
         ? resCategorias.data
         : []
 
-    const produtosApi = Array.isArray(resProdutos.data?.results)
-      ? resProdutos.data.results
-      : Array.isArray(resProdutos.data)
-        ? resProdutos.data
-        : []
-
     const categoriaId = Number(route.params.id)
     categoria.value =
       categoriasApi.find((item: Categoria) => Number(item.id) === categoriaId) || null
 
-    produtos.value = produtosApi.filter((produto: Produto) =>
+    const apiBase = `${API_BASE}/api/produtos/`
+    const todosProdutos: Produto[] = []
+    let nextUrl: string | null = apiBase
+
+    while (nextUrl) {
+      const resProdutos = await axios.get<{ results?: Produto[]; next?: string | null }>(nextUrl, {
+        params: { page_size: 1000 },
+      })
+
+      const payload = resProdutos.data as { results?: Produto[]; next?: string | null }
+      const paginaProdutos = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.results)
+          ? payload.results
+          : []
+
+      todosProdutos.push(...paginaProdutos)
+
+      nextUrl = payload?.next
+        ? payload.next.startsWith('http')
+          ? payload.next
+          : `${API_BASE}${payload.next}`
+        : null
+    }
+
+    produtos.value = todosProdutos.filter((produto: Produto) =>
       produtoPertenceCategoria(produto, categoria.value),
     )
   } catch (error) {
@@ -138,16 +155,27 @@ const abrirProduto = (id: number) => {
 
 const tituloCategoria = computed(() => getCategoriaNome(categoria.value))
 
-onMounted(() => {
-  carregarCategoria()
-})
+watch(
+  () => route.params.id,
+  () => {
+    carregarCategoria()
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
   <div class="categoria-page">
     <div class="header">
       <button class="back" @click="voltar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
           <polyline points="15 18 9 12 15 6"></polyline>
         </svg>
       </button>
@@ -237,11 +265,20 @@ onMounted(() => {
   width: 100%;
   height: 170px;
   object-fit: cover;
+  object-position: center;
+  transform: scale(1.08);
 }
 
 /* INFO */
 .info {
   padding: 10px;
+}
+
+.info h3 {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.35;
+  font-weight: 600;
 }
 
 /* TABLET */
@@ -297,10 +334,12 @@ onMounted(() => {
   .card img {
     height: 220px;
   }
+}
 
+@media (hover: hover) {
   .card:hover {
-    transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
   }
 }
 

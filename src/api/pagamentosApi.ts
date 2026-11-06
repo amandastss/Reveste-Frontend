@@ -1,3 +1,4 @@
+
 import axios, { type AxiosError } from 'axios'
 import api from './config'
 
@@ -39,6 +40,7 @@ export interface CheckoutResponse {
   ticket_url?: string
 }
 
+
 export interface PaymentBrickFormData {
   token?: string
   installments?: number
@@ -49,6 +51,7 @@ export interface PaymentBrickFormData {
     first_name?: string
     last_name?: string
     identification?: { type?: string; number?: string }
+
     address?: {
       city?: string
       federal_unit?: string
@@ -59,16 +62,17 @@ export interface PaymentBrickFormData {
     }
   }
 }
-
 export interface PaymentResponse {
   pedido_id: number
   id: string | number | null
   status: string | null
   status_detail?: string | null
+
   payment_method_id?: string
   qr_code?: string
   qr_code_base64?: string
   ticket_url?: string
+
 }
 
 export interface PedidoStatusResponse {
