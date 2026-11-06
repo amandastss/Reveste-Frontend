@@ -7,6 +7,7 @@ import { criarCheckout, processarPagamento, type CheckoutPreparado, type DadosPa
 import { useCartStore } from '@/stores/cart'
 import { hasCartAuthToken, getCartAuthRedirectPath } from '@/utils/cartAuth'
 import type { CheckoutResult } from '@/utils/checkoutPayment'
+import { classifyOrderPaymentStatus } from '@/utils/paymentOrderStatus'
 
 interface BrickFormData {
   token?: unknown
@@ -255,30 +256,14 @@ async function processarEnvioBrick(payload: BrickFormData): Promise<void> {
     const pedidoAtualizado = await api.get<{ status: string; mercado_pago_status?: string }>(
       `/pedidos/${pedidoId}/`,
     )
-    const statusPedido = String(pedidoAtualizado.data.status || '').trim().toUpperCase()
-    if (statusPedido === 'PAGO') {
-      resultadoPagamento.value = {
-        state: 'success',
-        pedidoId,
-        status: statusGateway || 'approved',
-        message: 'Pagamento aprovado e pedido confirmado pelo servidor.',
-      }
-      cartStore.clearCart()
-    } else if (statusPedido === 'CANCELADO') {
-      resultadoPagamento.value = {
-        state: 'failure',
-        pedidoId,
-        status: statusGateway || 'cancelled',
-        message: 'O pedido foi cancelado. Atualize o carrinho antes de tentar novamente.',
-      }
-    } else {
-      resultadoPagamento.value = {
-        state: 'pending',
-        pedidoId,
-        status: statusGateway || 'pending',
-        message: 'Pagamento recebido e aguardando confirmação do pedido pelo servidor. Não faça outro pagamento enquanto isso.',
-      }
+    const orderResult = classifyOrderPaymentStatus(pedidoAtualizado.data.status)
+    resultadoPagamento.value = {
+      state: orderResult.state,
+      pedidoId,
+      status: statusGateway || (orderResult.state === 'success' ? 'approved' : 'pending'),
+      message: orderResult.message,
     }
+    if (orderResult.state === 'success') cartStore.clearCart()
   } catch (error: unknown) {
     mensagemErro.value = obterErroPagamento(error)
     throw error
