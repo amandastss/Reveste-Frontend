@@ -1,10 +1,14 @@
-
 import axios from 'axios'
 
-const getViteApiUrl = () => (typeof import.meta !== 'undefined' ? import.meta.env?.VITE_API_URL : undefined)
+const getViteApiUrl = () =>
+  typeof import.meta !== 'undefined'
+    ? import.meta.env?.VITE_API_URL
+    : undefined
 
 export const resolveApiBaseUrl = (configUrl = getViteApiUrl()) =>
-  (configUrl || 'https://reveste-backend.class.fabricadesoftware.ifc.edu.br').replace(/\/+$/, '')
+  (configUrl || 'https://reveste-backend.class.fabricadesoftware.ifc.edu.br')
+    .replace(/\/+$/, '')
+    .replace(/\/api$/i, '')
 
 export const API_BASE = resolveApiBaseUrl()
 
@@ -13,6 +17,7 @@ export const getStoredToken = () => {
 
   for (const key of candidateKeys) {
     const value = localStorage.getItem(key)
+
     if (value && value !== 'null' && value !== 'undefined') {
       return value
     }
@@ -23,6 +28,7 @@ export const getStoredToken = () => {
 
 export const persistToken = (value) => {
   const token = typeof value === 'string' ? value.trim() : ''
+
   if (!token) return null
 
   const candidateKeys = ['token', 'access', 'access_token', 'jwt', 'authToken']
@@ -33,6 +39,7 @@ export const persistToken = (value) => {
 
 const api = axios.create({
   baseURL: `${API_BASE}/api`,
+  timeout: 20000,
 })
 
 api.interceptors.request.use((config) => {

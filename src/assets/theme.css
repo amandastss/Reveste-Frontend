@@ -53,6 +53,7 @@ html {
 }
 
 body {
+  min-width: 320px;
   background: var(--app-bg);
   color: var(--text-color);
   transition: background-color 0.25s ease, color 0.25s ease;
@@ -61,7 +62,14 @@ body {
 }
 
 #app {
+  width: 100%;
   min-height: 100vh;
+}
+
+img,
+video,
+svg {
+  max-width: 100%;
 }
 
 button,
@@ -109,4 +117,5 @@ select:focus,
 textarea:focus {
   outline: 2px solid rgba(17, 17, 17, 0.12);
   outline-offset: 1px;
+
 }

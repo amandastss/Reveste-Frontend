@@ -1,3 +1,4 @@
+
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -18,17 +19,23 @@ const unreadCount = computed(() => {
   return notifications.value.filter((notification) => !notification.lida).length
 })
 
-function resolveNotificationTarget(notification: Notificacao): string | null {
+function resolveNotificationTarget(
+  notification: Notificacao,
+): string | null {
   const produtoId = notification.produto_id ?? null
   const perguntaId = notification.pergunta_id ?? null
 
   if (produtoId) {
-    const query = perguntaId ? `?pergunta_id=${encodeURIComponent(String(perguntaId))}` : ''
+    const query = perguntaId
+      ? `?pergunta_id=${encodeURIComponent(String(perguntaId))}`
+      : ''
+
     return `/produto/${produtoId}/perguntas${query}`
   }
 
   if (notification.link) {
     const link = notification.link.trim()
+
     if (link.startsWith('http://') || link.startsWith('https://')) {
       try {
         const url = new URL(link)
@@ -49,14 +56,16 @@ function resolveNotificationTarget(notification: Notificacao): string | null {
   return null
 }
 
-async function carregarNotificacoes() {
+async function carregarNotificacoes(): Promise<void> {
   loading.value = true
   error.value = false
 
   try {
     const resultado = await buscarNotificacoes()
     notifications.value = Array.isArray(resultado) ? resultado : []
-  } catch (err) {
+
+    console.log('Notificações carregadas:', notifications.value)
+  } catch (err: unknown) {
     console.error('Erro ao carregar notificações:', err)
     error.value = true
   } finally {
@@ -64,16 +73,21 @@ async function carregarNotificacoes() {
   }
 }
 
-async function handleNotificationClick(notification: Notificacao) {
+async function handleNotificationClick(
+  notification: Notificacao,
+): Promise<void> {
   const targetRoute = resolveNotificationTarget(notification)
 
   if (!notification.lida) {
+    // Atualiza a interface imediatamente.
     notification.lida = true
 
     try {
       await marcarNotificacaoComoLida(notification.id)
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Erro ao marcar notificação como lida:', err)
+
+      // Reverte a alteração caso a API falhe.
       notification.lida = false
     }
   }
@@ -83,34 +97,43 @@ async function handleNotificationClick(notification: Notificacao) {
   }
 }
 
-async function marcarTodasComoLidas() {
-  const naoLidas = notifications.value.filter((notification) => !notification.lida)
+async function marcarTodasComoLidas(): Promise<void> {
+  const naoLidas = notifications.value.filter(
+    (notification) => !notification.lida,
+  )
 
   for (const notification of naoLidas) {
     try {
       await marcarNotificacaoComoLida(notification.id)
       notification.lida = true
-    } catch (err) {
-      console.error('Erro ao marcar notificação:', notification.id, err)
+    } catch (err: unknown) {
+      console.error(
+        'Erro ao marcar notificação:',
+        notification.id,
+        err,
+      )
     }
   }
 }
 
-function goBack() {
+function goBack(): void {
   router.back()
 }
 
 onMounted(() => {
-  carregarNotificacoes()
+  void carregarNotificacoes()
 })
 </script>
 
 <template>
   <div class="notifications-page">
-    <!-- HEADER -->
     <header class="notifications-header">
-      <button @click="goBack" class="back-btn" aria-label="Voltar">
-        <span class="material-symbols-outlined"> arrow_back </span>
+      <button
+        @click="goBack"
+        class="back-btn"
+        aria-label="Voltar"
+      >
+        <span class="material-symbols-outlined">arrow_back</span>
       </button>
 
       <div class="header-title">
@@ -123,39 +146,56 @@ onMounted(() => {
       </div>
     </header>
 
-    <!-- CARREGANDO -->
     <div v-if="loading" class="state-message">
-      <span class="material-symbols-outlined loading-icon"> progress_activity </span>
+      <span class="material-symbols-outlined loading-icon">
+        progress_activity
+      </span>
 
       <p>Carregando notificações...</p>
     </div>
 
-    <!-- ERRO -->
     <div v-else-if="error" class="state-message">
-      <span class="material-symbols-outlined"> error_outline </span>
+      <span class="material-symbols-outlined">error_outline</span>
 
       <p>Não foi possível carregar as notificações.</p>
 
-      <button class="retry-btn" @click="carregarNotificacoes">Tentar novamente</button>
+      <button
+        class="retry-btn"
+        @click="carregarNotificacoes"
+      >
+        Tentar novamente
+      </button>
     </div>
 
-    <!-- VAZIO -->
-    <div v-else-if="notifications.length === 0" class="empty-state">
-      <span class="material-symbols-outlined empty-icon"> notifications_none </span>
+    <div
+      v-else-if="notifications.length === 0"
+      class="empty-state"
+    >
+      <span class="material-symbols-outlined empty-icon">
+        notifications_none
+      </span>
 
       <h2>Nenhuma notificação</h2>
 
-      <p>Quando houver novidades sobre seus pedidos, ofertas ou sua conta, elas aparecerão aqui.</p>
+      <p>
+        Quando houver novidades sobre seus pedidos, ofertas ou sua conta,
+        elas aparecerão aqui.
+      </p>
     </div>
 
-    <!-- LISTA -->
     <main v-else class="notifications-list">
-      <!-- MARCAR TODAS -->
-      <div v-if="unreadCount > 0" class="mark-all-container">
-        <button class="mark-all-btn" @click="marcarTodasComoLidas">Marcar todas como lidas</button>
+      <div
+        v-if="unreadCount > 0"
+        class="mark-all-container"
+      >
+        <button
+          class="mark-all-btn"
+          @click="marcarTodasComoLidas"
+        >
+          Marcar todas como lidas
+        </button>
       </div>
 
-      <!-- NOTIFICAÇÃO -->
       <div
         v-for="notification in notifications"
         :key="notification.id"
@@ -167,7 +207,6 @@ onMounted(() => {
         ]"
         @click="handleNotificationClick(notification)"
       >
-        <!-- ÍCONE -->
         <div
           :class="[
             'icon-wrapper',
@@ -176,22 +215,23 @@ onMounted(() => {
             },
           ]"
         >
-          <span class="material-symbols-outlined"> notifications </span>
+          <span class="material-symbols-outlined">
+            notifications
+          </span>
         </div>
 
-        <!-- CONTEÚDO -->
         <div class="notification-content">
-          <h3>
-            {{ notification.mensagem }}
-          </h3>
+          <h3>{{ notification.mensagem }}</h3>
 
           <span class="time-ago">
             {{ new Date(notification.data_envio).toLocaleString('pt-BR') }}
           </span>
         </div>
 
-        <!-- BOLINHA -->
-        <div v-if="!notification.lida" class="unread-dot"></div>
+        <div
+          v-if="!notification.lida"
+          class="unread-dot"
+        ></div>
       </div>
     </main>
   </div>
@@ -199,13 +239,13 @@ onMounted(() => {
 
 <style scoped>
 .notifications-page {
-  background-color: var(--surface-bg);
+  background-color: var(--app-bg);
   min-height: 100vh;
   width: 100%;
   display: flex;
   flex-direction: column;
   padding: 24px;
-  font-family: 'Montserrat', sans-serif;
+  font-family: 'Manrope', sans-serif;
   box-sizing: border-box;
 }
 
@@ -248,6 +288,7 @@ onMounted(() => {
   font-weight: 500;
   margin: 0;
   color: var(--text-color);
+  letter-spacing: 0;
 }
 
 .unread-count {
@@ -284,7 +325,7 @@ onMounted(() => {
   padding: 18px;
   background-color: var(--surface-bg);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: 12px;
   cursor: pointer;
   transition: 0.2s ease;
 }
@@ -384,7 +425,7 @@ onMounted(() => {
   border: none;
   background: var(--text-color);
   color: var(--surface-bg);
-  border-radius: 20px;
+  border-radius: 8px;
   padding: 10px 18px;
   font-family: inherit;
   cursor: pointer;

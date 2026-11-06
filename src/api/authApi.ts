@@ -1,7 +1,9 @@
+
 import api from './config'
-import type { AxiosResponse } from 'axios'
+import axios, { type AxiosResponse } from 'axios'
 
 type AuthResponse<T = unknown> = Promise<AxiosResponse<T>>
+
 type UserProfile = {
   id: number
   email: string
@@ -13,6 +15,7 @@ type UserProfile = {
   profile_image: string
   created_at: string
 }
+
 type RegisterPayload = {
   email: string
   name: string
@@ -23,6 +26,7 @@ type RegisterPayload = {
   profile_image?: string
   bio?: string
 }
+
 type ProfileUpdatePayload = {
   email?: string
   name?: string
@@ -32,44 +36,57 @@ type ProfileUpdatePayload = {
   profile_image?: File | string
 }
 
-const post = <T = unknown>(url: string, data: unknown): AuthResponse<T> => api.post(url, data)
-const getStatus = (error: unknown): number | undefined => {
-  if (error && typeof error === 'object' && 'response' in error) {
-    const response = error.response as { status?: number } | undefined
-    return typeof response?.status === 'number' ? response.status : undefined
-  }
-  return undefined
-}
+const post = <T = unknown>(
+  url: string,
+  data: unknown,
+): AuthResponse<T> => api.post(url, data)
 
 const buildProfileForm = (payload: ProfileUpdatePayload) => {
   if (!(payload.profile_image instanceof File)) return payload
 
   const formData = new FormData()
+
   if (payload.name) formData.append('name', payload.name)
   if (payload.email) formData.append('email', payload.email)
   if (payload.phone) formData.append('phone', payload.phone)
   if (payload.birth_date) formData.append('birth_date', payload.birth_date)
   if (payload.bio) formData.append('bio', payload.bio)
+
   formData.append('profile_image', payload.profile_image)
+
   return formData
 }
 
-const checkEmail = (email: string): AuthResponse => post('/check-email/', { email })
-const sendEmail = (email: string): AuthResponse => post('/send-email/', { email })
+const checkEmail = (email: string): AuthResponse =>
+  post('/check-email/', { email })
+
+const sendEmail = (email: string): AuthResponse =>
+  post('/send-email/', { email })
+
 const login = (email: string, password: string): AuthResponse =>
   post('/token/', { email, password })
-const fetchUserProfile = async () => (await api.get('/usuarios/me/')).data as UserProfile
+
+const fetchUserProfile = async () =>
+  (await api.get('/usuarios/me/')).data as UserProfile
 
 async function fetchUserFromCandidates(
   token: string,
   userId?: string | number,
 ): Promise<Record<string, unknown> | null> {
   try {
-    const res = await api.get('/usuarios/me/')
+    const res = await api.get('/usuarios/me/', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
     if (res?.data) return res.data
-  } catch {}
+  } catch {
+    // Tenta os demais endpoints disponíveis.
+  }
 
   const candidates: string[] = []
+
   if (userId) {
     candidates.push(
       `/usuarios/${userId}/`,
@@ -81,16 +98,29 @@ async function fetchUserFromCandidates(
       `/registro/${userId}/`,
     )
   }
-  candidates.push('/profile/', '/user/', '/usuario/', '/usuarios/', '/users/')
+
+  candidates.push(
+    '/profile/',
+    '/user/',
+    '/usuario/',
+    '/usuarios/',
+    '/users/',
+  )
 
   for (const url of candidates) {
     try {
-      const response = await api.get(url)
+      const response = await api.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
       if (response?.data) return response.data
     } catch {
       console.error(`Failed to fetch user from ${url}`)
     }
   }
+
   return null
 }
 
@@ -106,29 +136,49 @@ const register = (
 ): AuthResponse<Record<string, unknown>> => {
   if (profile_image instanceof File) {
     const formData = new FormData()
+
     formData.append('email', email)
     formData.append('name', name)
     formData.append('password', password)
     formData.append('role', role)
+
     if (phone) formData.append('phone', phone)
     if (birth_date) formData.append('birth_date', birth_date)
     if (bio) formData.append('bio', bio)
+
     formData.append('profile_image', profile_image)
+
     return api.post('/registro/', formData)
   }
 
-  const data: RegisterPayload = { email, name, password, role }
+  const data: RegisterPayload = {
+    email,
+    name,
+    password,
+    role,
+  }
+
   if (phone) data.phone = phone
   if (birth_date) data.birth_date = birth_date
   if (bio) data.bio = bio
-  if (profile_image && typeof profile_image === 'string') data.profile_image = profile_image
+
+  if (profile_image && typeof profile_image === 'string') {
+    data.profile_image = profile_image
+  }
+
   return api.post('/registro/', data)
 }
 
-const updateProfile = async (payload: ProfileUpdatePayload): Promise<Record<string, unknown>> => {
+const updateProfile = async (
+  payload: ProfileUpdatePayload,
+): Promise<Record<string, unknown>> => {
   const rawUser = localStorage.getItem('user')
-  const storedUser = rawUser ? (JSON.parse(rawUser) as Record<string, unknown>) : {}
+  const storedUser = rawUser
+    ? (JSON.parse(rawUser) as Record<string, unknown>)
+    : {}
+
   const userId = storedUser?.id
+
   const candidateUrls = [
     '/usuarios/me/',
     '/usuarios/me',
@@ -151,18 +201,33 @@ const updateProfile = async (payload: ProfileUpdatePayload): Promise<Record<stri
 
   const requestBody = buildProfileForm(payload)
   const methods: Array<'patch' | 'put'> = ['patch', 'put']
-  let lastError: unknown = new Error('Nenhum endpoint de atualização disponível')
+
+  let lastError: unknown = new Error(
+    'Nenhum endpoint de atualização disponível',
+  )
 
   for (const url of candidateUrls) {
     for (const method of methods) {
       try {
         const response = await api[method](url, requestBody)
+
         return response.data as Record<string, unknown>
       } catch (error: unknown) {
         lastError = error
-        const status = getStatus(error)
-        if (status === 401) throw error
-        if (status === 405) continue
+
+        const status = axios.isAxiosError(error)
+          ? error.response?.status
+          : undefined
+
+        if (status === 401) {
+          throw error
+        }
+
+        if (status === 405) {
+          continue
+        }
+
+        continue
       }
     }
   }
@@ -172,9 +237,20 @@ const updateProfile = async (payload: ProfileUpdatePayload): Promise<Record<stri
 
 const verifyCode = (email: string, code: string): AuthResponse =>
   post('/verify-code/', { email, code })
-const requestPasswordReset = (email: string): AuthResponse => post('/forgot-password/', { email })
-const resetPassword = (email: string, code: string, newPassword: string): AuthResponse =>
-  post('/reset-password/', { email, code, new_password: newPassword })
+
+const requestPasswordReset = (email: string): AuthResponse =>
+  post('/forgot-password/', { email })
+
+const resetPassword = (
+  email: string,
+  code: string,
+  newPassword: string,
+): AuthResponse =>
+  post('/reset-password/', {
+    email,
+    code,
+    new_password: newPassword,
+  })
 
 export default {
   checkEmail,

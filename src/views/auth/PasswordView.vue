@@ -1,3 +1,4 @@
+
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <!-- eslint-disable vue/block-lang -->
 <script setup>
@@ -13,8 +14,9 @@ const isLogin = ref(false)
 const router = useRouter()
 
 onMounted(() => {
-  email.value = localStorage.getItem('email')
+  email.value = localStorage.getItem('email') || ''
   isLogin.value = localStorage.getItem('isLogin') === 'true'
+
   if (!email.value) {
     router.push('/auth/email')
   }
@@ -29,43 +31,46 @@ async function login() {
       return
     }
 
-    // Login - email já existe
     const res = await authApi.login(email.value, password.value)
-    const token = res.data?.access ?? res.data?.token ?? res.data?.access_token ?? res.data?.jwt ?? res.data?.authToken
+
+    const token =
+      res.data?.access ||
+      res.data?.token ||
+      res.data?.access_token ||
+      res.data?.jwt ||
+      res.data?.authToken
+
     if (token) {
-      try {
-        persistToken(token)
-      } catch {}
+      persistToken(token)
     }
+
     const userData = await authApi.fetchUserProfile()
     const existingUser = JSON.parse(localStorage.getItem('user') || '{}')
-    // const currentEmail = email.value?.toLowerCase() || ''
-    // const storedEmail = existingUser.email?.toLowerCase() || ''
 
-    // const mergedUser = storedEmail === currentEmail
-    //   ? {
-    //       ...existingUser,
-    //       ...res.data,
-    //       email: email.value,
-    //       name: existingUser.name || res.data.name || res.data.username || res.data.first_name || undefined,
-    //       phone: existingUser.phone || res.data.phone,
-    //       photo: existingUser.photo || res.data.profile_image || res.data.photo || res.data.avatar || res.data.image,
-    //       date_of_birth: existingUser.date_of_birth || res.data.date_of_birth || res.data.birthdate || res.data.birth_date,
-    //     }
-    //   : {
-    //       ...res.data,
-    //       email: email.value,
-    //     }
+    const mergedUser = {
+      ...existingUser,
+      ...userData,
+      email: userData.email || email.value,
+    }
 
-    localStorage.setItem('user', JSON.stringify(userData))
+    localStorage.setItem('user', JSON.stringify(mergedUser))
     localStorage.setItem('email', email.value)
 
     try {
-      const token = res.data?.token || res.data?.access || res.data?.access_token || getStoredToken()
+      const storedToken = token || getStoredToken()
+
       const candidateId =
-        res.data?.user_id || res.data?.user?.id || existingUser?.user_id || existingUser?.id
-      if (token) {
-        const serverUser = await authApi.fetchUserFromCandidates(token, candidateId)
+        res.data?.user_id ||
+        res.data?.user?.id ||
+        existingUser?.user_id ||
+        existingUser?.id
+
+      if (storedToken) {
+        const serverUser = await authApi.fetchUserFromCandidates(
+          storedToken,
+          candidateId,
+        )
+
         if (serverUser) {
           const enriched = {
             ...mergedUser,
@@ -82,16 +87,20 @@ async function login() {
               serverUser.date_of_birth ||
               serverUser.birthdate,
           }
+
           localStorage.setItem('user', JSON.stringify(enriched))
         }
       }
-    } catch (e) {
-      // ignore enrichment errors
+    } catch (error) {
+      console.error('Erro ao complementar os dados do usuário:', error)
     }
 
     router.push('/')
   } catch (err) {
-    alert('Erro ao autenticar: ' + (err.response?.data?.message || 'Tente novamente'))
+    alert(
+      'Erro ao autenticar: ' +
+        (err?.response?.data?.message || 'Tente novamente'),
+    )
   }
 }
 
@@ -118,7 +127,11 @@ function togglePassword() {
 
       <!-- INPUT SENHA -->
       <div class="input-group">
-        <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="Senha" />
+        <input
+          :type="showPassword ? 'text' : 'password'"
+          v-model="password"
+          placeholder="Senha"
+        />
 
         <span class="eye" @click="togglePassword">
           <!-- olho aberto -->
@@ -157,7 +170,13 @@ function togglePassword() {
       </button>
 
       <!-- ESQUECI -->
-      <p v-if="isLogin" class="forgot" @click="router.push('/auth/forgot')">Esqueceu sua senha?</p>
+      <p
+        v-if="isLogin"
+        class="forgot"
+        @click="router.push('/auth/forgot-password')"
+      >
+        Esqueceu sua senha?
+      </p>
     </div>
   </div>
 </template>
@@ -169,50 +188,38 @@ function togglePassword() {
   align-items: center;
   justify-content: center;
   padding: 24px;
-
   background: linear-gradient(135deg, #f5f7fb, #e8ecf5);
   font-family: 'Montserrat', sans-serif;
 }
 
-/* CARD */
 .auth-card {
   width: 100%;
   max-width: 400px;
   background: #fff;
   padding: 28px;
   border-radius: 20px;
-
   box-shadow:
     0 10px 30px rgba(0, 0, 0, 0.08),
     0 2px 10px rgba(0, 0, 0, 0.04);
-
   display: flex;
   flex-direction: column;
   gap: 16px;
   position: relative;
 }
 
-/* VOLTAR */
 .back {
   position: absolute;
   top: 16px;
   left: 16px;
-
   width: 38px;
   height: 38px;
   border-radius: 50%;
   border: none;
-  background: #f3f3f3;
-
+  background: #f5f5f5;
   display: flex;
   align-items: center;
   justify-content: center;
-
   cursor: pointer;
-}
-
-.back {
-  background: #f5f5f5;
   transition: 0.2s;
 }
 
@@ -220,7 +227,6 @@ function togglePassword() {
   background: #eaeaea;
 }
 
-/* TITLE */
 .auth-card h1 {
   font-size: 22px;
   font-weight: 600;
@@ -228,7 +234,6 @@ function togglePassword() {
   margin-bottom: 2px;
 }
 
-/* EMAIL */
 .email {
   font-size: 13px;
   color: #777;
@@ -236,7 +241,6 @@ function togglePassword() {
   margin-top: 0;
 }
 
-/* INPUT */
 .input-group {
   display: flex;
   align-items: center;
@@ -258,7 +262,6 @@ function togglePassword() {
   box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
 }
 
-/* OLHO */
 .eye {
   position: absolute;
   right: 12px;
@@ -271,7 +274,6 @@ function togglePassword() {
   height: 20px;
 }
 
-/* BOTÃO */
 .main-button {
   margin-top: 10px;
   padding: 12px;
@@ -284,25 +286,21 @@ function togglePassword() {
   transition: 0.2s;
 }
 
-/* HOVER */
 .main-button:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
 }
 
-/* DISABLED */
 .main-button:disabled {
   background: #ccc;
   cursor: not-allowed;
   box-shadow: none;
 }
 
-/* CLICK */
 .main-button:active {
   transform: scale(0.98);
 }
 
-/* ESQUECI */
 .forgot {
   text-align: center;
   font-size: 13px;
