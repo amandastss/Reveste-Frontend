@@ -334,10 +334,12 @@ watch(
   .card img {
     height: 220px;
   }
+}
 
+@media (hover: hover) {
   .card:hover {
-    transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
   }
 }
 
