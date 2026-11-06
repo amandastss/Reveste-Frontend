@@ -241,9 +241,9 @@ async function processarEnvioBrick(payload: BrickFormData): Promise<void> {
     }
 
     const resposta = await processarPagamento(dadosPagamento)
-    const statusPagamento = String(resposta.status || '').toLowerCase()
     const pedidoId = String(resposta.pedido_id ?? checkoutPreparado.value.pedido_id)
-    if (statusPagamento === 'pending' && (resposta.qr_code || resposta.qr_code_base64 || resposta.ticket_url)) {
+    const statusGateway = String(resposta.status || '').toLowerCase()
+    if (statusGateway === 'pending' && (resposta.qr_code || resposta.qr_code_base64 || resposta.ticket_url)) {
       paymentInstructions.value = {
         qr_code: resposta.qr_code,
         qr_code_base64: resposta.qr_code_base64,
@@ -251,27 +251,32 @@ async function processarEnvioBrick(payload: BrickFormData): Promise<void> {
       }
     }
 
-    if (statusPagamento === 'approved') {
+    // O status do gateway é informativo. Só o status persistido do pedido confirma a venda.
+    const pedidoAtualizado = await api.get<{ status: string; mercado_pago_status?: string }>(
+      `/pedidos/${pedidoId}/`,
+    )
+    const statusPedido = String(pedidoAtualizado.data.status || '').trim().toUpperCase()
+    if (statusPedido === 'PAGO') {
       resultadoPagamento.value = {
         state: 'success',
         pedidoId,
-        status: statusPagamento,
-        message: 'Pagamento aprovado e pedido confirmado.',
+        status: statusGateway || 'approved',
+        message: 'Pagamento aprovado e pedido confirmado pelo servidor.',
       }
       cartStore.clearCart()
-    } else if (statusPagamento === 'pending' || statusPagamento === 'in_process') {
-      resultadoPagamento.value = {
-        state: 'pending',
-        pedidoId,
-        status: statusPagamento,
-        message: 'Pagamento enviado e aguardando confirmação do Mercado Pago.',
-      }
-    } else {
+    } else if (statusPedido === 'CANCELADO') {
       resultadoPagamento.value = {
         state: 'failure',
         pedidoId,
-        status: statusPagamento || null,
-        message: 'O pagamento não foi aprovado. Tente novamente com outro cartão.',
+        status: statusGateway || 'cancelled',
+        message: 'O pedido foi cancelado. Atualize o carrinho antes de tentar novamente.',
+      }
+    } else {
+      resultadoPagamento.value = {
+        state: 'pending',
+        pedidoId,
+        status: statusGateway || 'pending',
+        message: 'Pagamento recebido e aguardando confirmação do pedido pelo servidor. Não faça outro pagamento enquanto isso.',
       }
     }
   } catch (error: unknown) {
