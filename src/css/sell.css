@@ -163,12 +163,17 @@ body,
   width: 100%;
   border: none;
   border-bottom: 1px solid var(--border-color);
-  background: transparent;
+  background: var(--surface-bg);
   color: var(--text-color);
   padding: 12px 0;
   font-size: 1rem;
   outline: none;
   transition: all 0.2s ease;
+}
+
+.field-group select option {
+  background: var(--surface-card);
+  color: var(--text-color);
 }
 
 .field-group input:focus,
