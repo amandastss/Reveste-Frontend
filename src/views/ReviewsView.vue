@@ -121,10 +121,59 @@ const productSellerKeys = computed(() => {
   return Array.from(new Set([...mappedKeys, ...directSellerKeys]))
 })
 
+const sellerIdentityHints = ref<string[]>([])
+
+function normalizeSellerHints(value: unknown): string[] {
+  if (value == null) return []
+
+  if (typeof value === 'string' || typeof value === 'number') {
+    const text = String(value).trim()
+    return text ? [text.toLowerCase()] : []
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => normalizeSellerHints(item))
+  }
+
+  if (typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>)
+    const results: string[] = []
+
+    for (const [key, nestedValue] of entries) {
+      const loweredKey = key.toLowerCase()
+      if (
+        ['id', 'user_id', 'usuario_id', 'seller_id', 'vendedor_id', 'owner_id', 'created_by'].includes(loweredKey)
+      ) {
+        results.push(...normalizeSellerHints(nestedValue))
+      }
+
+      if (
+        ['usuario', 'user', 'vendedor', 'owner', 'seller'].includes(loweredKey) ||
+        loweredKey.includes('usuario') ||
+        loweredKey.includes('vendedor') ||
+        loweredKey.includes('owner') ||
+        loweredKey.includes('seller')
+      ) {
+        results.push(...normalizeSellerHints(nestedValue))
+      }
+    }
+
+    return results
+  }
+
+  return []
+}
+
 const canReplyAsSeller = computed(() => {
   if (!isLoggedIn.value) return false
 
-  const sellerKeys = productSellerKeys.value.map((item) => item.trim().toLowerCase())
+  const sellerKeys = Array.from(
+    new Set([
+      ...productSellerKeys.value,
+      ...sellerIdentityHints.value,
+    ].map((item) => item.trim().toLowerCase()).filter(Boolean)),
+  )
+
   const userMatches = [
     currentUserId.value.trim().toLowerCase(),
     currentUserEmail.value.trim().toLowerCase(),
@@ -136,6 +185,8 @@ const canReplyAsSeller = computed(() => {
 
   return sellerKeys.some((sellerKey) => userMatches.includes(sellerKey))
 })
+
+const canAskQuestion = computed(() => isLoggedIn.value && !canReplyAsSeller.value)
 
 const normalizePergunta = (item: PerguntaApi): Pergunta => {
   const user = item.usuario ?? item.user ?? null
@@ -247,9 +298,22 @@ const responderPergunta = async (perguntaId: number) => {
   }
 }
 
+const carregarInformacaoVendedorProduto = async () => {
+  try {
+    const response = await api.get(`/produtos/${produtoId}/`)
+    const data = response.data as Record<string, unknown>
+    const hints = normalizeSellerHints(data)
+    sellerIdentityHints.value = Array.from(new Set(hints.filter(Boolean)))
+  } catch {
+    sellerIdentityHints.value = []
+  }
+}
+
 const voltar = () => router.back()
 
 onMounted(() => {
+  void carregarInformacaoVendedorProduto()
+
   const focoPergunta = Number(route.query.pergunta_id || 0)
   if (focoPergunta) {
     perguntaSelecionadaId.value = focoPergunta
@@ -273,7 +337,7 @@ onMounted(() => {
       <button class="btn-back" @click="voltar">←</button>
       <h1>Perguntas ao vendedor</h1>
       <button
-        v-if="isLoggedIn && !canReplyAsSeller"
+        v-if="canAskQuestion"
         class="btn-action"
         @click="isAddingQuestion = !isAddingQuestion"
       >
@@ -294,7 +358,7 @@ onMounted(() => {
       </div>
 
       <div v-else class="questions-layout">
-        <div v-if="isAddingQuestion && !canReplyAsSeller" class="question-form-card">
+        <div v-if="isAddingQuestion && canAskQuestion" class="question-form-card">
           <div class="section-tag">Faça sua pergunta</div>
           <label class="form-label">
             Sua pergunta <span class="required">*</span>

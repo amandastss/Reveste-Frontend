@@ -39,52 +39,39 @@ async function login() {
     }
     const userData = await authApi.fetchUserProfile()
     const existingUser = JSON.parse(localStorage.getItem('user') || '{}')
-    // const currentEmail = email.value?.toLowerCase() || ''
-    // const storedEmail = existingUser.email?.toLowerCase() || ''
-
-    // const mergedUser = storedEmail === currentEmail
-    //   ? {
-    //       ...existingUser,
-    //       ...res.data,
-    //       email: email.value,
-    //       name: existingUser.name || res.data.name || res.data.username || res.data.first_name || undefined,
-    //       phone: existingUser.phone || res.data.phone,
-    //       photo: existingUser.photo || res.data.profile_image || res.data.photo || res.data.avatar || res.data.image,
-    //       date_of_birth: existingUser.date_of_birth || res.data.date_of_birth || res.data.birthdate || res.data.birth_date,
-    //     }
-    //   : {
-    //       ...res.data,
-    //       email: email.value,
-    //     }
+    const existingUserId = existingUser?.id ?? existingUser?.user_id ?? userData?.id ?? userData?.user_id ?? ''
 
     localStorage.setItem('user', JSON.stringify(userData))
     localStorage.setItem('email', email.value)
     localStorage.setItem('user_email', String(email.value || '').trim().toLowerCase())
-    localStorage.setItem('user_id', String(userData?.id ?? userData?.user_id ?? ''))
+    localStorage.setItem('user_id', String(existingUserId))
 
     try {
       const token = res.data?.token || res.data?.access || res.data?.access_token || getStoredToken()
-      const candidateId =
-        res.data?.user_id || res.data?.user?.id || existingUser?.user_id || existingUser?.id
+      const candidateId = userData?.id ?? existingUser?.user_id ?? existingUser?.id ?? res.data?.user_id ?? res.data?.user?.id
       if (token) {
         const serverUser = await authApi.fetchUserFromCandidates(token, candidateId)
         if (serverUser) {
           const enriched = {
-            ...mergedUser,
+            ...userData,
             ...serverUser,
+            id: serverUser.id ?? userData.id ?? existingUserId,
+            email: email.value,
             photo:
-              mergedUser.photo ||
+              userData.photo ||
               serverUser.profile_image ||
               serverUser.photo ||
               serverUser.avatar ||
               serverUser.image,
             date_of_birth:
-              mergedUser.date_of_birth ||
+              userData.date_of_birth ||
               serverUser.birth_date ||
               serverUser.date_of_birth ||
               serverUser.birthdate,
           }
+
           localStorage.setItem('user', JSON.stringify(enriched))
+          localStorage.setItem('user_id', String(enriched.id ?? existingUserId))
         }
       }
     } catch (e) {
