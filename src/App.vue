@@ -64,17 +64,41 @@ function resolveNotificationTarget(notification: Notificacao | null): string | n
   return null
 }
 
+function getNotificationMeta(notification: Notificacao) {
+  const message = (notification.mensagem ?? '').toLowerCase()
+
+  if (/respondeu|resposta|respondida/i.test(message)) {
+    return {
+      title: 'Resposta do vendedor',
+      icon: 'check_circle',
+      kind: 'answer',
+    }
+  }
+
+  if (/pergunta|nova pergunta/i.test(message)) {
+    return {
+      title: 'Nova pergunta',
+      icon: 'question_answer',
+      kind: 'question',
+    }
+  }
+
+  return {
+    title: 'Nova atualização',
+    icon: 'notifications',
+    kind: 'info',
+  }
+}
+
 function triggerDesktopNotification(notification: Notificacao) {
   if (!('Notification' in window)) return
 
   const permission = Notification.permission
-  if (permission === 'granted') {
-    const title = /respondeu|resposta|respondida/i.test(notification.mensagem)
-      ? 'Resposta do vendedor'
-      : 'Nova pergunta'
+  const meta = getNotificationMeta(notification)
 
+  if (permission === 'granted') {
     try {
-      new Notification(title, {
+      new Notification(meta.title, {
         body: notification.mensagem,
         tag: `reveste-notification-${notification.id}`,
       })
@@ -87,12 +111,8 @@ function triggerDesktopNotification(notification: Notificacao) {
   if (permission === 'default') {
     Notification.requestPermission().then((result) => {
       if (result === 'granted') {
-        const title = /respondeu|resposta|respondida/i.test(notification.mensagem)
-          ? 'Resposta do vendedor'
-          : 'Nova pergunta'
-
         try {
-          new Notification(title, {
+          new Notification(meta.title, {
             body: notification.mensagem,
             tag: `reveste-notification-${notification.id}`,
           })
@@ -177,17 +197,17 @@ onBeforeUnmount(() => {
 
     <div
       v-if="activeNotification"
-      class="global-notification-banner"
+      :class="['global-notification-banner', getNotificationMeta(activeNotification).kind]"
       @click="openNotification"
       role="status"
       aria-live="polite"
     >
       <div class="global-notification-icon">
-        <span class="material-symbols-outlined">notifications</span>
+        <span class="material-symbols-outlined">{{ getNotificationMeta(activeNotification).icon }}</span>
       </div>
 
       <div class="global-notification-copy">
-        <strong>Nova pergunta</strong>
+        <strong>{{ getNotificationMeta(activeNotification).title }}</strong>
         <span>{{ activeNotification.mensagem }}</span>
       </div>
 
@@ -250,19 +270,31 @@ textarea {
 
 .global-notification-banner {
   position: sticky;
-  top: 0;
+  top: 12px;
   z-index: 30;
   display: flex;
   align-items: center;
   gap: 12px;
   margin: 12px auto 0;
-  width: min(94vw, 520px);
+  width: min(94vw, 540px);
   padding: 12px 14px;
   border-radius: 18px;
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(31, 41, 55, 0.96));
-  color: white;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.26);
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--text-color);
+  box-shadow: 0 18px 36px rgba(17, 17, 17, 0.08);
+  backdrop-filter: blur(10px);
   cursor: pointer;
+}
+
+.global-notification-banner.answer {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(255, 255, 255, 0.96));
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.global-notification-banner.question {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.12), rgba(255, 255, 255, 0.96));
+  border-color: rgba(251, 191, 36, 0.25);
 }
 
 .global-notification-icon {
@@ -272,7 +304,18 @@ textarea {
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(17, 17, 17, 0.06);
+  color: var(--text-color);
+}
+
+.global-notification-banner.answer .global-notification-icon {
+  background: rgba(16, 185, 129, 0.12);
+  color: #0f766e;
+}
+
+.global-notification-banner.question .global-notification-icon {
+  background: rgba(245, 158, 11, 0.12);
+  color: #9a5b00;
 }
 
 .global-notification-icon .material-symbols-outlined {
@@ -283,20 +326,22 @@ textarea {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
 }
 
 .global-notification-copy strong {
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  color: var(--text-color);
   opacity: 0.9;
 }
 
 .global-notification-copy span {
   font-size: 0.82rem;
   line-height: 1.35;
+  color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -305,11 +350,20 @@ textarea {
 .global-notification-action {
   border: none;
   border-radius: 999px;
-  background: #ffffff;
-  color: #111827;
+  background: var(--text-color);
+  color: var(--surface-bg);
   font-weight: 700;
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   padding: 8px 12px;
   cursor: pointer;
+  box-shadow: 0 10px 18px rgba(17, 17, 17, 0.12);
+}
+
+.global-notification-banner.answer .global-notification-action {
+  background: #0f766e;
+}
+
+.global-notification-banner.question .global-notification-action {
+  background: #a16207;
 }
 </style>
