@@ -59,6 +59,8 @@ async function login() {
 
     localStorage.setItem('user', JSON.stringify(userData))
     localStorage.setItem('email', email.value)
+    localStorage.setItem('user_email', String(email.value || '').trim().toLowerCase())
+    localStorage.setItem('user_id', String(userData?.id ?? userData?.user_id ?? ''))
 
     try {
       const token = res.data?.token || res.data?.access || res.data?.access_token || getStoredToken()

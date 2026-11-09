@@ -82,25 +82,43 @@ const currentUser = computed(() => {
 })
 
 const currentUserId = computed(() => {
+  const directId = localStorage.getItem('user_id')
+  if (directId && directId !== 'null' && directId !== 'undefined') {
+    return String(directId)
+  }
+
   const userId = currentUser.value?.id
   return userId !== undefined && userId !== null ? String(userId) : ''
 })
 
 const currentUserEmail = computed(() => {
+  const directEmail = localStorage.getItem('user_email')
+  if (directEmail && directEmail !== 'null' && directEmail !== 'undefined') {
+    return directEmail.trim().toLowerCase()
+  }
+
   const email = currentUser.value?.email
   return typeof email === 'string' && email.trim() ? email.trim().toLowerCase() : ''
 })
 
 const productSellerKeys = computed(() => {
+  const mappedKeys: string[] = []
+
   try {
     const raw = localStorage.getItem('reveste_product_sellers_v1')
-    if (!raw) return [] as string[]
-
-    const parsed = JSON.parse(raw) as Record<string, string[]>
-    return (parsed[String(produtoId)] ?? []).map((value) => String(value))
+    if (raw) {
+      const parsed = JSON.parse(raw) as Record<string, string[]>
+      mappedKeys.push(...(parsed[String(produtoId)] ?? []).map((value) => String(value)))
+    }
   } catch {
-    return [] as string[]
+    // ignora fallback
   }
+
+  const directSellerKeys = [localStorage.getItem('user_id'), localStorage.getItem('user_email')]
+    .filter((value): value is string => !!value && value !== 'null' && value !== 'undefined')
+    .map((value) => value.trim())
+
+  return Array.from(new Set([...mappedKeys, ...directSellerKeys]))
 })
 
 const canReplyAsSeller = computed(() => {
