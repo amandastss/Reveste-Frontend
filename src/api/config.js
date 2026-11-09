@@ -8,10 +8,10 @@ export const resolveApiBaseUrl = (configUrl = getViteApiUrl()) =>
 
 export const API_BASE = resolveApiBaseUrl()
 
-export const getStoredToken = () => {
-  const candidateKeys = ['token', 'access', 'access_token', 'jwt', 'authToken']
+export const AUTH_TOKEN_KEYS = ['token', 'access', 'access_token', 'jwt', 'authToken']
 
-  for (const key of candidateKeys) {
+export const getStoredToken = () => {
+  for (const key of AUTH_TOKEN_KEYS) {
     const value = localStorage.getItem(key)
     if (value && value !== 'null' && value !== 'undefined') {
       return value
@@ -25,10 +25,13 @@ export const persistToken = (value) => {
   const token = typeof value === 'string' ? value.trim() : ''
   if (!token) return null
 
-  const candidateKeys = ['token', 'access', 'access_token', 'jwt', 'authToken']
-  candidateKeys.forEach((key) => localStorage.setItem(key, token))
+  AUTH_TOKEN_KEYS.forEach((key) => localStorage.setItem(key, token))
 
   return token
+}
+
+export const clearStoredToken = () => {
+  AUTH_TOKEN_KEYS.forEach((key) => localStorage.removeItem(key))
 }
 
 const api = axios.create({

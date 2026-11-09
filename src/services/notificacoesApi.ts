@@ -57,6 +57,14 @@ function writeLocalNotifications(notifications: Notificacao[]) {
 }
 
 export async function buscarNotificacoes(): Promise<Notificacao[]> {
+  const token = getStoredToken()
+
+  if (!token) {
+    return readLocalNotifications().sort(
+      (a, b) => new Date(b.data_envio).getTime() - new Date(a.data_envio).getTime(),
+    )
+  }
+
   try {
     const response = await api.get('/api/notificacoes/')
 

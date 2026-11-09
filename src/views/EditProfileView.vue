@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import authApi from '@/api/authApi'
+import { getStoredToken } from '@/api/config'
 
 type User = Record<string, unknown>
 const router = useRouter()
@@ -78,6 +79,13 @@ const saveProfile = async () => {
   if (!form.value.name.trim() || !form.value.email.trim()) {
     feedback.value = 'Preencha nome e e-mail para continuar.'
     feedbackType.value = 'error'
+    return
+  }
+
+  if (!getStoredToken()) {
+    feedback.value = 'Você precisa fazer login antes de editar o perfil.'
+    feedbackType.value = 'error'
+    router.push('/auth/email')
     return
   }
 

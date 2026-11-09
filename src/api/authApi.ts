@@ -1,4 +1,4 @@
-import api from './config'
+import api, { getStoredToken } from './config'
 import type { AxiosResponse } from 'axios'
 
 type AuthResponse<T = unknown> = Promise<AxiosResponse<T>>
@@ -54,16 +54,33 @@ const buildProfileForm = (payload: ProfileUpdatePayload) => {
   return formData
 }
 
+const ensureAuthenticated = () => {
+  const token = getStoredToken()
+
+  if (!token) {
+    throw new Error('Você precisa fazer login antes de acessar este conteúdo.')
+  }
+
+  return token
+}
+
 const checkEmail = (email: string): AuthResponse => post('/check-email/', { email })
 const sendEmail = (email: string): AuthResponse => post('/send-email/', { email })
 const login = (email: string, password: string): AuthResponse =>
   post('/token/', { email, password })
-const fetchUserProfile = async () => (await api.get('/usuarios/me/')).data as UserProfile
+const fetchUserProfile = async () => {
+  ensureAuthenticated()
+  return (await api.get('/usuarios/me/')).data as UserProfile
+}
 
 async function fetchUserFromCandidates(
   token: string,
   userId?: string | number,
 ): Promise<Record<string, unknown> | null> {
+  if (!token && !getStoredToken()) {
+    return null
+  }
+
   try {
     const res = await api.get('/usuarios/me/')
     if (res?.data) return res.data
@@ -126,6 +143,8 @@ const register = (
 }
 
 const updateProfile = async (payload: ProfileUpdatePayload): Promise<Record<string, unknown>> => {
+  ensureAuthenticated()
+
   const rawUser = localStorage.getItem('user')
   const storedUser = rawUser ? (JSON.parse(rawUser) as Record<string, unknown>) : {}
   const userId = storedUser?.id
