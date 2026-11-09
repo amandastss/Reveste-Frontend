@@ -216,45 +216,44 @@ onMounted(() => {
     <header class="reviews-header">
       <button class="btn-back" @click="voltar">←</button>
       <h1>Perguntas ao vendedor</h1>
-      <button v-if="isLoggedIn" class="btn-action" @click="isAddingQuestion = true">
-        ENVIAR
+      <button
+        v-if="isLoggedIn"
+        class="btn-action"
+        @click="isAddingQuestion = !isAddingQuestion"
+      >
+        {{ isAddingQuestion ? 'CANCELAR' : 'PERGUNTAR' }}
       </button>
     </header>
 
     <main class="reviews-content">
-      <template v-if="!isLoggedIn">
-        <div class="form-container-desktop">
-          <div class="empty-state-box">
-            Faça login para ver e enviar perguntas sobre este produto.
-          </div>
-          <div class="form-group" style="margin-top: 16px;">
-            <button class="btn-action full-width" @click="router.push('/auth/email')">
-              Entrar
-            </button>
-          </div>
+      <div v-if="!isLoggedIn" class="form-container-desktop auth-card">
+        <div class="empty-state-box">
+          Faça login para ver e enviar perguntas sobre este produto.
         </div>
-      </template>
-
-      <template v-else-if="isAddingQuestion">
-        <div class="form-container-desktop">
-          <div class="form-group">
-            <label class="form-label">
-              Sua pergunta <span class="required">*</span>
-            </label>
-            <textarea
-              v-model="newQuestionText"
-              placeholder="Ex.: Esse produto vem no tamanho M ou G?"
-              class="review-textarea"
-            />
-          </div>
-
-          <div class="form-group">
-            <button class="btn-action full-width" @click="enviarPergunta">Enviar pergunta</button>
-          </div>
+        <div class="form-group" style="margin-top: 16px;">
+          <button class="btn-action full-width" @click="router.push('/auth/email')">
+            Entrar
+          </button>
         </div>
-      </template>
+      </div>
 
-      <template v-else>
+      <div v-else class="questions-layout">
+        <div v-if="isAddingQuestion" class="question-form-card">
+          <div class="section-tag">Faça sua pergunta</div>
+          <label class="form-label">
+            Sua pergunta <span class="required">*</span>
+          </label>
+          <textarea
+            v-model="newQuestionText"
+            placeholder="Ex.: Esse produto vem no tamanho M ou G?"
+            class="review-textarea"
+          />
+
+          <button class="btn-action full-width primary" @click="enviarPergunta">
+            Enviar pergunta
+          </button>
+        </div>
+
         <div class="reviews-list">
           <div class="reviews-count-title">
             {{ totalPerguntas }} pergunta{{ totalPerguntas === 1 ? '' : 's' }}
@@ -290,19 +289,20 @@ onMounted(() => {
             </div>
 
             <div v-else-if="isLoggedIn" class="seller-answer-box">
+              <label class="form-label small-label">Responder</label>
               <textarea
                 v-model="answerDrafts[pergunta.id]"
                 rows="3"
                 placeholder="Escreva a resposta do vendedor..."
-                class="review-textarea"
+                class="review-textarea compact-textarea"
               />
-              <button class="btn-action full-width" @click="responderPergunta(pergunta.id)">
+              <button class="btn-action full-width secondary" @click="responderPergunta(pergunta.id)">
                 Responder
               </button>
             </div>
           </div>
         </div>
-      </template>
+      </div>
     </main>
   </div>
 </template>
@@ -310,8 +310,60 @@ onMounted(() => {
 <style scoped>
 @import '../css/reviews.css';
 
+.questions-layout {
+  display: grid;
+  gap: 18px;
+}
+
+.auth-card,
+.question-form-card {
+  background: rgba(148, 163, 184, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 20px;
+  padding: 18px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.04);
+}
+
+.section-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 6px 10px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  border-radius: 999px;
+  color: #2563eb;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .full-width {
   width: 100%;
+}
+
+.primary,
+.secondary {
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.primary {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  margin-top: 8px;
+}
+
+.secondary {
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  color: var(--text-color);
+  padding: 10px 14px;
+  margin-top: 10px;
 }
 
 .empty-state-box {
@@ -331,8 +383,8 @@ onMounted(() => {
 }
 
 .user-avatar-wrap {
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   overflow: hidden;
   background: rgba(148, 163, 184, 0.15);
@@ -354,17 +406,17 @@ onMounted(() => {
 }
 
 .answer-box {
-  margin-top: 12px;
+  margin-top: 14px;
   padding: 12px 14px;
-  border-radius: 12px;
+  border-radius: 14px;
   background: rgba(34, 197, 94, 0.08);
-  border: 1px solid rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.16);
 }
 
 .answer-box strong {
   display: block;
-  margin-bottom: 6px;
-  font-size: 0.8rem;
+  margin-bottom: 8px;
+  font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #1b8a5a;
@@ -377,12 +429,47 @@ onMounted(() => {
 
 .seller-answer-box {
   margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.small-label {
+  margin-bottom: 8px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.compact-textarea {
+  min-height: 88px;
 }
 
 .selected-question {
   background: rgba(59, 130, 246, 0.04);
   border: 1px solid rgba(59, 130, 246, 0.18);
-  border-radius: 12px;
+  border-radius: 16px;
   box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.12);
+  padding: 16px;
+}
+
+@media (min-width: 768px) {
+  .reviews-page-container {
+    padding: 0 18px 20px;
+  }
+
+  .reviews-content {
+    padding-top: 22px;
+  }
+
+  .reviews-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+  }
+
+  .review-item {
+    min-height: 100%;
+  }
 }
 </style>
