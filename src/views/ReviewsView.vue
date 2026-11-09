@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api, { API_BASE, getStoredToken } from '@/api/config'
+import { canUserAccessQuestionReply, extractSellerKeysFromProduct } from '@/utils/questionAccess'
 
 interface UsuarioResumo {
   id?: number | string
@@ -101,6 +102,8 @@ const currentUserEmail = computed(() => {
   return typeof email === 'string' && email.trim() ? email.trim().toLowerCase() : ''
 })
 
+const sellerIdentityHints = ref<string[]>([])
+
 const productSellerKeys = computed(() => {
   const mappedKeys: string[] = []
 
@@ -114,76 +117,17 @@ const productSellerKeys = computed(() => {
     // ignora fallback
   }
 
-  const directSellerKeys = [localStorage.getItem('user_id'), localStorage.getItem('user_email')]
-    .filter((value): value is string => !!value && value !== 'null' && value !== 'undefined')
-    .map((value) => value.trim())
-
-  return Array.from(new Set([...mappedKeys, ...directSellerKeys]))
+  return Array.from(new Set([...mappedKeys, ...sellerIdentityHints.value]))
 })
-
-const sellerIdentityHints = ref<string[]>([])
-
-function normalizeSellerHints(value: unknown): string[] {
-  if (value == null) return []
-
-  if (typeof value === 'string' || typeof value === 'number') {
-    const text = String(value).trim()
-    return text ? [text.toLowerCase()] : []
-  }
-
-  if (Array.isArray(value)) {
-    return value.flatMap((item) => normalizeSellerHints(item))
-  }
-
-  if (typeof value === 'object') {
-    const entries = Object.entries(value as Record<string, unknown>)
-    const results: string[] = []
-
-    for (const [key, nestedValue] of entries) {
-      const loweredKey = key.toLowerCase()
-      if (
-        ['id', 'user_id', 'usuario_id', 'seller_id', 'vendedor_id', 'owner_id', 'created_by'].includes(loweredKey)
-      ) {
-        results.push(...normalizeSellerHints(nestedValue))
-      }
-
-      if (
-        ['usuario', 'user', 'vendedor', 'owner', 'seller'].includes(loweredKey) ||
-        loweredKey.includes('usuario') ||
-        loweredKey.includes('vendedor') ||
-        loweredKey.includes('owner') ||
-        loweredKey.includes('seller')
-      ) {
-        results.push(...normalizeSellerHints(nestedValue))
-      }
-    }
-
-    return results
-  }
-
-  return []
-}
 
 const canReplyAsSeller = computed(() => {
   if (!isLoggedIn.value) return false
 
-  const sellerKeys = Array.from(
-    new Set([
-      ...productSellerKeys.value,
-      ...sellerIdentityHints.value,
-    ].map((item) => item.trim().toLowerCase()).filter(Boolean)),
-  )
-
-  const userMatches = [
-    currentUserId.value.trim().toLowerCase(),
-    currentUserEmail.value.trim().toLowerCase(),
-  ].filter(Boolean)
-
-  if (!sellerKeys.length || !userMatches.length) {
-    return false
-  }
-
-  return sellerKeys.some((sellerKey) => userMatches.includes(sellerKey))
+  return canUserAccessQuestionReply({
+    currentUserId: currentUserId.value,
+    currentUserEmail: currentUserEmail.value,
+    productSellerKeys: productSellerKeys.value,
+  })
 })
 
 const canAskQuestion = computed(() => isLoggedIn.value && !canReplyAsSeller.value)
@@ -301,9 +245,7 @@ const responderPergunta = async (perguntaId: number) => {
 const carregarInformacaoVendedorProduto = async () => {
   try {
     const response = await api.get(`/produtos/${produtoId}/`)
-    const data = response.data as Record<string, unknown>
-    const hints = normalizeSellerHints(data)
-    sellerIdentityHints.value = Array.from(new Set(hints.filter(Boolean)))
+    sellerIdentityHints.value = extractSellerKeysFromProduct(response.data)
   } catch {
     sellerIdentityHints.value = []
   }
