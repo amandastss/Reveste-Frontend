@@ -139,10 +139,10 @@ function logout() {
 </template>
 <style scoped>
 .profile-page {
-  background: #f5f5f5;
+  background: var(--app-bg);
   min-height: 100vh;
   width: 100%;
-  color: black;
+  color: var(--text-color);
   display: block;
   font-family: "Montserrat", sans-serif;
 }
@@ -155,8 +155,8 @@ function logout() {
 
 /* HEADER */
 .profile-header {
-  background: black;
-  color: white;
+  background: var(--surface-inverse);
+  color: var(--primary-contrast);
   padding: 40px 30px 30px;
   text-align: center;
   position: relative;
@@ -186,11 +186,12 @@ function logout() {
 }
 
 .account-card {
-  background: white;
+  background: var(--surface-card);
+  border: 1px solid var(--border-color);
   border-radius: 18px;
   padding: 20px;
   margin: 16px 0;
-  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 14px 35px var(--shadow-color);
 }
 
 .account-card h3 {
@@ -208,7 +209,7 @@ function logout() {
 
 .account-hint {
   margin: 0;
-  color: var(--text-muted);
+  color: var(--text-soft);
   font-size: 14px;
 }
 
@@ -234,11 +235,11 @@ function logout() {
 }
 
 .account-row span {
-  color: #666;
+  color: var(--text-muted);
 }
 
 .account-row strong {
-  color: #111;
+  color: var(--text-color);
 }
 
 .avatar {
@@ -264,7 +265,7 @@ function logout() {
 
 .profile-bio {
   margin-top: 8px;
-  color: var(--text-muted);
+  color: #f8fafc;
   font-size: 14px;
   text-align: center;
   max-width: 520px;
@@ -303,18 +304,20 @@ function logout() {
 }
 
 .menu-item {
-  background: white;
+  background: var(--surface-card);
+  color: var(--text-color);
   padding: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  border-bottom: 1px solid #eee;
+  border: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
   transition: background 0.2s, transform 0.2s;
 }
 
 .menu-item:hover {
-  background: #f9f9f9;
+  background: rgba(255, 255, 255, 0.04);
   transform: translateY(-2px);
 }
 
@@ -332,12 +335,12 @@ function logout() {
 
 .extra {
   font-size: 12px;
-  color: gray;
+  color: var(--text-soft);
 }
 
 .arrow {
   font-size: 18px;
-  color: #999;
+  color: var(--text-muted);
 }
 
 /* DELETE (Sair) */

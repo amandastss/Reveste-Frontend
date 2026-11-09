@@ -17,7 +17,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid #f5f5f5;
+  border-bottom: 1px solid var(--border-color);
   background-color: var(--surface-bg);
 }
 
@@ -69,7 +69,8 @@
   gap: 10px;
   padding-bottom: 20px;
   margin-bottom: 20px;
-  border-bottom: 1px solid #f5f5f5;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
 }
 
 .review-user-row {
@@ -245,10 +246,11 @@
     max-width: 1100px; /* Expandido para ocupar o desktop de forma limpa */
     min-height: auto;
     margin: 40px auto;
-    border: 1px solid #eaeaea;
+    border: 1px solid var(--border-color);
     border-radius: 16px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
     padding: 10px 20px;
+    background: var(--surface-bg);
   }
 
   .reviews-header {
@@ -288,11 +290,13 @@
   }
 
   .review-item {
-    background-color: #fbfbfb;
+    background-color: var(--surface-card);
+    color: var(--text-color);
     padding: 20px;
     border-radius: 12px;
     border-bottom: none;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.01);
+    border: 1px solid var(--border-color);
   }
 
   /* Centralização e controle de largura do formulário */

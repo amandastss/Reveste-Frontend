@@ -234,12 +234,10 @@ onMounted(() => {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  border: none;
-  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--border-color);
+  background: var(--surface-card);
   backdrop-filter: blur(6px);
-  box-shadow:
-    0 10px 25px rgba(0, 0, 0, 0.25),
-    0 4px 10px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 25px var(--shadow-color);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -268,8 +266,8 @@ onMounted(() => {
 }
 
 .topbar .save {
-  background: var(--primary-color);
-  color: black;
+  background: var(--primary);
+  color: var(--primary-contrast);
   padding: 8px 16px;
   border-radius: 999px;
   font-size: 13px;
@@ -322,7 +320,7 @@ onMounted(() => {
 .change-photo {
   margin-top: 10px;
   font-size: 13px;
-  color: var(--primary-color);
+  color: var(--primary);
   cursor: pointer;
 }
 
@@ -340,7 +338,8 @@ onMounted(() => {
 
 /* INPUT CARD */
 .input-group {
-  background: var(--surface-bg);
+  background: var(--surface-card);
+  border: 1px solid var(--border-color);
   padding: 14px;
   border-radius: 14px;
   display: flex;

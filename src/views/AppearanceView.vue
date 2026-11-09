@@ -172,8 +172,8 @@ onMounted(() => {
 }
 
 .chip-dark {
-  background: var(--surface-bg);
-  color: var(--surface-bg);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-color);
 }
 
 .theme-preview {
