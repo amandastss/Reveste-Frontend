@@ -1,4 +1,4 @@
-import api, { getStoredToken } from './config'
+import api, { getStoredToken } from './config.js'
 import type { AxiosResponse } from 'axios'
 
 type AuthResponse<T = unknown> = Promise<AxiosResponse<T>>
