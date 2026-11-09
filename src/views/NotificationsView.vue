@@ -7,6 +7,7 @@ import {
   marcarNotificacaoComoLida,
   type Notificacao,
 } from '@/services/notificacoesApi'
+import { getNotificationMeta } from '@/utils/notificationMeta'
 
 const router = useRouter()
 
@@ -163,6 +164,8 @@ onMounted(() => {
           'notification-card',
           {
             unread: !notification.lida,
+            answer: getNotificationMeta(notification).kind === 'answer',
+            question: getNotificationMeta(notification).kind === 'question',
           },
         ]"
         @click="handleNotificationClick(notification)"
@@ -173,17 +176,21 @@ onMounted(() => {
             'icon-wrapper',
             {
               'unread-icon': !notification.lida,
+              'answer-icon': getNotificationMeta(notification).kind === 'answer',
+              'question-icon': getNotificationMeta(notification).kind === 'question',
             },
           ]"
         >
-          <span class="material-symbols-outlined"> notifications </span>
+          <span class="material-symbols-outlined"> {{ getNotificationMeta(notification).icon }} </span>
         </div>
 
         <!-- CONTEÚDO -->
         <div class="notification-content">
           <h3>
-            {{ notification.mensagem }}
+            {{ getNotificationMeta(notification).title }}
           </h3>
+
+          <p>{{ notification.mensagem }}</p>
 
           <span class="time-ago">
             {{ new Date(notification.data_envio).toLocaleString('pt-BR') }}
@@ -293,6 +300,16 @@ onMounted(() => {
   background-color: var(--surface-elevated);
 }
 
+.notification-card.answer {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(255, 255, 255, 0.96));
+  border-color: rgba(16, 185, 129, 0.18);
+}
+
+.notification-card.question {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.09), rgba(255, 255, 255, 0.96));
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
 .icon-wrapper {
   flex-shrink: 0;
   width: 42px;
@@ -311,17 +328,35 @@ onMounted(() => {
   color: var(--surface-bg);
 }
 
+.icon-wrapper.answer-icon {
+  background: rgba(16, 185, 129, 0.12);
+  color: #0f766e;
+}
+
+.icon-wrapper.question-icon {
+  background: rgba(245, 158, 11, 0.12);
+  color: #9a5b00;
+}
+
 .notification-content {
   flex: 1;
   padding-right: 15px;
 }
 
 .notification-content h3 {
-  font-size: 0.92rem;
-  font-weight: 600;
+  font-size: 0.9rem;
+  font-weight: 800;
   margin: 0 0 7px;
   color: var(--text-color);
-  line-height: 1.4;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+}
+
+.notification-content p {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-muted);
 }
 
 .time-ago {

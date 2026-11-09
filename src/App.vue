@@ -7,6 +7,7 @@ import HeaderDesktop from './components/HeaderDesktopComponent.vue'
 import FooterMobile from './components/FooterMobileComponent.vue'
 import MenuComponent from './components/MenuComponent.vue'
 import { buscarNotificacoes, type Notificacao } from './services/notificacoesApi'
+import { getNotificationMeta } from './utils/notificationMeta'
 
 const route = useRoute()
 const router = useRouter()
@@ -62,32 +63,6 @@ function resolveNotificationTarget(notification: Notificacao | null): string | n
   }
 
   return null
-}
-
-function getNotificationMeta(notification: Notificacao) {
-  const message = (notification.mensagem ?? '').toLowerCase()
-
-  if (/respondeu|resposta|respondida/i.test(message)) {
-    return {
-      title: 'Resposta do vendedor',
-      icon: 'check_circle',
-      kind: 'answer',
-    }
-  }
-
-  if (/pergunta|nova pergunta/i.test(message)) {
-    return {
-      title: 'Nova pergunta',
-      icon: 'question_answer',
-      kind: 'question',
-    }
-  }
-
-  return {
-    title: 'Nova atualização',
-    icon: 'notifications',
-    kind: 'info',
-  }
 }
 
 function triggerDesktopNotification(notification: Notificacao) {
@@ -285,6 +260,7 @@ textarea {
   box-shadow: 0 18px 36px rgba(17, 17, 17, 0.08);
   backdrop-filter: blur(10px);
   cursor: pointer;
+  font-family: 'Manrope', sans-serif;
 }
 
 .global-notification-banner.answer {
@@ -331,20 +307,22 @@ textarea {
 }
 
 .global-notification-copy strong {
-  font-size: 0.76rem;
-  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--text-color);
   opacity: 0.9;
+  font-weight: 800;
 }
 
 .global-notification-copy span {
-  font-size: 0.82rem;
-  line-height: 1.35;
+  font-size: 0.86rem;
+  line-height: 1.4;
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 500;
 }
 
 .global-notification-action {
@@ -357,6 +335,7 @@ textarea {
   padding: 8px 12px;
   cursor: pointer;
   box-shadow: 0 10px 18px rgba(17, 17, 17, 0.12);
+  font-family: 'Manrope', sans-serif;
 }
 
 .global-notification-banner.answer .global-notification-action {
