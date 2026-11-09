@@ -81,6 +81,44 @@ const currentUser = computed(() => {
   }
 })
 
+const currentUserId = computed(() => {
+  const userId = currentUser.value?.id
+  return userId !== undefined && userId !== null ? String(userId) : ''
+})
+
+const currentUserEmail = computed(() => {
+  const email = currentUser.value?.email
+  return typeof email === 'string' && email.trim() ? email.trim().toLowerCase() : ''
+})
+
+const productSellerKeys = computed(() => {
+  try {
+    const raw = localStorage.getItem('reveste_product_sellers_v1')
+    if (!raw) return [] as string[]
+
+    const parsed = JSON.parse(raw) as Record<string, string[]>
+    return (parsed[String(produtoId)] ?? []).map((value) => String(value))
+  } catch {
+    return [] as string[]
+  }
+})
+
+const canReplyAsSeller = computed(() => {
+  if (!isLoggedIn.value) return false
+
+  const sellerKeys = productSellerKeys.value.map((item) => item.trim().toLowerCase())
+  const userMatches = [
+    currentUserId.value.trim().toLowerCase(),
+    currentUserEmail.value.trim().toLowerCase(),
+  ].filter(Boolean)
+
+  if (!sellerKeys.length || !userMatches.length) {
+    return false
+  }
+
+  return sellerKeys.some((sellerKey) => userMatches.includes(sellerKey))
+})
+
 const normalizePergunta = (item: PerguntaApi): Pergunta => {
   const user = item.usuario ?? item.user ?? null
   const productId = Number(item.produto_id ?? item.produto ?? produtoId)
@@ -217,7 +255,7 @@ onMounted(() => {
       <button class="btn-back" @click="voltar">←</button>
       <h1>Perguntas ao vendedor</h1>
       <button
-        v-if="isLoggedIn"
+        v-if="isLoggedIn && !canReplyAsSeller"
         class="btn-action"
         @click="isAddingQuestion = !isAddingQuestion"
       >
@@ -238,7 +276,7 @@ onMounted(() => {
       </div>
 
       <div v-else class="questions-layout">
-        <div v-if="isAddingQuestion" class="question-form-card">
+        <div v-if="isAddingQuestion && !canReplyAsSeller" class="question-form-card">
           <div class="section-tag">Faça sua pergunta</div>
           <label class="form-label">
             Sua pergunta <span class="required">*</span>
@@ -288,7 +326,7 @@ onMounted(() => {
               <p>{{ pergunta.answer }}</p>
             </div>
 
-            <div v-else-if="isLoggedIn" class="seller-answer-box">
+            <div v-else-if="canReplyAsSeller" class="seller-answer-box">
               <label class="form-label small-label">Responder</label>
               <textarea
                 v-model="answerDrafts[pergunta.id]"

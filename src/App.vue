@@ -14,6 +14,7 @@ const router = useRouter()
 /* controla abrir e fechar o menu lateral */
 const isMenuOpen = ref(false)
 const activeNotification = ref<Notificacao | null>(null)
+const lastNotifiedNotificationId = ref<number | string | null>(null)
 let hideNotificationTimer: number | undefined
 let notificationPoller: number | undefined
 
@@ -63,6 +64,48 @@ function resolveNotificationTarget(notification: Notificacao | null): string | n
   return null
 }
 
+function triggerDesktopNotification(notification: Notificacao) {
+  if (!('Notification' in window)) return
+
+  const permission = Notification.permission
+  if (permission === 'granted') {
+    const title = /respondeu|resposta|respondida/i.test(notification.mensagem)
+      ? 'Resposta do vendedor'
+      : 'Nova pergunta'
+
+    try {
+      new Notification(title, {
+        body: notification.mensagem,
+        tag: `reveste-notification-${notification.id}`,
+      })
+    } catch {
+      // ignora falhas do navegador
+    }
+    return
+  }
+
+  if (permission === 'default') {
+    Notification.requestPermission().then((result) => {
+      if (result === 'granted') {
+        const title = /respondeu|resposta|respondida/i.test(notification.mensagem)
+          ? 'Resposta do vendedor'
+          : 'Nova pergunta'
+
+        try {
+          new Notification(title, {
+            body: notification.mensagem,
+            tag: `reveste-notification-${notification.id}`,
+          })
+        } catch {
+          // ignora falhas do navegador
+        }
+      }
+    }).catch(() => {
+      // ignora falhas do navegador
+    })
+  }
+}
+
 async function syncUnreadNotification() {
   try {
     const notifications = await buscarNotificacoes()
@@ -71,18 +114,23 @@ async function syncUnreadNotification() {
 
     if (!next) {
       activeNotification.value = null
+      lastNotifiedNotificationId.value = null
       return
     }
 
-    activeNotification.value = next
+    if (String(next.id) !== String(lastNotifiedNotificationId.value)) {
+      activeNotification.value = next
+      triggerDesktopNotification(next)
+      lastNotifiedNotificationId.value = next.id
 
-    if (hideNotificationTimer) {
-      window.clearTimeout(hideNotificationTimer)
+      if (hideNotificationTimer) {
+        window.clearTimeout(hideNotificationTimer)
+      }
+
+      hideNotificationTimer = window.setTimeout(() => {
+        activeNotification.value = null
+      }, 9000)
     }
-
-    hideNotificationTimer = window.setTimeout(() => {
-      activeNotification.value = null
-    }, 9000)
   } catch {
     activeNotification.value = null
   }
