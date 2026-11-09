@@ -297,7 +297,8 @@ onMounted(() => {
 }
 
 .notification-card.unread {
-  background-color: var(--surface-elevated);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.19), rgba(255, 255, 255, 0.96));
+  border-color: rgba(217, 119, 6, 0.33);
 }
 
 .notification-card.answer {
@@ -324,8 +325,8 @@ onMounted(() => {
 }
 
 .icon-wrapper.unread-icon {
-  background-color: var(--text-color);
-  color: var(--surface-bg);
+  background: rgba(217, 119, 6, 0.16);
+  color: #92400e;
 }
 
 .icon-wrapper.answer-icon {

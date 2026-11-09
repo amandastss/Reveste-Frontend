@@ -98,3 +98,20 @@ export function canUserAccessQuestionReply({
 
   return sellerKeys.some((sellerKey) => userMatches.includes(sellerKey))
 }
+
+export function canUserDeleteQuestion({
+  currentUserId,
+  questionUserId,
+}: {
+  currentUserId: string
+  questionUserId: string | number | null | undefined
+}): boolean {
+  const current = normalizeQuestionIdentity(currentUserId)
+  const questionOwner = normalizeQuestionIdentity(questionUserId)
+
+  if (!current || !questionOwner) {
+    return false
+  }
+
+  return current === questionOwner
+}

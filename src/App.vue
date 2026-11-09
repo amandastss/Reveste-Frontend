@@ -6,7 +6,11 @@ import HeaderMobile from './components/HeaderMobileComponent.vue'
 import HeaderDesktop from './components/HeaderDesktopComponent.vue'
 import FooterMobile from './components/FooterMobileComponent.vue'
 import MenuComponent from './components/MenuComponent.vue'
-import { buscarNotificacoes, type Notificacao } from './services/notificacoesApi'
+import {
+  buscarNotificacoes,
+  marcarNotificacaoComoLida,
+  type Notificacao,
+} from './services/notificacoesApi'
 import { getNotificationMeta } from './utils/notificationMeta'
 
 const route = useRoute()
@@ -131,6 +135,25 @@ async function syncUnreadNotification() {
   }
 }
 
+async function clearActiveNotification() {
+  const notification = activeNotification.value
+
+  if (notification && !notification.lida && notification.id) {
+    try {
+      await marcarNotificacaoComoLida(notification.id)
+      notification.lida = true
+    } catch {
+      // ignora falhas ao fechar a barra
+    }
+  }
+
+  activeNotification.value = null
+
+  if (hideNotificationTimer) {
+    window.clearTimeout(hideNotificationTimer)
+  }
+}
+
 async function openNotification() {
   const target = resolveNotificationTarget(activeNotification.value)
 
@@ -138,7 +161,7 @@ async function openNotification() {
     await router.push(target)
   }
 
-  activeNotification.value = null
+  await clearActiveNotification()
 }
 
 onMounted(() => {
@@ -186,7 +209,12 @@ onBeforeUnmount(() => {
         <span>{{ activeNotification.mensagem }}</span>
       </div>
 
-      <button class="global-notification-action" @click.stop="openNotification">Abrir</button>
+      <div class="global-notification-actions">
+        <button class="global-notification-action" @click.stop="openNotification">Abrir</button>
+        <button class="global-notification-close" @click.stop="clearActiveNotification" aria-label="Fechar notificação">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
     </div>
 
     <main class="content">
@@ -325,17 +353,37 @@ textarea {
   font-weight: 500;
 }
 
-.global-notification-action {
+.global-notification-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.global-notification-action,
+.global-notification-close {
   border: none;
   border-radius: 999px;
-  background: var(--text-color);
-  color: var(--surface-bg);
   font-weight: 700;
   font-size: 0.74rem;
-  padding: 8px 12px;
   cursor: pointer;
-  box-shadow: 0 10px 18px rgba(17, 17, 17, 0.12);
   font-family: 'Manrope', sans-serif;
+}
+
+.global-notification-action {
+  background: var(--text-color);
+  color: var(--surface-bg);
+  padding: 8px 12px;
+  box-shadow: 0 10px 18px rgba(17, 17, 17, 0.12);
+}
+
+.global-notification-close {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.08);
+  color: var(--text-color);
 }
 
 .global-notification-banner.answer .global-notification-action {

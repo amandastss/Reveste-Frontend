@@ -2,7 +2,11 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api, { API_BASE, getStoredToken } from '@/api/config'
-import { canUserAccessQuestionReply, extractSellerKeysFromProduct } from '@/utils/questionAccess'
+import {
+  canUserAccessQuestionReply,
+  canUserDeleteQuestion,
+  extractSellerKeysFromProduct,
+} from '@/utils/questionAccess'
 
 interface UsuarioResumo {
   id?: number | string
@@ -242,6 +246,38 @@ const responderPergunta = async (perguntaId: number) => {
   }
 }
 
+const podeApagarPergunta = (pergunta: Pergunta) => {
+  return canUserDeleteQuestion({
+    currentUserId: currentUserId.value,
+    questionUserId: pergunta.userId,
+  })
+}
+
+const apagarPergunta = async (perguntaId: number) => {
+  if (!ensureAuthenticated()) {
+    return
+  }
+
+  const pergunta = perguntas.value.find((item) => item.id === perguntaId)
+  if (!pergunta || !podeApagarPergunta(pergunta)) {
+    alert('Você só pode apagar sua própria pergunta.')
+    return
+  }
+
+  const confirmar = window.confirm('Tem certeza que deseja apagar esta pergunta?')
+  if (!confirmar) {
+    return
+  }
+
+  try {
+    await api.delete(`/perguntas/${perguntaId}/`)
+    perguntas.value = perguntas.value.filter((item) => item.id !== perguntaId)
+  } catch (error) {
+    console.error('Erro ao apagar pergunta:', error)
+    alert('Não foi possível apagar a pergunta.')
+  }
+}
+
 const carregarInformacaoVendedorProduto = async () => {
   try {
     const response = await api.get(`/produtos/${produtoId}/`)
@@ -350,6 +386,12 @@ onMounted(() => {
               <p>{{ pergunta.answer }}</p>
             </div>
 
+            <div v-if="podeApagarPergunta(pergunta)" class="question-actions">
+              <button class="btn-action full-width danger" @click="apagarPergunta(pergunta.id)">
+                Apagar pergunta
+              </button>
+            </div>
+
             <div v-else-if="canReplyAsSeller" class="seller-answer-box">
               <label class="form-label small-label">Responder</label>
               <textarea
@@ -407,7 +449,8 @@ onMounted(() => {
 }
 
 .primary,
-.secondary {
+.secondary,
+.danger {
   border-radius: 12px;
   font-weight: 700;
 }
@@ -424,6 +467,14 @@ onMounted(() => {
   background: rgba(15, 23, 42, 0.04);
   border: 1px solid rgba(15, 23, 42, 0.08);
   color: var(--text-color);
+  padding: 10px 14px;
+  margin-top: 10px;
+}
+
+.danger {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.18);
+  color: #b91c1c;
   padding: 10px 14px;
   margin-top: 10px;
 }
@@ -487,6 +538,10 @@ onMounted(() => {
 .answer-box p {
   margin: 0;
   line-height: 1.5;
+}
+
+.question-actions {
+  margin-top: 12px;
 }
 
 .seller-answer-box {
