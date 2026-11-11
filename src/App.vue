@@ -272,54 +272,60 @@ textarea {
 }
 
 .global-notification-banner {
-  position: sticky;
-  top: 12px;
-  z-index: 30;
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 12px auto 0;
-  width: min(94vw, 540px);
-  padding: 12px 14px;
-  border-radius: 18px;
-  border: 1px solid var(--border-color);
-  background: rgba(255, 255, 255, 0.95);
-  color: var(--text-color);
-  box-shadow: 0 18px 36px rgba(17, 17, 17, 0.08);
-  backdrop-filter: blur(10px);
+  width: min(calc(100vw - 32px), 540px);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(168, 85, 247, 0.32);
+  border-left: 3px solid #a855f7;
+  background: #111111;
+  color: #ffffff;
+  box-shadow: 0 14px 35px var(--shadow-color), 0 0 20px rgba(168, 85, 247, 0.2);
   cursor: pointer;
-  font-family: 'Manrope', sans-serif;
+  font-family: inherit;
+  animation: notification-toast-enter 0.22s ease-out;
 }
 
 .global-notification-banner.answer {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(255, 255, 255, 0.96));
-  border-color: rgba(16, 185, 129, 0.2);
+  border-left-color: #a855f7;
 }
 
-.global-notification-banner.question {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.12), rgba(255, 255, 255, 0.96));
-  border-color: rgba(251, 191, 36, 0.25);
+.global-notification-banner:hover {
+  box-shadow: 0 18px 40px var(--shadow-color), 0 0 26px rgba(168, 85, 247, 0.32);
+}
+
+.global-notification-banner:focus-visible,
+.global-notification-action:focus-visible,
+.global-notification-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .global-notification-icon {
+  flex: 0 0 38px;
   width: 38px;
   height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  background: rgba(17, 17, 17, 0.06);
-  color: var(--text-color);
+  border-radius: var(--radius-sm);
+  background: #292929;
+  color: #a855f7;
 }
 
 .global-notification-banner.answer .global-notification-icon {
-  background: rgba(16, 185, 129, 0.12);
-  color: #0f766e;
+  color: #a855f7;
 }
 
 .global-notification-banner.question .global-notification-icon {
-  background: rgba(245, 158, 11, 0.12);
-  color: #9a5b00;
+  color: #a855f7;
 }
 
 .global-notification-icon .material-symbols-outlined {
@@ -335,19 +341,19 @@ textarea {
 }
 
 .global-notification-copy strong {
-  font-size: 0.72rem;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--text-color);
-  opacity: 0.9;
-  font-weight: 800;
+  font-size: 0.84rem;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+  font-weight: 700;
 }
 
 .global-notification-copy span {
-  font-size: 0.86rem;
+  font-size: 0.8rem;
   line-height: 1.4;
-  color: var(--text-muted);
-  white-space: nowrap;
+  color: #d1d5db;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
   text-overflow: ellipsis;
   font-weight: 500;
@@ -362,18 +368,17 @@ textarea {
 .global-notification-action,
 .global-notification-close {
   border: none;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-weight: 700;
   font-size: 0.74rem;
   cursor: pointer;
-  font-family: 'Manrope', sans-serif;
+  font-family: inherit;
 }
 
 .global-notification-action {
-  background: var(--text-color);
-  color: var(--surface-bg);
+  background: #a855f7;
+  color: #ffffff;
   padding: 8px 12px;
-  box-shadow: 0 10px 18px rgba(17, 17, 17, 0.12);
 }
 
 .global-notification-close {
@@ -382,15 +387,25 @@ textarea {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(15, 23, 42, 0.08);
-  color: var(--text-color);
+  background: #292929;
+  color: #ffffff;
 }
 
-.global-notification-banner.answer .global-notification-action {
-  background: #0f766e;
+@keyframes notification-toast-enter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
-.global-notification-banner.question .global-notification-action {
-  background: #a16207;
+@media (prefers-reduced-motion: reduce) {
+  .global-notification-banner {
+    animation: none;
+  }
 }
 </style>

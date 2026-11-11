@@ -107,3 +107,12 @@ export async function marcarNotificacaoComoLida(
     }
   }
 }
+
+export async function excluirNotificacao(id: number): Promise<void> {
+  if (!getStoredToken()) {
+    writeLocalNotifications(readLocalNotifications().filter((item) => item.id !== id))
+    return
+  }
+
+  await api.delete(`/api/notificacoes/${id}/`)
+}
