@@ -91,6 +91,7 @@ const closeAddToCartConfirm = () => {
 }
 const loadFavoriteState = () => {
   isFavorite.value = isFavoriteProduct(productId)
+
 }
 const toggleFavorite = () => {
   if (!productData.value) return
@@ -103,7 +104,10 @@ const toggleFavorite = () => {
   }
   isFavorite.value = toggleFavoriteProduct(favoritePayload)
   isAnimating.value = true
-  setTimeout(() => (isAnimating.value = false), 600)
+  setTimeout(() => {
+    isAnimating.value = false
+  }, 600)
+
 }
 const handleAddToCartSuccess = () => {
   addToCartSuccess.value = true
