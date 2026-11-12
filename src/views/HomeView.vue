@@ -251,18 +251,6 @@ watch(
   { immediate: true },
 )
 
-const selecionarCategoria = (categoriaId: number | null) => {
-  const nextQuery = { ...route.query }
-
-  if (categoriaId === null) {
-    delete nextQuery.categoria
-  } else {
-    nextQuery.categoria = String(categoriaId)
-  }
-
-  router.push({ name: 'home', query: nextQuery })
-}
-
 const produtosFiltrados = computed(() => {
   if (!categoriaSelecionada.value) return produtos.value
 
@@ -299,8 +287,12 @@ onMounted(() => {
   <div class="home">
     <section class="hero-banner">
       <div class="hero-slider" :style="{ transform: `translateX(-${heroIndex * 100}%)` }">
-        <article v-for="slide in heroSlides" :key="slide.id" class="hero-slide"
-          @click="slide.productId ? goToProduto(slide.productId) : goToSearch()">
+        <article
+          v-for="slide in heroSlides"
+          :key="slide.id"
+          class="hero-slide"
+          @click="slide.productId ? goToProduto(slide.productId) : goToSearch()"
+        >
           <div class="hero-content">
             <p class="eyebrow">{{ slide.tag }}</p>
             <h1>{{ slide.title }}</h1>
@@ -309,7 +301,10 @@ onMounted(() => {
             </p>
 
             <div class="hero-actions">
-              <button class="hero-primary" @click.stop="slide.productId ? goToProduto(slide.productId) : goToSearch()">
+              <button
+                class="hero-primary"
+                @click.stop="slide.productId ? goToProduto(slide.productId) : goToSearch()"
+              >
                 {{ slide.ctaPrimary || (slide.productId ? 'Ver produto' : 'Explorar loja') }}
               </button>
               <button class="hero-secondary" @click.stop="goToSearch">
@@ -338,7 +333,7 @@ onMounted(() => {
         <div class="highlight-item active-highlight">
           <span class="material-symbols-outlined">{{
             currentHighlight?.icon ?? 'local_shipping'
-            }}</span>
+          }}</span>
           <span>{{ currentHighlight?.text ?? 'Frete grátis acima de R$ 200' }}</span>
         </div>
       </div>
@@ -349,9 +344,14 @@ onMounted(() => {
         </button>
 
         <div class="hero-dots" aria-label="Navegação do banner">
-          <button v-for="(slide, index) in heroSlides" :key="`${slide.id}-dot`" class="dot"
-            :class="{ active: index === heroIndex }" @click="heroIndex = index"
-            :aria-label="`Ir para o slide ${index + 1}`" />
+          <button
+            v-for="(slide, index) in heroSlides"
+            :key="`${slide.id}-dot`"
+            class="dot"
+            :class="{ active: index === heroIndex }"
+            @click="heroIndex = index"
+            :aria-label="`Ir para o slide ${index + 1}`"
+          />
         </div>
 
         <button class="nav-arrow" @click="nextHeroSlide" aria-label="Próximo slide">
