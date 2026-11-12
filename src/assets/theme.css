@@ -5,8 +5,12 @@
   --surface-bg: #ffffff;
   --surface-elevated: #f3f4f6;
   --surface-muted: #f7f7f5;
+  --surface-card: #ffffff;
+  --surface-inverse: #111111;
+  --surface-subtle: #f0f2f5;
   --text-color: #111111;
   --text-muted: #5f6368;
+  --text-soft: #6b7280;
   --border-color: #e5e7eb;
   --header-bg: #ffffff;
   --header-text: #111111;
@@ -28,24 +32,104 @@
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --app-bg: #0f1115;
-  --surface-bg: #171b21;
-  --surface-elevated: #1d2229;
-  --surface-muted: #111821;
+  --app-bg: #0b1020;
+  --surface-bg: #121922;
+  --surface-elevated: #1a2433;
+  --surface-muted: #0f1724;
+  --surface-card: #181f2a;
+  --surface-inverse: #f8fafc;
+  --surface-subtle: #111b2a;
   --text-color: #f8fafc;
-  --text-muted: #b8c2cc;
-  --border-color: rgba(255, 255, 255, 0.08);
-  --header-bg: #171b21;
+  --text-muted: #dfe8f3;
+  --text-soft: #ebf0f7;
+  --border-color: rgba(255, 255, 255, 0.09);
+  --header-bg: #121922;
   --header-text: #f8fafc;
   --accent: #e5e7eb;
-  --accent-soft: rgba(255, 255, 255, 0.06);
+  --accent-soft: rgba(255, 255, 255, 0.08);
   --accent-strong: #ffffff;
   --primary: #e5e7eb;
   --primary-contrast: #111111;
   --success: #34d399;
   --warning: #fbbf24;
   --danger: #f87171;
-  --shadow-color: rgba(0, 0, 0, 0.35);
+  --shadow-color: rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme='dark'] body,
+:root[data-theme='dark'] .app-container,
+:root[data-theme='dark'] .content,
+:root[data-theme='dark'] .page,
+:root[data-theme='dark'] .profile-page,
+:root[data-theme='dark'] .appearance-page,
+:root[data-theme='dark'] .auth-wrapper,
+:root[data-theme='dark'] .auth-card,
+:root[data-theme='dark'] .menu-item,
+:root[data-theme='dark'] .account-card,
+:root[data-theme='dark'] .cart-page,
+:root[data-theme='dark'] .checkout-page,
+:root[data-theme='dark'] .search-page,
+:root[data-theme='dark'] .favorites-page,
+:root[data-theme='dark'] .product-page,
+:root[data-theme='dark'] .settings-page {
+  background: var(--app-bg);
+  color: var(--text-color);
+}
+
+:root[data-theme='dark'] .profile-page .profile-header,
+:root[data-theme='dark'] .profile-page .menu-item,
+:root[data-theme='dark'] .profile-page .account-card,
+:root[data-theme='dark'] .appearance-card,
+:root[data-theme='dark'] .auth-card,
+:root[data-theme='dark'] .theme-card,
+:root[data-theme='dark'] .card,
+:root[data-theme='dark'] .surface-card {
+  background: var(--surface-card);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+
+:root[data-theme='dark'] .profile-page .account-row span,
+:root[data-theme='dark'] .profile-page .profile-bio,
+:root[data-theme='dark'] .profile-page .extra,
+:root[data-theme='dark'] .profile-page .arrow,
+:root[data-theme='dark'] .profile-page .account-hint,
+:root[data-theme='dark'] .appearance-header p,
+:root[data-theme='dark'] .hint p,
+:root[data-theme='dark'] .profile-page .menu-item .left,
+:root[data-theme='dark'] .profile-page .menu-item .right,
+:root[data-theme='dark'] .profile-page .menu-item .left span:last-child,
+:root[data-theme='dark'] .profile-page .menu-item .right span:last-child {
+  color: var(--text-color);
+}
+
+:root[data-theme='dark'] .profile-page .account-row strong,
+:root[data-theme='dark'] .profile-page .profile-bio,
+:root[data-theme='dark'] .profile-page .account-card h3 {
+  color: var(--text-color);
+}
+
+:root[data-theme='dark'] .profile-page .menu-item {
+  background: var(--surface-elevated);
+}
+
+:root[data-theme='dark'] .profile-page .menu-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme='dark'] .profile-page .delete,
+:root[data-theme='dark'] .profile-page .auth {
+  color: var(--text-color);
+}
+
+:root[data-theme='dark'] .theme-card.active {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
+}
+
+:root[data-theme='dark'] .preview-top,
+:root[data-theme='dark'] .preview-sidebar,
+:root[data-theme='dark'] .preview-item {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 html {

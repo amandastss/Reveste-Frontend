@@ -57,6 +57,14 @@ function writeLocalNotifications(notifications: Notificacao[]) {
 }
 
 export async function buscarNotificacoes(): Promise<Notificacao[]> {
+  const token = getStoredToken()
+
+  if (!token) {
+    return readLocalNotifications().sort(
+      (a, b) => new Date(b.data_envio).getTime() - new Date(a.data_envio).getTime(),
+    )
+  }
+
   try {
     const response = await api.get('/api/notificacoes/')
 
@@ -98,4 +106,13 @@ export async function marcarNotificacaoComoLida(
       data_envio: new Date().toISOString(),
     }
   }
+}
+
+export async function excluirNotificacao(id: number): Promise<void> {
+  if (!getStoredToken()) {
+    writeLocalNotifications(readLocalNotifications().filter((item) => item.id !== id))
+    return
+  }
+
+  await api.delete(`/api/notificacoes/${id}/`)
 }

@@ -74,6 +74,7 @@ async function register() {
     )
 
     const responseData = response.data || {}
+    const responsePayload = responseData as Record<string, unknown>
 
     const userData = {
       ...responseData,
@@ -84,8 +85,14 @@ async function register() {
       date_of_birth: birthdate.value,
     }
 
+    const userId = String(
+      responsePayload.id ?? responsePayload.user_id ?? (userData as Record<string, unknown>).id ?? '',
+    )
+
     localStorage.setItem('email', email.value)
     localStorage.setItem('user', JSON.stringify(userData))
+    localStorage.setItem('user_email', String(email.value || '').trim().toLowerCase())
+    localStorage.setItem('user_id', userId)
     localStorage.setItem('isLogin', 'true')
 
     const token =

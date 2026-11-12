@@ -98,11 +98,13 @@ function handleClick(item: FooterItem, index: number) {
 
 /* BOTÃO DO MEIO (VENDER) */
 .footer-button:nth-child(2) {
-  background: black;
+  background: #ffffff;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 .footer-button:nth-child(2) .material-symbols-outlined {
-  color: var(--surface-bg);
+  color: #111111;
 }
 
 .footer-button:nth-child(2):active {

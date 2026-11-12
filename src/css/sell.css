@@ -16,7 +16,8 @@ body,
   width: 100%;
   min-height: 100vh;
 
-  background: linear-gradient(to bottom, #ffffff 0%, #f7f7f7 60%, #f1f1f1 100%);
+  background: var(--app-bg);
+  color: var(--text-color);
 
   padding: 24px 24px 220px;
   font-family: 'Montserrat', sans-serif;
@@ -37,21 +38,23 @@ body,
 }
 
 .modal {
-  background: white;
+  background: var(--surface-card);
+  color: var(--text-color);
   padding: 25px;
   border-radius: 15px;
   text-align: center;
   width: 80%;
   max-width: 300px;
   animation: pop 0.2s ease;
+  border: 1px solid var(--border-color);
 }
 
 .modal button {
   margin-top: 15px;
   padding: 10px;
   border: none;
-  background: black;
-  color: white;
+  background: var(--primary);
+  color: var(--primary-contrast);
   border-radius: 8px;
   cursor: pointer;
 }
@@ -81,7 +84,7 @@ body,
   font-size: 1.6rem;
   font-weight: 500;
   margin: 0;
-  color: #000;
+  color: var(--text-color);
   letter-spacing: -0.5px;
 }
 
@@ -93,9 +96,10 @@ body,
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  border: none;
+  border: 1px solid var(--border-color);
 
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--surface-card);
+  color: var(--text-color);
   backdrop-filter: blur(8px);
 
   display: flex;
@@ -105,9 +109,7 @@ body,
   cursor: pointer;
   transition: all 0.25s ease;
 
-  box-shadow:
-    0 10px 25px rgba(0, 0, 0, 0.18),
-    0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px var(--shadow-color);
 }
 
 .back-btn:hover {
@@ -132,11 +134,13 @@ body,
 }
 
 .field-group {
-  background: #fff;
+  background: var(--surface-card);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
   padding: 14px 16px;
   border-radius: 14px;
 
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 6px 16px var(--shadow-color);
 
   transition: all 0.2s ease;
 }
@@ -147,7 +151,7 @@ body,
 
 .field-group label {
   font-size: 0.75rem;
-  color: #888;
+  color: var(--text-muted);
   font-weight: 600;
   letter-spacing: 0.5px;
 }
@@ -158,18 +162,24 @@ body,
 .field-group select {
   width: 100%;
   border: none;
-  border-bottom: 1px solid #ccc;
-  background: transparent;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--surface-bg);
+  color: var(--text-color);
   padding: 12px 0;
   font-size: 1rem;
   outline: none;
   transition: all 0.2s ease;
 }
 
+.field-group select option {
+  background: var(--surface-card);
+  color: var(--text-color);
+}
+
 .field-group input:focus,
 .field-group textarea:focus,
 .field-group select:focus {
-  border-bottom: 1px solid #000;
+  border-bottom: 1px solid var(--accent);
 }
 
 .field-group textarea {
@@ -179,7 +189,7 @@ body,
 
 .character-count {
   margin: 5px 0 0;
-  color: #888;
+  color: var(--text-muted);
   font-size: 0.75rem;
   text-align: right;
 }
@@ -192,8 +202,8 @@ body,
   border: none;
   border-radius: 14px;
 
-  background: #111;
-  color: #fff;
+  background: var(--primary);
+  color: var(--primary-contrast);
 
   cursor: pointer;
   font-size: 0.95rem;
@@ -208,20 +218,20 @@ body,
 
 /* DICAS */
 .photo-tips {
-  background: #fff;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 16px;
   margin-top: 10px;
 
-  box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.08),
-    0 2px 6px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 8px 20px var(--shadow-color);
 }
 
 .photo-tips p {
   margin: 0 0 8px;
   font-size: 0.9rem;
   font-weight: 600;
+  color: var(--text-color);
 }
 
 .photo-tips ul {
@@ -231,7 +241,7 @@ body,
 
 .photo-tips li {
   font-size: 0.85rem;
-  color: #555;
+  color: var(--text-muted);
   margin-bottom: 6px;
 }
 
@@ -265,17 +275,19 @@ body,
 }
 
 .scanner-result {
-  background: #f9fafb;
+  background: var(--surface-elevated);
+  color: var(--text-color);
   padding: 12px;
   border-radius: 12px;
+  border: 1px solid var(--border-color);
 }
 
 .scanner-status {
-  color: #555;
+  color: var(--text-muted);
 }
 
 .scanner-error {
-  color: #e11d48;
+  color: #f87171;
   font-weight: 500;
 }
 
@@ -286,8 +298,8 @@ body,
   bottom: 70px;
   width: 100%;
   padding: 18px 24px;
-  background: white;
-  border-top: 1px solid #e5e5e5;
+  background: var(--surface-bg);
+  border-top: 1px solid var(--border-color);
   z-index: 999;
 }
 
@@ -297,8 +309,8 @@ body,
   border: none;
   border-radius: 32px;
 
-  background: #000;
-  color: white;
+  background: var(--primary);
+  color: var(--primary-contrast);
 
   font-size: 15px;
   font-weight: 700;

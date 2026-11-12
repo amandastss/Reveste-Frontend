@@ -1,7 +1,8 @@
 .product-page-container {
   max-width: 430px;
   margin: 0 auto;
-  background: #fff;
+  background: var(--app-bg);
+  color: var(--text-color);
   min-height: 100vh;
   font-family: 'Montserrat', sans-serif;
 }
@@ -95,7 +96,7 @@
 
 .category-badge {
   font-size: 11px;
-  color: #777;
+  color: var(--text-muted);
   display: block;
   margin-bottom: 16px;
 }
@@ -105,12 +106,12 @@ h2 {
   font-size: 11px;
   text-transform: uppercase;
   margin-bottom: 4px;
-  color: #888;
+  color: var(--text-muted);
 }
 
 p {
   font-size: 13px;
-  color: #333;
+  color: var(--text-color);
 }
 
 /* LAYOUT */
@@ -154,8 +155,8 @@ p {
   gap: 12px;
   padding: 16px 24px;
 
-  background: #ffffff;
-  border-top: 1px solid #e5e5e5;
+  background: var(--surface-bg);
+  border-top: 1px solid var(--border-color);
 
   z-index: 100;
 }
@@ -477,7 +478,7 @@ p {
 @media (min-width: 768px) {
   .product-page-container {
     max-width: 700px;
-    background: #f8f9fb;
+    background: var(--app-bg);
   }
 
   .scrollable-content {
@@ -516,13 +517,14 @@ p {
 /* ========================= */
 @media (min-width: 1024px) {
   body {
-    background: #eef1f6;
+    background: var(--app-bg);
   }
 
   .product-page-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 40px 20px;
+    background: var(--app-bg);
   }
 
   .scrollable-content {
@@ -550,7 +552,8 @@ p {
 
   /* CARD DIREITA */
   .content {
-    background: white;
+    background: var(--surface-card);
+    color: var(--text-color);
     padding: 30px;
     border-radius: 20px;
 

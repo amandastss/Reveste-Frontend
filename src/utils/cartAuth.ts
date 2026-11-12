@@ -1,4 +1,4 @@
-import { getStoredToken } from '@/api/config'
+import { getStoredToken } from '../api/config.js'
 
 export function hasCartAuthToken() {
   return Boolean(getStoredToken())

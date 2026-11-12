@@ -1,5 +1,4 @@
-
-import api from './config'
+import api, { getStoredToken } from './config.js'
 import axios, { type AxiosResponse } from 'axios'
 
 type AuthResponse<T = unknown> = Promise<AxiosResponse<T>>
@@ -57,22 +56,34 @@ const buildProfileForm = (payload: ProfileUpdatePayload) => {
   return formData
 }
 
-const checkEmail = (email: string): AuthResponse =>
-  post('/check-email/', { email })
+const ensureAuthenticated = () => {
+  const token = getStoredToken()
 
-const sendEmail = (email: string): AuthResponse =>
-  post('/send-email/', { email })
+  if (!token) {
+    throw new Error('Você precisa fazer login antes de acessar este conteúdo.')
+  }
 
+  return token
+}
+
+const checkEmail = (email: string): AuthResponse => post('/check-email/', { email })
+const sendEmail = (email: string): AuthResponse => post('/send-email/', { email })
 const login = (email: string, password: string): AuthResponse =>
   post('/token/', { email, password })
 
-const fetchUserProfile = async () =>
-  (await api.get('/usuarios/me/')).data as UserProfile
+const fetchUserProfile = async () => {
+  ensureAuthenticated()
+  return (await api.get('/usuarios/me/')).data as UserProfile
+}
 
 async function fetchUserFromCandidates(
   token: string,
   userId?: string | number,
 ): Promise<Record<string, unknown> | null> {
+  if (!token && !getStoredToken()) {
+    return null
+  }
+
   try {
     const res = await api.get('/usuarios/me/', {
       headers: {
@@ -169,9 +180,9 @@ const register = (
   return api.post('/registro/', data)
 }
 
-const updateProfile = async (
-  payload: ProfileUpdatePayload,
-): Promise<Record<string, unknown>> => {
+const updateProfile = async (payload: ProfileUpdatePayload): Promise<Record<string, unknown>> => {
+  ensureAuthenticated()
+
   const rawUser = localStorage.getItem('user')
   const storedUser = rawUser
     ? (JSON.parse(rawUser) as Record<string, unknown>)

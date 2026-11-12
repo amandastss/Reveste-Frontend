@@ -1,19 +1,22 @@
-
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import {
   buscarNotificacoes,
+  excluirNotificacao,
   marcarNotificacaoComoLida,
   type Notificacao,
 } from '@/services/notificacoesApi'
+import { getNotificationMeta } from '@/utils/notificationMeta'
 
 const router = useRouter()
 
 const notifications = ref<Notificacao[]>([])
 const loading = ref(true)
 const error = ref(false)
+const deletingNotifications = ref(false)
+const notificationActionError = ref('')
 
 const unreadCount = computed(() => {
   return notifications.value.filter((notification) => !notification.lida).length
@@ -79,15 +82,12 @@ async function handleNotificationClick(
   const targetRoute = resolveNotificationTarget(notification)
 
   if (!notification.lida) {
-    // Atualiza a interface imediatamente.
     notification.lida = true
 
     try {
       await marcarNotificacaoComoLida(notification.id)
     } catch (err: unknown) {
       console.error('Erro ao marcar notificação como lida:', err)
-
-      // Reverte a alteração caso a API falhe.
       notification.lida = false
     }
   }
@@ -114,6 +114,38 @@ async function marcarTodasComoLidas(): Promise<void> {
       )
     }
   }
+}
+
+async function limparNotificacoes(): Promise<void> {
+  if (deletingNotifications.value || notifications.value.length === 0) return
+
+  const confirmed = window.confirm('Tem certeza que deseja apagar todas as notificações?')
+  if (!confirmed) return
+
+  deletingNotifications.value = true
+  notificationActionError.value = ''
+
+  const totalNotifications = notifications.value.length
+  const failedNotifications: Notificacao[] = []
+
+for (const notification of notifications.value) {
+    try {
+      await excluirNotificacao(notification.id)
+      notifications.value = notifications.value.filter((item) => item.id !== notification.id)
+    } catch (err) {
+      console.error('Erro ao excluir notificação:', notification.id, err)
+      failedNotifications.push(notification)
+    }
+  }
+
+  if (failedNotifications.length > 0) {
+    notificationActionError.value =
+      failedNotifications.length === totalNotifications
+        ? 'Não foi possível apagar as notificações. Tente novamente.'
+        : 'Algumas notificações não puderam ser apagadas. Tente novamente.'
+  }
+
+  deletingNotifications.value = false
 }
 
 function goBack(): void {
@@ -184,18 +216,24 @@ onMounted(() => {
     </div>
 
     <main v-else class="notifications-list">
-      <div
-        v-if="unreadCount > 0"
-        class="mark-all-container"
-      >
-        <button
-          class="mark-all-btn"
-          @click="marcarTodasComoLidas"
-        >
+      <div v-if="notifications.length > 0" class="notification-list-actions">
+        <button v-if="unreadCount > 0" class="mark-all-btn" @click="marcarTodasComoLidas">
           Marcar todas como lidas
+        </button>
+        <button
+          class="mark-all-btn clear-notifications-btn"
+          :disabled="deletingNotifications"
+          @click="limparNotificacoes"
+        >
+          {{ deletingNotifications ? 'Apagando...' : 'Limpar notificações' }}
         </button>
       </div>
 
+      <p v-if="notificationActionError" class="notification-action-error" role="alert">
+        {{ notificationActionError }}
+      </p>
+
+      <!-- NOTIFICAÇÃO -->
       <div
         v-for="notification in notifications"
         :key="notification.id"
@@ -203,6 +241,8 @@ onMounted(() => {
           'notification-card',
           {
             unread: !notification.lida,
+            answer: getNotificationMeta(notification).kind === 'answer',
+            question: getNotificationMeta(notification).kind === 'question',
           },
         ]"
         @click="handleNotificationClick(notification)"
@@ -212,16 +252,20 @@ onMounted(() => {
             'icon-wrapper',
             {
               'unread-icon': !notification.lida,
+              'answer-icon': getNotificationMeta(notification).kind === 'answer',
+              'question-icon': getNotificationMeta(notification).kind === 'question',
             },
           ]"
         >
-          <span class="material-symbols-outlined">
-            notifications
-          </span>
+          <span class="material-symbols-outlined">{{ getNotificationMeta(notification).icon }}</span>
         </div>
 
         <div class="notification-content">
-          <h3>{{ notification.mensagem }}</h3>
+          <h3>
+            {{ getNotificationMeta(notification).title }}
+          </h3>
+
+          <p>{{ notification.mensagem }}</p>
 
           <span class="time-ago">
             {{ new Date(notification.data_envio).toLocaleString('pt-BR') }}
@@ -302,8 +346,10 @@ onMounted(() => {
   gap: 12px;
 }
 
-.mark-all-container {
+.notification-list-actions {
   display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
   justify-content: flex-end;
   margin-bottom: 4px;
 }
@@ -318,20 +364,37 @@ onMounted(() => {
   text-decoration: underline;
 }
 
+.clear-notifications-btn {
+  color: #7e22ce;
+}
+
+.clear-notifications-btn:disabled {
+  cursor: wait;
+}
+
+.notification-action-error {
+  color: var(--danger);
+  font-size: 0.8rem;
+  text-align: right;
+}
+
 .notification-card {
   position: relative;
   display: flex;
   align-items: flex-start;
   padding: 18px;
-  background-color: var(--surface-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.12), var(--surface-card));
+  border: 1px solid rgba(168, 85, 247, 0.24);
+  border-radius: 16px;
   cursor: pointer;
   transition: 0.2s ease;
 }
 
-.notification-card.unread {
-  background-color: var(--surface-elevated);
+.notification-card.unread,
+.notification-card.answer.unread,
+.notification-card.question.unread {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.26), rgba(126, 34, 206, 0.18));
+  border-color: rgba(126, 34, 206, 0.38);
 }
 
 .icon-wrapper {
@@ -343,13 +406,23 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   margin-right: 14px;
-  background-color: var(--surface-elevated);
-  color: var(--text-muted);
+  background: rgba(168, 85, 247, 0.14);
+  color: #7e22ce;
+}
+
+.icon-wrapper.answer-icon {
+  background: rgba(168, 85, 247, 0.14);
+  color: #7e22ce;
+}
+
+.icon-wrapper.question-icon {
+  background: rgba(168, 85, 247, 0.14);
+  color: #7e22ce;
 }
 
 .icon-wrapper.unread-icon {
-  background-color: var(--text-color);
-  color: var(--surface-bg);
+  background: rgba(255, 255, 255, 0.62);
+  color: #6b21a8;
 }
 
 .notification-content {
@@ -358,11 +431,28 @@ onMounted(() => {
 }
 
 .notification-content h3 {
-  font-size: 0.92rem;
-  font-weight: 600;
+  font-size: 0.9rem;
+  font-weight: 800;
   margin: 0 0 7px;
   color: var(--text-color);
-  line-height: 1.4;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+}
+
+.notification-card.unread .notification-content h3 {
+  color: var(--text-color);
+}
+
+.notification-content p {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.notification-card.unread .notification-content p,
+.notification-card.unread .time-ago {
+  color: var(--text-muted);
 }
 
 .time-ago {
@@ -376,7 +466,7 @@ onMounted(() => {
   right: 18px;
   width: 7px;
   height: 7px;
-  background-color: var(--text-color);
+  background-color: #7e22ce;
   border-radius: 50%;
 }
 

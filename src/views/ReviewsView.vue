@@ -2,6 +2,11 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api, { API_BASE, getStoredToken } from '@/api/config'
+import {
+  canUserAccessQuestionReply,
+  canUserDeleteQuestion,
+  extractSellerKeysFromProduct,
+} from '@/utils/questionAccess'
 
 interface UsuarioResumo {
   id?: number | string
@@ -80,6 +85,56 @@ const currentUser = computed(() => {
     return null
   }
 })
+
+const currentUserId = computed(() => {
+  const directId = localStorage.getItem('user_id')
+  if (directId && directId !== 'null' && directId !== 'undefined') {
+    return String(directId)
+  }
+
+  const userId = currentUser.value?.id
+  return userId !== undefined && userId !== null ? String(userId) : ''
+})
+
+const currentUserEmail = computed(() => {
+  const directEmail = localStorage.getItem('user_email')
+  if (directEmail && directEmail !== 'null' && directEmail !== 'undefined') {
+    return directEmail.trim().toLowerCase()
+  }
+
+  const email = currentUser.value?.email
+  return typeof email === 'string' && email.trim() ? email.trim().toLowerCase() : ''
+})
+
+const sellerIdentityHints = ref<string[]>([])
+
+const productSellerKeys = computed(() => {
+  const mappedKeys: string[] = []
+
+  try {
+    const raw = localStorage.getItem('reveste_product_sellers_v1')
+    if (raw) {
+      const parsed = JSON.parse(raw) as Record<string, string[]>
+      mappedKeys.push(...(parsed[String(produtoId)] ?? []).map((value) => String(value)))
+    }
+  } catch {
+    // ignora fallback
+  }
+
+  return Array.from(new Set([...mappedKeys, ...sellerIdentityHints.value]))
+})
+
+const canReplyAsSeller = computed(() => {
+  if (!isLoggedIn.value) return false
+
+  return canUserAccessQuestionReply({
+    currentUserId: currentUserId.value,
+    currentUserEmail: currentUserEmail.value,
+    productSellerKeys: productSellerKeys.value,
+  })
+})
+
+const canAskQuestion = computed(() => isLoggedIn.value && !canReplyAsSeller.value)
 
 const normalizePergunta = (item: PerguntaApi): Pergunta => {
   const user = item.usuario ?? item.user ?? null
@@ -191,9 +246,52 @@ const responderPergunta = async (perguntaId: number) => {
   }
 }
 
+const podeApagarPergunta = (pergunta: Pergunta) => {
+  return canUserDeleteQuestion({
+    currentUserId: currentUserId.value,
+    questionUserId: pergunta.userId,
+  })
+}
+
+const apagarPergunta = async (perguntaId: number) => {
+  if (!ensureAuthenticated()) {
+    return
+  }
+
+  const pergunta = perguntas.value.find((item) => item.id === perguntaId)
+  if (!pergunta || !podeApagarPergunta(pergunta)) {
+    alert('Você só pode apagar sua própria pergunta.')
+    return
+  }
+
+  const confirmar = window.confirm('Tem certeza que deseja apagar esta pergunta?')
+  if (!confirmar) {
+    return
+  }
+
+  try {
+    await api.delete(`/perguntas/${perguntaId}/`)
+    perguntas.value = perguntas.value.filter((item) => item.id !== perguntaId)
+  } catch (error) {
+    console.error('Erro ao apagar pergunta:', error)
+    alert('Não foi possível apagar a pergunta.')
+  }
+}
+
+const carregarInformacaoVendedorProduto = async () => {
+  try {
+    const response = await api.get(`/produtos/${produtoId}/`)
+    sellerIdentityHints.value = extractSellerKeysFromProduct(response.data)
+  } catch {
+    sellerIdentityHints.value = []
+  }
+}
+
 const voltar = () => router.back()
 
 onMounted(() => {
+  void carregarInformacaoVendedorProduto()
+
   const focoPergunta = Number(route.query.pergunta_id || 0)
   if (focoPergunta) {
     perguntaSelecionadaId.value = focoPergunta
@@ -216,45 +314,44 @@ onMounted(() => {
     <header class="reviews-header">
       <button class="btn-back" @click="voltar">←</button>
       <h1>Perguntas ao vendedor</h1>
-      <button v-if="isLoggedIn" class="btn-action" @click="isAddingQuestion = true">
-        ENVIAR
+      <button
+        v-if="canAskQuestion"
+        class="btn-action"
+        @click="isAddingQuestion = !isAddingQuestion"
+      >
+        {{ isAddingQuestion ? 'CANCELAR' : 'PERGUNTAR' }}
       </button>
     </header>
 
     <main class="reviews-content">
-      <template v-if="!isLoggedIn">
-        <div class="form-container-desktop">
-          <div class="empty-state-box">
-            Faça login para ver e enviar perguntas sobre este produto.
-          </div>
-          <div class="form-group" style="margin-top: 16px;">
-            <button class="btn-action full-width" @click="router.push('/auth/email')">
-              Entrar
-            </button>
-          </div>
+      <div v-if="!isLoggedIn" class="form-container-desktop auth-card">
+        <div class="empty-state-box">
+          Faça login para ver e enviar perguntas sobre este produto.
         </div>
-      </template>
-
-      <template v-else-if="isAddingQuestion">
-        <div class="form-container-desktop">
-          <div class="form-group">
-            <label class="form-label">
-              Sua pergunta <span class="required">*</span>
-            </label>
-            <textarea
-              v-model="newQuestionText"
-              placeholder="Ex.: Esse produto vem no tamanho M ou G?"
-              class="review-textarea"
-            />
-          </div>
-
-          <div class="form-group">
-            <button class="btn-action full-width" @click="enviarPergunta">Enviar pergunta</button>
-          </div>
+        <div class="form-group" style="margin-top: 16px;">
+          <button class="btn-action full-width" @click="router.push('/auth/email')">
+            Entrar
+          </button>
         </div>
-      </template>
+      </div>
 
-      <template v-else>
+      <div v-else class="questions-layout">
+        <div v-if="isAddingQuestion && canAskQuestion" class="question-form-card">
+          <div class="section-tag">Faça sua pergunta</div>
+          <label class="form-label">
+            Sua pergunta <span class="required">*</span>
+          </label>
+          <textarea
+            v-model="newQuestionText"
+            placeholder="Ex.: Esse produto vem no tamanho M ou G?"
+            class="review-textarea"
+          />
+
+          <button class="btn-action full-width primary" @click="enviarPergunta">
+            Enviar pergunta
+          </button>
+        </div>
+
         <div class="reviews-list">
           <div class="reviews-count-title">
             {{ totalPerguntas }} pergunta{{ totalPerguntas === 1 ? '' : 's' }}
@@ -289,20 +386,27 @@ onMounted(() => {
               <p>{{ pergunta.answer }}</p>
             </div>
 
-            <div v-else-if="isLoggedIn" class="seller-answer-box">
+            <div v-if="podeApagarPergunta(pergunta)" class="question-actions">
+              <button class="btn-action full-width danger" @click="apagarPergunta(pergunta.id)">
+                Apagar pergunta
+              </button>
+            </div>
+
+            <div v-else-if="canReplyAsSeller" class="seller-answer-box">
+              <label class="form-label small-label">Responder</label>
               <textarea
                 v-model="answerDrafts[pergunta.id]"
                 rows="3"
                 placeholder="Escreva a resposta do vendedor..."
-                class="review-textarea"
+                class="review-textarea compact-textarea"
               />
-              <button class="btn-action full-width" @click="responderPergunta(pergunta.id)">
+              <button class="btn-action full-width secondary" @click="responderPergunta(pergunta.id)">
                 Responder
               </button>
             </div>
           </div>
         </div>
-      </template>
+      </div>
     </main>
   </div>
 </template>
@@ -310,8 +414,69 @@ onMounted(() => {
 <style scoped>
 @import '../css/reviews.css';
 
+.questions-layout {
+  display: grid;
+  gap: 18px;
+}
+
+.auth-card,
+.question-form-card {
+  background: rgba(148, 163, 184, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 20px;
+  padding: 18px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.04);
+}
+
+.section-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 6px 10px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  border-radius: 999px;
+  color: #2563eb;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .full-width {
   width: 100%;
+}
+
+.primary,
+.secondary,
+.danger {
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.primary {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  margin-top: 8px;
+}
+
+.secondary {
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  color: var(--text-color);
+  padding: 10px 14px;
+  margin-top: 10px;
+}
+
+.danger {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.18);
+  color: #b91c1c;
+  padding: 10px 14px;
+  margin-top: 10px;
 }
 
 .empty-state-box {
@@ -331,8 +496,8 @@ onMounted(() => {
 }
 
 .user-avatar-wrap {
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   overflow: hidden;
   background: rgba(148, 163, 184, 0.15);
@@ -354,17 +519,17 @@ onMounted(() => {
 }
 
 .answer-box {
-  margin-top: 12px;
+  margin-top: 14px;
   padding: 12px 14px;
-  border-radius: 12px;
+  border-radius: 14px;
   background: rgba(34, 197, 94, 0.08);
-  border: 1px solid rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.16);
 }
 
 .answer-box strong {
   display: block;
-  margin-bottom: 6px;
-  font-size: 0.8rem;
+  margin-bottom: 8px;
+  font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #1b8a5a;
@@ -375,14 +540,53 @@ onMounted(() => {
   line-height: 1.5;
 }
 
+.question-actions {
+  margin-top: 12px;
+}
+
 .seller-answer-box {
   margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.small-label {
+  margin-bottom: 8px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.compact-textarea {
+  min-height: 88px;
 }
 
 .selected-question {
   background: rgba(59, 130, 246, 0.04);
   border: 1px solid rgba(59, 130, 246, 0.18);
-  border-radius: 12px;
+  border-radius: 16px;
   box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.12);
+  padding: 16px;
+}
+
+@media (min-width: 768px) {
+  .reviews-page-container {
+    padding: 0 18px 20px;
+  }
+
+  .reviews-content {
+    padding-top: 22px;
+  }
+
+  .reviews-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+  }
+
+  .review-item {
+    min-height: 100%;
+  }
 }
 </style>

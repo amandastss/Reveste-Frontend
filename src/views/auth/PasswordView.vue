@@ -1,4 +1,3 @@
-
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <!-- eslint-disable vue/block-lang -->
 <script setup>
@@ -52,18 +51,32 @@ async function login() {
       ...userData,
       email: userData.email || email.value,
     }
+    const existingUserId =
+      existingUser?.id ??
+      existingUser?.user_id ??
+      userData?.id ??
+      userData?.user_id ??
+      ''
 
     localStorage.setItem('user', JSON.stringify(mergedUser))
     localStorage.setItem('email', email.value)
+    localStorage.setItem('user_email', String(email.value || '').trim().toLowerCase())
+    localStorage.setItem('user_id', String(existingUserId))
 
     try {
-      const storedToken = token || getStoredToken()
+      const storedToken =
+        token ||
+        res.data?.token ||
+        res.data?.access ||
+        res.data?.access_token ||
+        getStoredToken()
 
       const candidateId =
-        res.data?.user_id ||
-        res.data?.user?.id ||
-        existingUser?.user_id ||
-        existingUser?.id
+        userData?.id ??
+        existingUser?.user_id ??
+        existingUser?.id ??
+        res.data?.user_id ??
+        res.data?.user?.id
 
       if (storedToken) {
         const serverUser = await authApi.fetchUserFromCandidates(
@@ -73,22 +86,25 @@ async function login() {
 
         if (serverUser) {
           const enriched = {
-            ...mergedUser,
+            ...userData,
             ...serverUser,
+            id: serverUser.id ?? userData.id ?? existingUserId,
+            email: email.value,
             photo:
-              mergedUser.photo ||
+              userData.photo ||
               serverUser.profile_image ||
               serverUser.photo ||
               serverUser.avatar ||
               serverUser.image,
             date_of_birth:
-              mergedUser.date_of_birth ||
+              userData.date_of_birth ||
               serverUser.birth_date ||
               serverUser.date_of_birth ||
               serverUser.birthdate,
           }
 
           localStorage.setItem('user', JSON.stringify(enriched))
+          localStorage.setItem('user_id', String(enriched.id ?? existingUserId))
         }
       }
     } catch (error) {
