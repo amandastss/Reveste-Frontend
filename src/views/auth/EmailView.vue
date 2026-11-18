@@ -1,7 +1,7 @@
 <!-- eslint-disable vue/block-lang -->
 <script setup>
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import authApi from '../../api/authApi'
 import { getStoredToken, persistToken } from '../../api/config'
 
@@ -9,11 +9,16 @@ import { faEnvelope } from '@fortawesome/free-regular-svg-icons'
 import { faLock } from '@fortawesome/free-solid-svg-icons'
 import reveste from '@/assets/reveste.png'
 
-const email = ref('')
+const route = useRoute()
+const isPasswordStep = ref(route.query.step === 'password')
+const email = ref(isPasswordStep.value ? localStorage.getItem('email') || '' : '')
 const password = ref('')
 const showPassword = ref(false)
-const isPasswordStep = ref(false)
 const router = useRouter()
+
+if (!email.value) {
+  isPasswordStep.value = false
+}
 
 const isValid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value))
 
@@ -165,6 +170,8 @@ function togglePassword() {
             <template v-else>Digite sua senha para entrar:</template>
           </h1>
 
+          <p v-if="isPasswordStep" class="account-email">{{ email }}</p>
+
           <div v-if="!isPasswordStep" class="input">
             <span class="icon">
               <font-awesome-icon :icon="faEnvelope" />
@@ -255,6 +262,12 @@ function togglePassword() {
   line-height: 1.35;
   color: var(--text-color);
   margin-bottom: 40px;
+}
+.account-email {
+  margin: -24px 0 30px;
+  color: var(--text-muted);
+  font-size: 14px;
+  overflow-wrap: anywhere;
 }
 .input {
   display: flex;
