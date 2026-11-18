@@ -58,17 +58,28 @@ const profileImageUrl = computed(() => {
 
 const favoriteCount = computed(() => getFavoriteCount())
 
-const menuItems = computed(() => [
-  { label: 'Meus Pedidos', icon: 'inventory_2', route: '/pedidos' },
-  {
-    label: 'Favoritos',
-    icon: 'favorite',
-    extra: favoriteCount.value === 0 ? '0 itens' : `${favoriteCount.value} ${favoriteCount.value === 1 ? 'item' : 'itens'}`,
-    route: '/favoritos'
-  },
-  { label: 'Aparência', icon: 'palette', route: '/aparencia' },
-  { label: 'Ajuda e Suporte', icon: 'lock', route: '/suporte' }
-])
+const menuItems = computed(() => {
+  const items = [
+    { label: 'Meus Pedidos', icon: 'inventory_2', route: '/pedidos' },
+    {
+      label: 'Favoritos',
+      icon: 'favorite',
+      extra:
+        favoriteCount.value === 0
+          ? '0 itens'
+          : `${favoriteCount.value} ${favoriteCount.value === 1 ? 'item' : 'itens'}`,
+      route: '/favoritos',
+    },
+    { label: 'Aparência', icon: 'palette', route: '/aparencia' },
+    { label: 'Ajuda e Suporte', icon: 'lock', route: '/suporte' },
+  ]
+
+  if (isLoggedIn.value) {
+    items.splice(1, 0, { label: 'Meus produtos', icon: 'sell', route: '/meus-produtos' })
+  }
+
+  return items
+})
 
 function goTo(route: string) {
   router.push(route)
@@ -280,29 +291,6 @@ function logout() {
   margin-top: 10px;
 }
 
-/* GRID NO DESKTOP */
-@media (min-width: 768px) {
-  .profile-content {
-    padding: 0 5% 40px;
-  }
-
-  .menu {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    padding: 10px 0;
-  }
-
-  .menu-item {
-    border-radius: 12px;
-    border: none;
-  }
-
-  .delete {
-    grid-column: span 2;
-  }
-}
-
 .menu-item {
   background: var(--surface-card);
   color: var(--text-color);
@@ -357,5 +345,23 @@ function logout() {
 /* ÍCONES */
 .material-symbols-outlined {
   font-size: 22px;
+}
+
+@media (min-width: 768px) {
+  .profile-content {
+    padding: 0 5% 40px;
+  }
+
+  .menu {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    padding: 10px 0;
+  }
+
+  .menu-item {
+    border-radius: 12px;
+    border: none;
+  }
 }
 </style>
