@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
+import { formatCurrencyBRL } from '@/utils/currency'
 
 const router = useRouter()
 const route = useRoute()
@@ -380,7 +381,7 @@ onMounted(async () => {
         <div class="info">
           <h3>{{ item.nome }}</h3>
           <p class="marca">{{ item.marca }}</p>
-          <p class="preco">R$ {{ Number(item.preco).toFixed(2) }}</p>
+          <p class="preco">{{ formatCurrencyBRL(item.preco) }}</p>
         </div>
       </div>
     </div>

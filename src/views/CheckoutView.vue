@@ -7,6 +7,7 @@ import { criarCheckout, processarPagamento, type CheckoutPreparado, type DadosPa
 import { useCartStore } from '@/stores/cart'
 import { hasCartAuthToken, getCartAuthRedirectPath } from '@/utils/cartAuth'
 import type { CheckoutResult } from '@/utils/checkoutPayment'
+import { formatCurrencyBRL } from '@/utils/currency'
 
 interface BrickFormData {
   token?: unknown
@@ -120,7 +121,7 @@ async function consultarCep(_event?: Event) {
 }
 
 function formatarValor(valor: number) {
-  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  return formatCurrencyBRL(valor)
 }
 
 function obterErroPagamento(error: unknown): string {

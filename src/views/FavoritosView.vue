@@ -2,19 +2,13 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getFavoriteCount, readFavorites, removeFavorite } from '@/utils/favorites'
+import { formatCurrencyBRL } from '@/utils/currency'
 
 const router = useRouter()
 const favorites = ref(readFavorites())
 
 const refreshFavorites = () => {
   favorites.value = readFavorites()
-}
-
-const formatPrice = (value: number) => {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(Number(value || 0))
 }
 
 const getImageUrl = (url?: string | null) => {
@@ -77,7 +71,7 @@ onMounted(() => {
 
         <div class="card-content" @click="abrirProduto(produto.id)">
           <h3>{{ produto.nome }}</h3>
-          <p class="price">{{ formatPrice(produto.preco) }}</p>
+          <p class="price">{{ formatCurrencyBRL(produto.preco) }}</p>
         </div>
       </article>
     </div>

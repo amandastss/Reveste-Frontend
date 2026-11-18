@@ -2,6 +2,7 @@
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFavoritesStore } from '@/stores/favorites'
+import { formatCurrencyBRL } from '@/utils/currency'
 
 const router = useRouter()
 
@@ -179,9 +180,7 @@ onMounted(() => {
               {{ produto.nome }}
             </h3>
 
-            <p class="price">
-              R$ {{ Number(produto.preco).toFixed(2).replace('.', ',') }}
-            </p>
+            <p class="price">{{ formatCurrencyBRL(produto.preco) }}</p>
 
           </div>
 

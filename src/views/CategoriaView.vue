@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { API_BASE } from '@/api/config'
+import { formatCurrencyBRL } from '@/utils/currency'
 
 interface Categoria {
   id: number
@@ -201,7 +202,7 @@ watch(
         />
         <div class="info">
           <h3>{{ produto.nome || produto.name }}</h3>
-          <p class="price">R$ {{ Number(produto.preco).toFixed(2) }}</p>
+          <p class="price">{{ formatCurrencyBRL(produto.preco) }}</p>
         </div>
       </div>
     </div>

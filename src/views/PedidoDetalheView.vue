@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
+import { formatCurrencyBRL } from '@/utils/currency'
 
 const route = useRoute();
 
@@ -73,7 +74,7 @@ const pedido = {
 
       <div>
         <h4>{{ pedido.nome }}</h4>
-        <strong>R$ {{ pedido.preco }}</strong>
+        <strong>{{ formatCurrencyBRL(pedido.preco) }}</strong>
       </div>
     </div>
 

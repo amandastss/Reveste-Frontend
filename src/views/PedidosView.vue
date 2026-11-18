@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
+import { formatCurrencyBRL } from '@/utils/currency'
 import { getStoredToken } from '@/api/config'
 
 const router = useRouter()
@@ -144,7 +145,7 @@ function statusClass(status: string) {
           {{ pedido.cor }} | {{ pedido.tamanho }}
         </p>
 
-        <strong>R$ {{ pedido.preco }}</strong>
+        <strong>{{ formatCurrencyBRL(pedido.preco) }}</strong>
       </div>
 
       <div :class="['status', statusClass(pedido.status)]">

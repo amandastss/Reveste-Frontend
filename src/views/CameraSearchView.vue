@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, nextTick } from "vue"
 import { useRouter } from "vue-router"
 import axios from 'axios'
+import { formatCurrencyBRL } from '@/utils/currency'
 
 const router = useRouter()
 
@@ -182,7 +183,7 @@ function voltar() {
       <div class="item" v-for="item in resultados" :key="item.id">
         <img :src="item.imagem" />
         <p class="nome">{{ item.nome }}</p>
-        <p class="preco">R$ {{ item.preco }}</p>
+        <p class="preco">{{ formatCurrencyBRL(item.preco) }}</p>
       </div>
     </div>
 

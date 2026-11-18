@@ -6,6 +6,7 @@ import api, { API_BASE, getStoredToken } from '@/api/config'
 import { useCartStore } from '@/stores/cart'
 import { hasCartAuthToken, getCartAuthRedirectPath } from '@/utils/cartAuth'
 import { canUserAccessQuestionReply, extractSellerKeysFromProduct } from '@/utils/questionAccess'
+import { formatCurrencyBRL } from '@/utils/currency'
 import {
   isFavoriteProduct,
   toggleFavorite as toggleFavoriteProduct,
@@ -446,7 +447,7 @@ onMounted(() => {
       <div v-else-if="error" class="error-state">{{ error }}</div>
       <div v-else class="content">
         <h1 class="product-title">{{ productData?.nome }}</h1>
-        <p class="product-price">R$ {{ productData?.preco }}</p>
+        <p class="product-price">{{ formatCurrencyBRL(productData?.preco) }}</p>
         <span class="category-badge">{{ categoriaNome || 'Sem categoria' }}</span>
         <div class="info-block">
           <h2>Descrição</h2>
