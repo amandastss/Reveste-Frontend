@@ -3,20 +3,36 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import authApi from '../../api/authApi'
+import { getStoredToken, persistToken } from '../../api/config'
 
 import { faEnvelope } from '@fortawesome/free-regular-svg-icons'
+import { faLock } from '@fortawesome/free-solid-svg-icons'
 import reveste from '@/assets/reveste.png'
 
 const email = ref('')
+const password = ref('')
+const showPassword = ref(false)
+const isPasswordStep = ref(false)
 const router = useRouter()
 
 const isValid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value))
 
 function goHome() {
+  if (isPasswordStep.value) {
+    isPasswordStep.value = false
+    password.value = ''
+    return
+  }
+
   router.push('/')
 }
 
 async function next() {
+  if (isPasswordStep.value) {
+    await login()
+    return
+  }
+
   if (!isValid.value) return
 
   localStorage.setItem('email', email.value)
@@ -26,15 +42,96 @@ async function next() {
     const emailExists = response.data.exists
 
     localStorage.setItem('isLogin', emailExists ? 'true' : 'false')
-    router.push(emailExists ? '/auth/password' : '/auth/register')
+    if (emailExists) {
+      isPasswordStep.value = true
+    } else {
+      router.push('/auth/register')
+    }
   } catch (err) {
     console.error('Erro ao verificar email:', err)
     const existingUser = JSON.parse(localStorage.getItem('user') || '{}')
     const emailKnown =
       existingUser.email && existingUser.email.toLowerCase() === email.value.toLowerCase()
     localStorage.setItem('isLogin', emailKnown ? 'true' : 'false')
-    router.push(emailKnown ? '/auth/password' : '/auth/register')
+    if (emailKnown) {
+      isPasswordStep.value = true
+    } else {
+      router.push('/auth/register')
+    }
   }
+}
+
+async function login() {
+  if (!password.value) return
+
+  try {
+    const res = await authApi.login(email.value, password.value)
+    const token =
+      res.data?.access ??
+      res.data?.token ??
+      res.data?.access_token ??
+      res.data?.jwt ??
+      res.data?.authToken
+    if (token) {
+      try {
+        persistToken(token)
+      } catch {}
+    }
+    const userData = await authApi.fetchUserProfile()
+    const existingUser = JSON.parse(localStorage.getItem('user') || '{}')
+    const existingUserId =
+      existingUser?.id ?? existingUser?.user_id ?? userData?.id ?? userData?.user_id ?? ''
+
+    localStorage.setItem('user', JSON.stringify(userData))
+    localStorage.setItem('email', email.value)
+    localStorage.setItem('user_email', String(email.value || '').trim().toLowerCase())
+    localStorage.setItem('user_id', String(existingUserId))
+
+    try {
+      const storedToken = res.data?.token || res.data?.access || res.data?.access_token || getStoredToken()
+      const candidateId =
+        userData?.id ??
+        existingUser?.user_id ??
+        existingUser?.id ??
+        res.data?.user_id ??
+        res.data?.user?.id
+      if (storedToken) {
+        const serverUser = await authApi.fetchUserFromCandidates(storedToken, candidateId)
+        if (serverUser) {
+          const enriched = {
+            ...userData,
+            ...serverUser,
+            id: serverUser.id ?? userData.id ?? existingUserId,
+            email: email.value,
+            photo:
+              userData.photo ||
+              serverUser.profile_image ||
+              serverUser.photo ||
+              serverUser.avatar ||
+              serverUser.image,
+            date_of_birth:
+              userData.date_of_birth ||
+              serverUser.birth_date ||
+              serverUser.date_of_birth ||
+              serverUser.birthdate,
+          }
+
+          localStorage.setItem('user', JSON.stringify(enriched))
+          localStorage.setItem('user_id', String(enriched.id ?? existingUserId))
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao carregar dados adicionais do usuário:', err)
+    }
+
+    router.push('/')
+  } catch (err) {
+    alert('Erro ao autenticar: ' + (err.response?.data?.message || 'Tente novamente'))
+  }
+}
+
+function togglePassword() {
+  showPassword.value = !showPassword.value
 }
 </script>
 <template>
@@ -61,20 +158,66 @@ async function next() {
           </button>
 
           <h1 class="title">
-            Insira seu email para<br />
-            entrar ou se cadastrar:
+            <template v-if="!isPasswordStep">
+              Insira seu email para<br />
+              entrar ou se cadastrar:
+            </template>
+            <template v-else>Digite sua senha para entrar:</template>
           </h1>
 
-          <div class="input">
+          <div v-if="!isPasswordStep" class="input">
             <span class="icon">
               <font-awesome-icon :icon="faEnvelope" />
             </span>
 
-            <input v-model="email" type="email" placeholder="seu e-mail" />
+            <input
+              v-model="email"
+              type="email"
+              placeholder="seu e-mail"
+              autocomplete="email"
+              @keyup.enter="next"
+            />
           </div>
 
-          <button class="button" :class="{ active: isValid }" :disabled="!isValid" @click="next">
-            CONTINUE
+          <div v-else class="input">
+            <span class="icon">
+              <font-awesome-icon :icon="faLock" />
+            </span>
+
+            <input
+              v-model="password"
+              :type="showPassword ? 'text' : 'password'"
+              placeholder="sua senha"
+              autocomplete="current-password"
+              @keyup.enter="next"
+            />
+
+            <button
+              class="password-toggle"
+              type="button"
+              :aria-label="showPassword ? 'Ocultar senha' : 'Mostrar senha'"
+              @click="togglePassword"
+            >
+              {{ showPassword ? 'Ocultar' : 'Mostrar' }}
+            </button>
+          </div>
+
+          <button
+            class="button"
+            :class="{ active: isPasswordStep ? !!password : isValid }"
+            :disabled="isPasswordStep ? !password : !isValid"
+            @click="next"
+          >
+            {{ isPasswordStep ? 'ENTRAR' : 'CONTINUE' }}
+          </button>
+
+          <button
+            v-if="isPasswordStep"
+            class="forgot"
+            type="button"
+            @click="router.push('/auth/forgot-password')"
+          >
+            Esqueceu sua senha?
           </button>
         </div>
       </div>
@@ -136,6 +279,14 @@ async function next() {
 .input input::placeholder {
   color: #bdbdbd;
 }
+.password-toggle {
+  border: 0;
+  padding: 4px 0 4px 8px;
+  background: transparent;
+  color: #777;
+  font-size: 12px;
+  cursor: pointer;
+}
 .button {
   width: 100%;
   height: 52px;
@@ -157,6 +308,16 @@ async function next() {
   background: var(--surface-bg);
   color: var(--text-color);
   border: 1px solid #000;
+}
+.forgot {
+  align-self: center;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
 }
 .choice-box {
   display: flex;
