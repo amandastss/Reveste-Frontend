@@ -467,4 +467,164 @@ function togglePassword() {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   }
 }
+
+@media (max-width: 767px) {
+  .screen {
+    width: 100%;
+    min-height: calc(100dvh - 52px);
+    height: auto;
+    padding: 0;
+    background: #f5f2ee;
+  }
+
+  .desktop-layout {
+    display: flex;
+    min-height: calc(100dvh - 52px);
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0;
+  }
+
+  .branding {
+    min-height: 176px;
+    flex: 0 0 176px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin: 0;
+    padding: 22px 24px 6px;
+    position: relative;
+    z-index: 1;
+    background: linear-gradient(180deg, #fff 0%, #f5f2ee 100%);
+    color: #111;
+  }
+
+  .branding .reveste {
+    width: 106px;
+    max-width: 106px;
+    margin: 0;
+    padding: 6px;
+    border: 1px solid #eee9e3;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 5px 16px rgba(48, 39, 29, 0.07);
+  }
+
+  .branding p {
+    max-width: 112px;
+    margin: 0;
+    padding-left: 14px;
+    border-left: 1px solid #d8d1c9;
+    color: #514a43;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  .form-wrapper {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -22px;
+    padding: 42px 20px max(34px, env(safe-area-inset-bottom));
+    border-radius: 30px 30px 0 0;
+    background: #191816;
+    box-shadow: 0 -12px 32px rgba(47, 39, 31, 0.08);
+  }
+
+  .form-wrapper > .form-content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 420px;
+    margin: 0;
+    padding: 28px 22px 26px;
+    border: 0;
+    border-radius: 20px;
+    background: #fffdfa;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+  }
+
+  .form-content .back {
+    width: 34px;
+    height: 34px;
+    margin-bottom: 22px;
+    background: #f1eee9;
+    color: #111;
+    box-shadow: none;
+  }
+
+  .form-content .title {
+    margin: 0 0 22px;
+    color: #111;
+    font-size: clamp(22px, 6vw, 26px);
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .form-content .account-email {
+    margin: -12px 0 24px;
+    padding: 0;
+    background: transparent;
+    color: #666;
+    font-size: 14px;
+  }
+
+  .form-content .input {
+    min-height: 50px;
+    margin-bottom: 18px;
+    padding: 0 12px;
+    border: 1px solid #e8e3dd;
+    border-radius: 10px;
+    background: #f8f6f3;
+  }
+
+  .form-content .input:focus-within {
+    border-color: #76695c;
+  }
+
+  .form-content .input input {
+    width: 0;
+    min-width: 0;
+    flex: 1 1 0;
+    font-size: 14px;
+  }
+
+  .form-content .password-toggle {
+    flex: 0 0 auto;
+    padding-left: 4px;
+    white-space: nowrap;
+    font-size: 11px;
+  }
+
+  .form-content .icon,
+  .form-content .password-toggle {
+    color: #777;
+  }
+
+  .form-content .button {
+    height: 50px;
+    margin-top: 4px;
+    border-radius: 10px;
+    background: #191816;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .form-content .button:disabled {
+    background: #e9e5e0;
+    color: #929292;
+    opacity: 1;
+  }
+
+  .form-content .forgot {
+    margin-top: 18px;
+    color: #666;
+  }
+}
 </style>
