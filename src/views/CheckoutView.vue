@@ -264,7 +264,7 @@ async function marcarResultadoDoPedido(
       estado.value = 'desconhecido'
       erro.value =
         'Não foi possível confirmar o resultado. Consulte o pedido novamente antes de tentar outra vez.'
-
+      iniciarConsultaAutomatica(id, lifecycle)
       await desmontarBrick()
     }
 
@@ -628,17 +628,25 @@ async function continuarComEndereco(): Promise<void> {
   salvandoEndereco.value = true
   erro.value = ''
   estado.value = 'carregando'
+  const endereco = { ...enderecoEntrega }
   try {
-    const endereco = { ...enderecoEntrega }
     await salvarEnderecoEntrega(endereco)
-    if (!isCurrentLifecycle(lifecycle)) return
-    await prepararCheckout(lifecycle, endereco)
   } catch (error: unknown) {
     if (!isCurrentLifecycle(lifecycle)) return
     estado.value = 'endereco'
     erro.value = friendlyError(error, 'Não foi possível salvar o endereço. Confira os dados e tente novamente.')
-  } finally {
     salvandoEndereco.value = false
+    return
+  }
+
+  if (!isCurrentLifecycle(lifecycle)) return
+  salvandoEndereco.value = false
+  try {
+    await prepararCheckout(lifecycle, endereco)
+  } catch (error: unknown) {
+    if (!isCurrentLifecycle(lifecycle)) return
+    estado.value = lastCheckout ? 'erro' : 'endereco'
+    erro.value = friendlyError(error, 'Não foi possível preparar seu checkout. Confira o carrinho e tente novamente.')
   }
 }
 
