@@ -8,11 +8,14 @@ import {
   consultarPedido,
   criarCheckout,
   finalizarCarrinho,
+  obterEnderecoEntrega,
+  salvarEnderecoEntrega,
   isPedidoCancelado,
   isPedidoPago,
   PaymentApiError,
   processarPagamento,
   type CheckoutResponse,
+  type EnderecoEntrega,
   type PaymentBrickFormData,
 } from '@/api/pagamentosApi'
 
@@ -20,6 +23,7 @@ import { useCartStore } from '@/stores/cart'
 
 type EstadoCheckout =
   | 'carregando'
+  | 'endereco'
   | 'inicializando'
   | 'pronto'
   | 'enviando'
@@ -119,6 +123,18 @@ const boletoAddress = reactive({
   zip_code: '',
 })
 
+const enderecoEntrega = reactive<EnderecoEntrega>({
+  cep: '',
+  rua: '',
+  numero: '',
+  complemento: '',
+  bairro: '',
+  cidade: '',
+  estado: '',
+})
+const salvandoEndereco = ref(false)
+let statusPollingTimer: ReturnType<typeof setInterval> | null = null
+
 let brickController: BrickController | null = null
 let lastCheckout: CheckoutResponse | null = null
 let lifecycleId = 0
@@ -186,6 +202,25 @@ async function desmontarBrick(): Promise<void> {
   }
 }
 
+function pararConsultaAutomatica(): void {
+  if (statusPollingTimer !== null) {
+    window.clearInterval(statusPollingTimer)
+    statusPollingTimer = null
+  }
+}
+
+function iniciarConsultaAutomatica(id: number, lifecycle: number): void {
+  if (statusPollingTimer !== null) return
+  statusPollingTimer = window.setInterval(() => {
+    if (!isCurrentLifecycle(lifecycle) || estado.value === 'consultando') return
+    if (!['pendente', 'desconhecido'].includes(estado.value)) {
+      pararConsultaAutomatica()
+      return
+    }
+    void marcarResultadoDoPedido(id, lifecycle)
+  }, 5000)
+}
+
 async function marcarResultadoDoPedido(
   id: number,
   lifecycle: number,
@@ -202,6 +237,7 @@ async function marcarResultadoDoPedido(
     if (!isCurrentLifecycle(lifecycle)) return false
 
     if (isPedidoPago(pedido.status)) {
+      pararConsultaAutomatica()
       estado.value = 'aprovado'
       await atualizarCarrinhoSemApagarEmErro()
       await desmontarBrick()
@@ -209,6 +245,7 @@ async function marcarResultadoDoPedido(
     }
 
     if (isPedidoCancelado(pedido.status)) {
+      pararConsultaAutomatica()
       estado.value =
         gatewayStatus?.toLowerCase() === 'rejected'
           ? 'recusado'
@@ -219,6 +256,7 @@ async function marcarResultadoDoPedido(
     }
 
     estado.value = 'pendente'
+    iniciarConsultaAutomatica(id, lifecycle)
     await desmontarBrick()
     return false
   } catch {
@@ -547,65 +585,94 @@ async function iniciarCheckout(lifecycle: number): Promise<void> {
   erro.value = ''
 
   await cartStore.loadCart()
-
   if (!isCurrentLifecycle(lifecycle)) return
-
   atualizarItensResumo(cartStore.items)
 
   if (cartStore.items.length === 0) {
     await router.replace('/carrinho')
     return
   }
-
   if (!publicKey) {
-    throw new Error(
-      'O checkout não está configurado para este ambiente.',
-    )
+    throw new Error('O checkout não está configurado para este ambiente.')
   }
 
-  const preparado = await finalizarCarrinho()
+  try {
+    const enderecoSalvo = await obterEnderecoEntrega()
+    Object.assign(enderecoEntrega, enderecoSalvo)
+  } catch {
+    // Permite cadastrar o endereço mesmo se o perfil ainda não tiver um.
+  }
+  if (!isCurrentLifecycle(lifecycle)) return
+  estado.value = 'endereco'
+}
 
+async function continuarComEndereco(): Promise<void> {
+  if (salvandoEndereco.value || estado.value !== 'endereco') return
+
+  const obrigatorios: Array<keyof EnderecoEntrega> = [
+    'cep', 'rua', 'numero', 'bairro', 'cidade', 'estado',
+  ]
+  enderecoEntrega.cep = enderecoEntrega.cep.replace(/\D/g, '')
+  enderecoEntrega.estado = enderecoEntrega.estado.trim().toUpperCase()
+
+  if (obrigatorios.some((campo) => !String(enderecoEntrega[campo] || '').trim())) {
+    erro.value = 'Preencha CEP, rua, número, bairro, cidade e estado para continuar.'
+    return
+  }
+  if (enderecoEntrega.cep.length !== 8 || enderecoEntrega.estado.length !== 2) {
+    erro.value = 'Confira o CEP (8 números) e a UF (2 letras).'
+    return
+  }
+
+  const lifecycle = lifecycleId
+  salvandoEndereco.value = true
+  erro.value = ''
+  estado.value = 'carregando'
+  try {
+    const endereco = { ...enderecoEntrega }
+    await salvarEnderecoEntrega(endereco)
+    if (!isCurrentLifecycle(lifecycle)) return
+    await prepararCheckout(lifecycle, endereco)
+  } catch (error: unknown) {
+    if (!isCurrentLifecycle(lifecycle)) return
+    estado.value = 'endereco'
+    erro.value = friendlyError(error, 'Não foi possível salvar o endereço. Confira os dados e tente novamente.')
+  } finally {
+    salvandoEndereco.value = false
+  }
+}
+
+async function prepararCheckout(
+  lifecycle: number,
+  endereco: EnderecoEntrega,
+): Promise<void> {
+  const preparado = await finalizarCarrinho(endereco)
   if (!isCurrentLifecycle(lifecycle)) return
 
   const preparedId = Number(preparado.pedido_id)
   const statusPreparado = preparado.status.toUpperCase()
-
   if (!Number.isSafeInteger(preparedId) || preparedId <= 0) {
     throw new Error('O servidor retornou um pedido inválido.')
   }
-
   if (statusPreparado === 'PAGO') {
     pedidoId.value = preparedId
     await marcarResultadoDoPedido(preparedId, lifecycle)
     return
   }
-
-  if (
-    !['PENDENTE', 'AGUARDANDO_PAGAMENTO'].includes(statusPreparado)
-  ) {
-    throw new Error(
-      'O pedido não está disponível para iniciar o pagamento.',
-    )
+  if (!['PENDENTE', 'AGUARDANDO_PAGAMENTO'].includes(statusPreparado)) {
+    throw new Error('O pedido não está disponível para iniciar o pagamento.')
   }
 
   pedidoId.value = preparedId
-
   await cartStore.loadCart()
-
   if (!isCurrentLifecycle(lifecycle)) return
-
   atualizarItensResumo(cartStore.items)
 
   const checkout = await criarCheckout()
-
   if (!isCurrentLifecycle(lifecycle)) return
-
   if (Number(checkout.pedido_id) !== preparedId) {
-    throw new Error(
-      'Não foi possível confirmar que o pagamento corresponde ao pedido preparado.',
-    )
+    throw new Error('Não foi possível confirmar que o pagamento corresponde ao pedido preparado.')
   }
-
   if (checkout.payment_in_progress) {
     paymentInfo.value = {
       paymentMethodId: checkout.payment_method_id,
@@ -613,16 +680,9 @@ async function iniciarCheckout(lifecycle: number): Promise<void> {
       qrCodeBase64: checkout.qr_code_base64,
       ticketUrl: checkout.ticket_url,
     }
-
-    await marcarResultadoDoPedido(
-      preparedId,
-      lifecycle,
-      checkout.payment_status,
-    )
-
+    await marcarResultadoDoPedido(preparedId, lifecycle, checkout.payment_status)
     return
   }
-
   if (checkout.status?.toUpperCase() === 'PAGO') {
     await marcarResultadoDoPedido(preparedId, lifecycle)
     return
@@ -630,7 +690,6 @@ async function iniciarCheckout(lifecycle: number): Promise<void> {
 
   lastCheckout = checkout
   totalServidor.value = Number(checkout.amount)
-
   await montarBrick(checkout, lifecycle)
 }
 
@@ -759,6 +818,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  pararConsultaAutomatica()
   lifecycleId += 1
   cepRequestId += 1
 
