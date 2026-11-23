@@ -7,6 +7,8 @@ const mocks = vi.hoisted(() => ({
   cart: { items: [] as Array<Record<string, unknown>>, loadCart: vi.fn() },
   router: { push: vi.fn(), replace: vi.fn() },
   finalizarCarrinho: vi.fn(),
+  obterEnderecoEntrega: vi.fn(),
+  salvarEnderecoEntrega: vi.fn(),
   criarCheckout: vi.fn(),
   processarPagamento: vi.fn(),
   consultarPedido: vi.fn(),
@@ -19,6 +21,8 @@ vi.mock('@/stores/cart', () => ({ useCartStore: () => mocks.cart }))
 vi.mock('@mercadopago/sdk-js', () => ({ loadMercadoPago: mocks.loadMercadoPago }))
 vi.mock('@/api/pagamentosApi', () => ({
   finalizarCarrinho: mocks.finalizarCarrinho,
+  obterEnderecoEntrega: mocks.obterEnderecoEntrega,
+  salvarEnderecoEntrega: mocks.salvarEnderecoEntrega,
   criarCheckout: mocks.criarCheckout,
   processarPagamento: mocks.processarPagamento,
   consultarPedido: mocks.consultarPedido,
@@ -48,6 +52,8 @@ function mountCheckout() {
 async function initializeBrick() {
   const wrapper = mountCheckout()
   await flushPromises()
+  await wrapper.get('.continue-payment').trigger('click')
+  await flushPromises()
   latestBrickSettings().callbacks.onReady()
   await flushPromises()
   return wrapper
@@ -58,6 +64,11 @@ beforeEach(() => {
   mocks.cart.items = [{ id: 71, name: 'Blusa', image: '', size: 'M', price: 0.01, quantity: 1 }]
   mocks.cart.loadCart.mockResolvedValue(undefined)
   mocks.finalizarCarrinho.mockResolvedValue({ pedido_id: 29, status: 'PENDENTE' })
+  mocks.obterEnderecoEntrega.mockResolvedValue({
+    cep: '89245000', rua: 'Rua Teste', numero: '10', complemento: '',
+    bairro: 'Centro', cidade: 'Araquari', estado: 'SC',
+  })
+  mocks.salvarEnderecoEntrega.mockResolvedValue(undefined)
   mocks.criarCheckout.mockResolvedValue({
     pedido_id: 29,
     amount: '89.90',
@@ -111,6 +122,8 @@ describe('CheckoutView / Payment Brick', () => {
 
     const wrapper = mountCheckout()
     await flushPromises()
+    await wrapper.get('.continue-payment').trigger('click')
+    await flushPromises()
 
     expect(mocks.consultarPedido).toHaveBeenCalledWith(88)
     expect(mocks.brickCreate).not.toHaveBeenCalled()
@@ -123,6 +136,8 @@ describe('CheckoutView / Payment Brick', () => {
     mocks.finalizarCarrinho.mockRejectedValue(new Error('falha interna'))
     const wrapper = mountCheckout()
     await flushPromises()
+    await wrapper.get('.continue-payment').trigger('click')
+    await flushPromises()
     expect(wrapper.text()).toContain('Não foi possível preparar seu checkout')
     expect(wrapper.text()).not.toContain('falha interna')
     wrapper.unmount()
@@ -133,6 +148,8 @@ describe('CheckoutView / Payment Brick', () => {
       .mockRejectedValueOnce(new Error('script error'))
       .mockResolvedValue(undefined)
     const wrapper = mountCheckout()
+    await flushPromises()
+    await wrapper.get('.continue-payment').trigger('click')
     await flushPromises()
     expect(wrapper.text()).toContain('TENTAR NOVAMENTE')
     await wrapper.get('.retry-button').trigger('click')
@@ -148,6 +165,8 @@ describe('CheckoutView / Payment Brick', () => {
       .mockRejectedValueOnce(new Error('brick init'))
       .mockResolvedValue({ unmount: vi.fn().mockResolvedValue(undefined) })
     const wrapper = mountCheckout()
+    await flushPromises()
+    await wrapper.get('.continue-payment').trigger('click')
     await flushPromises()
     await wrapper.get('.retry-button').trigger('click')
     await flushPromises()
