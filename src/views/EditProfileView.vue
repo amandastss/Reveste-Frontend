@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import authApi from '@/api/authApi'
+import api from '@/api/config'
 import { getStoredToken } from '@/api/config'
 
 type User = Record<string, unknown>
@@ -11,6 +12,15 @@ const feedback = ref('')
 const feedbackType = ref<'success' | 'error'>('success')
 const user = ref<User>({})
 const form = ref({ name: '', email: '', phone: '', birthDate: '', bio: '' })
+const enderecoEntrega = ref({
+  cep: '',
+  rua: '',
+  numero: '',
+  complemento: '',
+  bairro: '',
+  cidade: '',
+  estado: '',
+})
 const photoFile = ref<File | null>(null)
 const photoPreview = ref('')
 
@@ -105,6 +115,10 @@ const saveProfile = async () => {
       ...payload,
       profile_image: photoFile.value || undefined,
     })
+    await api.patch('/usuarios/me/', {
+      endereco_entrega: { ...enderecoEntrega.value },
+    })
+
     const mergedUser = {
       ...user.value,
       ...payload,
@@ -188,6 +202,24 @@ onMounted(() => {
           :placeholder="field.placeholder"
         />
         <textarea v-else v-model="form[field.key]" :placeholder="field.placeholder" />
+      </div>
+
+      <div class="input-group address-group">
+        <strong>Endereço de entrega</strong>
+        <label>CEP</label>
+        <input v-model.trim="enderecoEntrega.cep" inputmode="numeric" maxlength="8" placeholder="00000000" />
+        <label>Rua</label>
+        <input v-model.trim="enderecoEntrega.rua" placeholder="Nome da rua" />
+        <label>Número</label>
+        <input v-model.trim="enderecoEntrega.numero" placeholder="Número" />
+        <label>Complemento</label>
+        <input v-model.trim="enderecoEntrega.complemento" placeholder="Apartamento, bloco..." />
+        <label>Bairro</label>
+        <input v-model.trim="enderecoEntrega.bairro" placeholder="Bairro" />
+        <label>Cidade</label>
+        <input v-model.trim="enderecoEntrega.cidade" placeholder="Cidade" />
+        <label>Estado (UF)</label>
+        <input v-model.trim="enderecoEntrega.estado" maxlength="2" placeholder="SC" />
       </div>
 
       <p v-if="feedback" class="feedback" :class="feedbackType">{{ feedback }}</p>
@@ -346,6 +378,12 @@ onMounted(() => {
   flex-direction: column;
   gap: 6px;
   box-shadow: 0 6px 15px var(--shadow-color);
+}
+
+.address-group strong {
+  color: var(--text-color);
+  font-size: 14px;
+  margin-bottom: 4px;
 }
 
 .input-group label {
