@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
 import { hasCartAuthToken, getCartAuthRedirectPath } from '@/utils/cartAuth'
+import { formatCurrencyBRL } from '@/utils/currency'
 
 const router = useRouter()
 const cartStore = useCartStore()
@@ -165,7 +166,7 @@ onMounted(() => {
 
             <span class="unique-item"> Peça única </span>
 
-            <strong class="price"> R$ {{ item.price.toFixed(2).replace('.', ',') }} </strong>
+            <strong class="price">{{ formatCurrencyBRL(item.price) }}</strong>
           </div>
         </article>
       </section>
@@ -175,7 +176,7 @@ onMounted(() => {
       <div class="total">
         <span>Total</span>
 
-        <strong> R$ {{ subtotal.toFixed(2).replace('.', ',') }} </strong>
+        <strong>{{ formatCurrencyBRL(subtotal) }}</strong>
       </div>
 
       <button class="checkout-btn" @click="irParaPagamento">SEGUIR PARA PAGAMENTO</button>

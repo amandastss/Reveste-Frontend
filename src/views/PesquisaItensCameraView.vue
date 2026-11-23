@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { formatCurrencyBRL } from '@/utils/currency'
 
 const router = useRouter()
 
@@ -87,10 +88,6 @@ function voltar() {
   router.back()
 }
 
-function formatPreco(valor: number) {
-  return Number(valor).toFixed(2)
-}
-
 function formatImagem(item: Produto) {
   return item.imagem_url || item.imagem || 'https://placehold.co/300x300?text=Sem+foto'
 }
@@ -158,7 +155,7 @@ function formatImagem(item: Produto) {
           </h3>
 
           <p>
-            R$ {{ formatPreco(item.preco) }}
+            {{ formatCurrencyBRL(item.preco) }}
           </p>
 
         </div>

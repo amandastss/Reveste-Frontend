@@ -5,19 +5,19 @@ export function normalizeQuestionIdentity(value: string | number | null | undefi
 export function extractSellerKeysFromProduct(value: unknown): string[] {
   const sellerKeys = new Set<string>()
 
-  const walk = (node: unknown) => {
+  const walk = (node: unknown, isSellerObject = false) => {
     if (node == null) return
 
     if (typeof node === 'string' || typeof node === 'number') {
-      const normalized = normalizeQuestionIdentity(node)
-      if (normalized) {
-        sellerKeys.add(normalized)
+      if (isSellerObject) {
+        const normalized = normalizeQuestionIdentity(node)
+        if (normalized) sellerKeys.add(normalized)
       }
       return
     }
 
     if (Array.isArray(node)) {
-      node.forEach(walk)
+      node.forEach((item) => walk(item, isSellerObject))
       return
     }
 
@@ -29,16 +29,31 @@ export function extractSellerKeysFromProduct(value: unknown): string[] {
       const lowerKey = key.toLowerCase()
 
       const isSellerIdField = [
-        'id',
         'user_id',
         'usuario_id',
         'seller_id',
         'vendedor_id',
         'owner_id',
-        'userId',
-        'usuarioId',
-        'sellerId',
-        'vendedorId',
+        'creator_id',
+        'author_id',
+        'autor_id',
+        'criador_id',
+        'userid',
+        'usuarioid',
+        'sellerid',
+        'vendedorid',
+        'ownerid',
+        'creatorid',
+        'authorid',
+        'autorid',
+        'criadorid',
+        'user_email',
+        'usuario_email',
+        'seller_email',
+        'vendedor_email',
+        'owner_email',
+        'creator_email',
+        'author_email',
       ].includes(lowerKey)
 
       const isSellerReferenceField = [
@@ -49,6 +64,11 @@ export function extractSellerKeysFromProduct(value: unknown): string[] {
         'owner',
         'criador',
         'autor',
+        'created_by',
+        'published_by',
+        'author',
+        'publicado_por',
+        'criado_por',
       ].includes(lowerKey) || lowerKey.includes('usuario') || lowerKey.includes('vendedor') || lowerKey.includes('seller') || lowerKey.includes('owner')
 
       if (isSellerIdField) {
@@ -59,8 +79,23 @@ export function extractSellerKeysFromProduct(value: unknown): string[] {
         continue
       }
 
+      if (lowerKey === 'id' && isSellerObject) {
+        const normalized = normalizeQuestionIdentity(nested as string | number | null | undefined)
+        if (normalized) sellerKeys.add(normalized)
+        continue
+      }
+
+      if (
+        isSellerObject &&
+        ['email', 'username', 'user_email', 'usuario_email'].includes(lowerKey)
+      ) {
+        const normalized = normalizeQuestionIdentity(nested as string | number | null | undefined)
+        if (normalized) sellerKeys.add(normalized)
+        continue
+      }
+
       if (isSellerReferenceField) {
-        walk(nested)
+        walk(nested, true)
       }
     }
   }

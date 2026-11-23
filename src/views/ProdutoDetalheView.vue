@@ -2,9 +2,11 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
-import { API_BASE } from '@/api/config'
+import api, { API_BASE, getStoredToken } from '@/api/config'
 import { useCartStore } from '@/stores/cart'
 import { hasCartAuthToken, getCartAuthRedirectPath } from '@/utils/cartAuth'
+import { canUserAccessQuestionReply, extractSellerKeysFromProduct } from '@/utils/questionAccess'
+import { formatCurrencyBRL } from '@/utils/currency'
 import {
   isFavoriteProduct,
   toggleFavorite as toggleFavoriteProduct,
@@ -22,6 +24,22 @@ interface Produto {
   categoria?: number | string | { id?: number; nome?: string; name?: string; title?: string } | null
 }
 
+interface Categoria {
+  id: number
+  nome?: string
+  name?: string
+  title?: string
+}
+
+interface ProdutoEditDraft {
+  nome: string
+  descricao: string
+  preco: string
+  marca: string
+  condicao: string
+  categoria: string
+}
+
 const route = useRoute(),
   router = useRouter(),
   cartStore = useCartStore(),
@@ -36,7 +54,52 @@ const productData = ref<Produto | null>(null),
   addToCartError = ref(''),
   addToCartSuccess = ref(false),
   isFavorite = ref(false),
-  isAnimating = ref(false)
+  favoriteSuccess = ref(false),
+  isAnimating = ref(false),
+  showEditProduct = ref(false),
+  isSavingProduct = ref(false),
+  isDeletingProduct = ref(false),
+  productActionError = ref(''),
+  categorias = ref<Categoria[]>([]),
+  replacementImage = ref<File | null>(null)
+const editDraft = ref<ProdutoEditDraft>({
+  nome: '',
+  descricao: '',
+  preco: '',
+  marca: '',
+  condicao: '',
+  categoria: '',
+})
+const isProductOwner = computed(() => {
+  if (!productData.value || !getStoredToken()) return false
+
+  let storedUser: { id?: string | number; email?: string } = {}
+  try {
+    storedUser = JSON.parse(localStorage.getItem('user') || '{}')
+  } catch {
+    storedUser = {}
+  }
+
+  const currentUserId = localStorage.getItem('user_id') || String(storedUser.id || '')
+  const currentUserEmail = localStorage.getItem('user_email') || storedUser.email || ''
+  let locallyKnownSellerKeys: string[] = []
+
+  try {
+    const sellersByProduct = JSON.parse(
+      localStorage.getItem('reveste_product_sellers_v1') || '{}',
+    ) as Record<string, string[]>
+    locallyKnownSellerKeys = (sellersByProduct[String(productId)] || []).map(String)
+  } catch (error) {
+    console.error('Não foi possível verificar os dados locais do vendedor:', error)
+  }
+
+  const serverSellerKeys = extractSellerKeysFromProduct(productData.value)
+  return canUserAccessQuestionReply({
+    currentUserId,
+    currentUserEmail,
+    productSellerKeys: serverSellerKeys.length ? serverSellerKeys : locallyKnownSellerKeys,
+  })
+})
 const mainImage = computed(() =>
   !productData.value?.imagem_url
     ? 'https://via.placeholder.com/600x600?text=Sem+imagem'
@@ -95,6 +158,7 @@ const loadFavoriteState = () => {
 }
 const toggleFavorite = () => {
   if (!productData.value) return
+
   const favoritePayload: FavoriteProduct = {
     id: productData.value.id,
     nome: productData.value.nome,
@@ -102,12 +166,22 @@ const toggleFavorite = () => {
     imagem_url: productData.value.imagem_url,
     categoria: productData.value.categoria,
   }
+
   isFavorite.value = toggleFavoriteProduct(favoritePayload)
+
   isAnimating.value = true
   setTimeout(() => {
     isAnimating.value = false
   }, 600)
 
+  if (isFavorite.value) {
+    favoriteSuccess.value = true
+    setTimeout(() => {
+      favoriteSuccess.value = false
+    }, 3000)
+  } else {
+    favoriteSuccess.value = false
+  }
 }
 const handleAddToCartSuccess = () => {
   addToCartSuccess.value = true
@@ -163,6 +237,146 @@ const fetchProduct = async () => {
   } finally {
     loading.value = false
   }
+}
+const openProductEditor = async () => {
+  if (!isProductOwner.value || !productData.value) return
+
+  const product = productData.value
+  const categoryId =
+    typeof product.categoria === 'object' && product.categoria
+      ? product.categoria.id
+      : product.categoria
+
+  editDraft.value = {
+    nome: product.nome || '',
+    descricao: product.descricao || '',
+    preco: String(product.preco ?? ''),
+    marca: product.marca || '',
+    condicao: product.condicao || '',
+    categoria: String(categoryId ?? ''),
+  }
+  replacementImage.value = null
+  productActionError.value = ''
+  showEditProduct.value = true
+
+  try {
+    const response = await api.get('/categorias/')
+    categorias.value = Array.isArray(response.data?.results)
+      ? response.data.results
+      : Array.isArray(response.data)
+        ? response.data
+        : []
+  } catch (error) {
+    console.error('Erro ao carregar categorias para edição:', error)
+    productActionError.value = 'Não foi possível carregar as categorias. Tente novamente.'
+  }
+}
+const saveProductChanges = async () => {
+  if (!isProductOwner.value || !productData.value || isSavingProduct.value) return
+
+  const price = Number(String(editDraft.value.preco).replace(',', '.'))
+  if (!editDraft.value.nome.trim() || !editDraft.value.descricao.trim()) {
+    productActionError.value = 'Informe o nome e a descrição do produto.'
+    return
+  }
+  if (!Number.isFinite(price) || price <= 0) {
+    productActionError.value = 'Informe um preço válido maior que zero.'
+    return
+  }
+  if (!editDraft.value.categoria) {
+    productActionError.value = 'Selecione uma categoria para o produto.'
+    return
+  }
+
+  isSavingProduct.value = true
+  productActionError.value = ''
+  const productPayload = {
+    nome: editDraft.value.nome.trim(),
+    descricao: editDraft.value.descricao.trim(),
+    preco: price.toFixed(2),
+    marca: editDraft.value.marca.trim(),
+    condicao: editDraft.value.condicao.trim(),
+    categoria: editDraft.value.categoria,
+  }
+
+  let payload: FormData | typeof productPayload = productPayload
+  if (replacementImage.value) {
+    const formData = new FormData()
+    Object.entries(productPayload).forEach(([key, value]) => formData.append(key, value))
+    formData.append('imagem', replacementImage.value)
+    payload = formData
+  }
+
+  try {
+    await api.patch(`/produtos/${productData.value.id}/`, payload)
+    showEditProduct.value = false
+    await fetchProduct()
+  } catch (error) {
+    console.error('Erro ao atualizar produto:', error)
+    productActionError.value = getProductActionError(
+      error,
+      'Não foi possível atualizar o produto. Tente novamente.',
+    )
+  } finally {
+    isSavingProduct.value = false
+  }
+}
+const selectReplacementImage = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  replacementImage.value = input.files?.[0] ?? null
+}
+const deleteProduct = async () => {
+  if (!isProductOwner.value || !productData.value || isDeletingProduct.value) return
+
+  if (!window.confirm('Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.')) {
+    return
+  }
+
+  isDeletingProduct.value = true
+  productActionError.value = ''
+  try {
+    await api.delete(`/produtos/${productData.value.id}/`)
+
+    try {
+      const sellerProducts = JSON.parse(
+        localStorage.getItem('reveste_seller_products_v1') || '{}',
+      ) as Record<string, string[]>
+      Object.keys(sellerProducts).forEach((sellerKey) => {
+        sellerProducts[sellerKey] = (sellerProducts[sellerKey] || []).filter(
+          (id) => String(id) !== String(productData.value?.id),
+        )
+      })
+      localStorage.setItem('reveste_seller_products_v1', JSON.stringify(sellerProducts))
+
+      const productSellers = JSON.parse(
+        localStorage.getItem('reveste_product_sellers_v1') || '{}',
+      ) as Record<string, string[]>
+      delete productSellers[String(productData.value.id)]
+      localStorage.setItem('reveste_product_sellers_v1', JSON.stringify(productSellers))
+    } catch (error) {
+      console.error('Produto removido, mas não foi possível limpar os dados locais:', error)
+    }
+
+    await router.push('/')
+  } catch (error) {
+    console.error('Erro ao excluir produto:', error)
+    productActionError.value = getProductActionError(
+      error,
+      'Não foi possível excluir o produto. Tente novamente.',
+    )
+  } finally {
+    isDeletingProduct.value = false
+  }
+}
+function getProductActionError(error: unknown, fallback: string): string {
+  if (axios.isAxiosError(error)) {
+    if (error.response?.status === 401) return 'Entre novamente para gerenciar este produto.'
+    if (error.response?.status === 403) return 'Você não tem permissão para alterar este produto.'
+    const detail = error.response?.data?.detail
+    if (typeof detail === 'string') return detail
+  }
+
+  return fallback
 }
 const confirmAddToCart = async () => {
   if (!productData.value) return
@@ -223,6 +437,11 @@ onMounted(() => {
         ✓ Adicionado ao carrinho!
       </div>
     </Transition>
+    <Transition name="fade">
+      <div v-if="favoriteSuccess" class="success-message favorite-success-message">
+        ♥ Adicionado aos favoritos!
+      </div>
+    </Transition>
     <main class="scrollable-content">
       <div class="image-wrapper" @mouseenter="handleImageEnter" @mousemove="handleImageMove"
         @mouseleave="resetImageZoom">
@@ -249,7 +468,7 @@ onMounted(() => {
       <div v-else-if="error" class="error-state">{{ error }}</div>
       <div v-else class="content">
         <h1 class="product-title">{{ productData?.nome }}</h1>
-        <p class="product-price">R$ {{ productData?.preco }}</p>
+        <p class="product-price">{{ formatCurrencyBRL(productData?.preco) }}</p>
         <span class="category-badge">{{ categoriaNome || 'Sem categoria' }}</span>
         <div class="info-block">
           <h2>Descrição</h2>
@@ -268,9 +487,28 @@ onMounted(() => {
         <div class="questions-card" @click="openQuestions">
           <span>Perguntas ao vendedor</span><span>→</span>
         </div>
+        <div v-if="isProductOwner" class="manage-product-actions">
+          <p>Este produto foi publicado por você.</p>
+          <div class="manage-product-buttons">
+            <button type="button" class="edit-product-btn" @click="openProductEditor">
+              Alterar produto
+            </button>
+            <button
+              type="button"
+              class="delete-product-btn"
+              :disabled="isDeletingProduct"
+              @click="deleteProduct"
+            >
+              {{ isDeletingProduct ? 'Excluindo...' : 'Excluir produto' }}
+            </button>
+          </div>
+          <p v-if="productActionError && !showEditProduct" class="product-action-error" role="alert">
+            {{ productActionError }}
+          </p>
+        </div>
       </div>
     </main>
-    <div class="bottom-bar">
+    <div v-if="!isProductOwner" class="bottom-bar">
       <button class="cart-btn" :disabled="isAddingToCart || !productData" @click="showAddToCartConfirm = true">
         Adicionar ao carrinho</button><button class="buy-now-btn" :disabled="isAddingToCart || !productData"
         @click="buyNow">
@@ -309,6 +547,72 @@ onMounted(() => {
           </button>
         </div>
       </div>
+    </div>
+
+    <div v-if="showEditProduct && productData" class="overlay edit-product-overlay" @click.self="showEditProduct = false">
+      <form class="edit-product-modal" @submit.prevent="saveProductChanges">
+        <div class="edit-product-header">
+          <h2>Alterar produto</h2>
+          <button type="button" aria-label="Fechar" @click="showEditProduct = false">×</button>
+        </div>
+        <label>
+          Nome do produto
+          <input v-model="editDraft.nome" maxlength="150" required />
+        </label>
+        <label>
+          Descrição
+          <textarea v-model="editDraft.descricao" maxlength="300" required />
+        </label>
+        <div class="edit-product-row">
+          <label>
+            Preço (R$)
+            <input v-model="editDraft.preco" type="number" min="0.01" step="0.01" required />
+          </label>
+          <label>
+            Marca
+            <input v-model="editDraft.marca" maxlength="100" />
+          </label>
+        </div>
+        <div class="edit-product-row">
+          <label>
+            Categoria
+            <select v-model="editDraft.categoria" required>
+              <option value="" disabled>Selecione</option>
+              <option
+                v-if="editDraft.categoria && !categorias.some((item) => String(item.id) === editDraft.categoria)"
+                :value="editDraft.categoria"
+              >
+                {{ categoriaNome || `Categoria ${editDraft.categoria}` }}
+              </option>
+              <option v-for="categoria in categorias" :key="categoria.id" :value="String(categoria.id)">
+                {{ categoria.nome || categoria.name || categoria.title || `Categoria ${categoria.id}` }}
+              </option>
+            </select>
+          </label>
+          <label>
+            Condição
+            <input v-model="editDraft.condicao" maxlength="80" />
+          </label>
+        </div>
+        <label>
+          Trocar foto (opcional)
+          <input type="file" accept="image/*" @change="selectReplacementImage" />
+        </label>
+        <p v-if="replacementImage" class="selected-image-name">
+          Nova foto: {{ replacementImage.name }}
+        </p>
+        <p v-if="productActionError" class="product-action-error" role="alert">
+          {{ productActionError }}
+        </p>
+        <div class="actions">
+          <button type="button" class="btn-secondary" @click="showEditProduct = false">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary" :disabled="isSavingProduct">
+            {{ isSavingProduct ? 'Salvando...' : 'Salvar alterações' }}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </template>

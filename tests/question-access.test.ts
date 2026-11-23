@@ -4,7 +4,24 @@ import assert from 'node:assert/strict'
 import {
   canUserAccessQuestionReply,
   canUserDeleteQuestion,
+  extractSellerKeysFromProduct,
 } from '../src/utils/questionAccess.ts'
+
+test('extrai identidade do vendedor sem confundir com o id do produto', () => {
+  assert.deepEqual(
+    extractSellerKeysFromProduct({
+      id: 17,
+      usuario: { id: 42, email: 'Vendedora@teste.com' },
+    }),
+    ['42', 'vendedora@teste.com'],
+  )
+
+  assert.deepEqual(extractSellerKeysFromProduct({ id: 17, nome: 'Calça jeans' }), [])
+  assert.deepEqual(
+    extractSellerKeysFromProduct({ id: 17, ownerId: 42, owner_email: 'dona@teste.com' }),
+    ['42', 'dona@teste.com'],
+  )
+})
 
 test('permite vendedor responder quando o id ou email batem com o dono do produto', () => {
   assert.equal(

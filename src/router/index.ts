@@ -27,6 +27,7 @@ import CategoriaView from '../views/CategoriaView.vue'
 import EditProfileView from '../views/EditProfileView.vue'
 import FavoritosView from '../views/FavoritosView.vue'
 import SuporteView from '../views/SuporteView.vue'
+import MeusProdutosView from '@/views/MeusProdutosView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -68,6 +69,11 @@ const router = createRouter({
       path: '/profile/edit',
       name: 'profile-edit',
       component: EditProfileView,
+    },
+    {
+      path: '/meus-produtos',
+      name: 'meus-produtos',
+      component: MeusProdutosView,
     },
     {
       path: '/favoritos',

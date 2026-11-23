@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { API_BASE } from '@/api/config'
+import { formatCurrencyBRL } from '@/utils/currency'
 
 interface Produto {
   id: number
@@ -97,11 +98,6 @@ const formatMediaUrl = (url?: string | null) => {
   return url.startsWith('http') ? url : `${API_BASE}${url}`
 }
 
-const formatPrice = (valor: number) =>
-  `R$ ${Number(valor || 0)
-    .toFixed(2)
-    .replace('.', ',')}`
-
 const buildHeroSlides = () => {
   const lista = produtos.value.slice(0, 4)
 
@@ -121,7 +117,7 @@ const buildHeroSlides = () => {
             : 'Seleções da loja',
     image: formatMediaUrl(produto.imagem_url),
     tag: index === 0 ? 'Novo' : index === 1 ? 'Popular' : 'Em alta',
-    price: formatPrice(Number(produto.preco || 0)),
+    price: formatCurrencyBRL(produto.preco),
     ctaPrimary: 'Ver produto',
     ctaSecondary: 'Explorar loja',
   }))
@@ -385,7 +381,7 @@ onMounted(() => {
             {{ p.nome }}
           </p>
 
-          <p class="price">R$ {{ Number(p.preco).toFixed(2).replace('.', ',') }}</p>
+          <p class="price">{{ formatCurrencyBRL(p.preco) }}</p>
         </div>
       </div>
     </section>

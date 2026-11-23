@@ -167,6 +167,11 @@ const publicarPeca = async () => {
     return
   }
 
+  if (!form.value.marca.trim()) {
+    alert('Informe a marca do produto.')
+    return
+  }
+
   const precoInformado = form.value.preco
   const precoTexto = String(precoInformado).trim()
   const preco = Number(precoTexto.replace(',', '.'))
@@ -355,155 +360,150 @@ function axiosErrorMessage(error: unknown): string | null {
           <polyline points="12 19 5 12 12 5" />
         </svg>
       </button>
-
-      <h1>Vender</h1>
+      <div class="page-heading">
+        <p class="page-eyebrow">Dê uma nova vida às suas peças</p>
+        <h1>Anuncie seu produto</h1>
+        <p class="page-description">Conte um pouco sobre a peça e prepare-a para encontrar um novo lar.</p>
+      </div>
     </header>
 
     <form class="sell-form" @submit.prevent="publicarPeca">
-      <div class="field-group">
-        <label for="titulo">NOME DO PRODUTO</label>
-        <input
-          id="titulo"
-          v-model="form.titulo"
-          type="text"
-          maxlength="150"
-          required
-        />
-      </div>
+      <div class="sell-layout">
+        <section class="sell-details">
+          <div class="section-heading">
+            <span class="material-symbols-outlined">inventory_2</span>
+            <div>
+              <h2>Sobre o produto</h2>
+              <p>As informações ajudam as pessoas a encontrar sua peça.</p>
+            </div>
+          </div>
 
-      <div class="field-group">
-        <label for="descricao">DESCRIÇÃO</label>
-        <textarea
-          id="descricao"
-          v-model="form.descricao"
-          maxlength="300"
-          required
-        />
+          <div class="field-group">
+            <label for="titulo">NOME DO PRODUTO</label>
+            <input id="titulo" v-model="form.titulo" type="text" maxlength="150" required />
+          </div>
 
-        <p class="character-count">
-          {{ form.descricao.length }}/300
-        </p>
-      </div>
+          <div class="field-group">
+            <label for="descricao">DESCRIÇÃO</label>
+            <textarea id="descricao" v-model="form.descricao" maxlength="300" required />
+            <p class="character-count">{{ form.descricao.length }}/300</p>
+          </div>
 
-      <div class="field-group">
-        <label for="preco">PREÇO (R$)</label>
-        <input
-          id="preco"
-          v-model="form.preco"
-          type="number"
-          min="0.01"
-          step="0.01"
-          required
-        />
-      </div>
+          <div class="product-details-grid">
+            <div class="field-group">
+              <label for="preco">PREÇO (R$)</label>
+              <input
+                id="preco"
+                v-model="form.preco"
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="0,00"
+                required
+              />
+            </div>
 
-      <div class="field-group">
-        <label for="marca">MARCA</label>
-        <input
-          id="marca"
-          v-model="form.marca"
-          type="text"
-          maxlength="100"
-        />
-      </div>
+            <div class="field-group">
+              <label for="marca">MARCA</label>
+              <input
+                id="marca"
+                v-model="form.marca"
+                type="text"
+                maxlength="100"
+                placeholder="Ex.: Vintage"
+                required
+              />
+            </div>
 
-      <div class="field-group">
-        <label for="categoria">CATEGORIA</label>
+            <div class="field-group">
+              <label for="categoria">CATEGORIA</label>
+              <select id="categoria" v-model="form.categoria" required>
+                <option value="">Selecione uma categoria</option>
+                <option
+                  v-for="categoria in categorias"
+                  :key="categoria.id"
+                  :value="String(categoria.id)"
+                >
+                  {{ categoria.nome || categoria.name || categoria.title || `Categoria ${categoria.id}` }}
+                </option>
+              </select>
+              <p v-if="categorias.length === 0" class="field-hint">
+                Nenhuma categoria disponível. Verifique sua conexão com a API.
+              </p>
+            </div>
 
-        <select
-          id="categoria"
-          v-model="form.categoria"
-          required
-        >
-          <option value="">Selecione uma categoria</option>
+            <div class="field-group">
+              <label for="condicao">CONDIÇÃO</label>
+              <input
+                id="condicao"
+                v-model="form.condicao"
+                type="text"
+                readonly
+                placeholder="Aguardando avaliação da imagem"
+              />
+            </div>
+          </div>
+        </section>
 
-          <option
-            v-for="categoria in categorias"
-            :key="categoria.id"
-            :value="String(categoria.id)"
-          >
-            {{ categoria.nome || categoria.name || categoria.title || `Categoria ${categoria.id}` }}
-          </option>
-        </select>
+        <section class="field-group photos">
+          <div class="section-heading photo-section-heading">
+            <span class="material-symbols-outlined">add_a_photo</span>
+            <div>
+              <h2>Foto da peça</h2>
+              <p>Uma boa foto faz toda a diferença no anúncio.</p>
+            </div>
+          </div>
 
-        <p v-if="categorias.length === 0">
-          Nenhuma categoria disponível. Verifique sua conexão com a API.
-        </p>
-      </div>
+          <div v-if="!preview" class="photo-empty-state">
+            <span class="material-symbols-outlined">image</span>
+            <strong>Adicione uma foto do produto</strong>
+            <p>Escolha uma imagem nítida e bem iluminada.</p>
+          </div>
 
-      <div class="field-group">
-        <label for="condicao">CONDIÇÃO</label>
+          <div class="photo-tips">
+            <p>Dicas para uma boa foto</p>
+            <ul>
+              <li>Prefira a roupa vestida em alguém</li>
+              <li>Use fundo branco ou neutro</li>
+              <li>Garanta boa iluminação</li>
+              <li>Mostre frente, costas e detalhes</li>
+              <li>Evite fotos tremidas</li>
+            </ul>
+          </div>
 
-        <input
-          id="condicao"
-          v-model="form.condicao"
-          type="text"
-          readonly
-          placeholder="Aguardando avaliação da imagem"
-        />
-      </div>
+          <button type="button" class="icon-btn" @click="abrirGaleria">
+            <span class="material-symbols-outlined">upload</span>
+            {{ preview ? 'Trocar foto' : 'Escolher foto' }}
+          </button>
 
-      <div class="field-group photos">
-        <label>FOTOS</label>
+          <input
+            ref="fileInput"
+            type="file"
+            accept="image/*"
+            capture="environment"
+            class="hidden-input"
+            @change="previewImagem"
+          />
 
-        <div class="photo-tips">
-          <p>Dicas para melhor avaliação da peça:</p>
+          <div v-if="preview" class="preview-box">
+            <img :src="preview" alt="Pré-visualização da foto do produto" />
+          </div>
 
-          <ul>
-            <li>Prefira a roupa vestida em alguém</li>
-            <li>Use fundo branco ou neutro</li>
-            <li>Garanta boa iluminação</li>
-            <li>Mostre frente, costas e detalhes</li>
-            <li>Evite fotos tremidas</li>
-          </ul>
-        </div>
+          <div v-if="analisando" class="scanner-status" role="status">
+            <span class="material-symbols-outlined">progress_activity</span>
+            Analisando imagem...
+          </div>
 
-        <button
-          type="button"
-          class="icon-btn"
-          @click="abrirGaleria"
-        >
-          Escolher foto
-        </button>
+          <div v-if="resultadoIA" class="scanner-result">
+            <p><strong>Condição:</strong> {{ resultadoIA.condicao }}</p>
+            <p><strong>Score:</strong> {{ resultadoIA.score }}%</p>
+            <p>{{ resultadoIA.detalhes }}</p>
+          </div>
 
-        <input
-          ref="fileInput"
-          type="file"
-          accept="image/*"
-          capture="environment"
-          class="hidden-input"
-          @change="previewImagem"
-        />
-
-        <div v-if="preview" class="preview-box">
-          <img :src="preview" alt="Pré-visualização da foto do produto" />
-        </div>
-
-        <div v-if="analisando" class="scanner-status" role="status">
-          Analisando imagem...
-        </div>
-
-        <div v-if="resultadoIA" class="scanner-result">
-          <p>
-            <strong>Condição:</strong>
-            {{ resultadoIA.condicao }}
-          </p>
-
-          <p>
-            <strong>Score:</strong>
-            {{ resultadoIA.score }}%
-          </p>
-
-          <p>{{ resultadoIA.detalhes }}</p>
-        </div>
-
-        <div
-          v-if="erroScanner"
-          class="scanner-error"
-          role="alert"
-        >
-          {{ erroScanner }}
-        </div>
+          <div v-if="erroScanner" class="scanner-error" role="alert">
+            {{ erroScanner }}
+          </div>
+        </section>
       </div>
 
       <p

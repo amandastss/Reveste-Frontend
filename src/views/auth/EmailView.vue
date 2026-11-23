@@ -1,22 +1,43 @@
 <!-- eslint-disable vue/block-lang -->
 <script setup>
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import authApi from '../../api/authApi'
+import { getStoredToken, persistToken } from '../../api/config'
 
 import { faEnvelope } from '@fortawesome/free-regular-svg-icons'
+import { faLock } from '@fortawesome/free-solid-svg-icons'
 import reveste from '@/assets/reveste.png'
 
-const email = ref('')
+const route = useRoute()
+const isPasswordStep = ref(route.query.step === 'password')
+const email = ref(isPasswordStep.value ? localStorage.getItem('email') || '' : '')
+const password = ref('')
+const showPassword = ref(false)
 const router = useRouter()
+
+if (!email.value) {
+  isPasswordStep.value = false
+}
 
 const isValid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value))
 
 function goHome() {
+  if (isPasswordStep.value) {
+    isPasswordStep.value = false
+    password.value = ''
+    return
+  }
+
   router.push('/')
 }
 
 async function next() {
+  if (isPasswordStep.value) {
+    await login()
+    return
+  }
+
   if (!isValid.value) return
 
   localStorage.setItem('email', email.value)
@@ -26,15 +47,96 @@ async function next() {
     const emailExists = response.data.exists
 
     localStorage.setItem('isLogin', emailExists ? 'true' : 'false')
-    router.push(emailExists ? '/auth/password' : '/auth/register')
+    if (emailExists) {
+      isPasswordStep.value = true
+    } else {
+      router.push('/auth/register')
+    }
   } catch (err) {
     console.error('Erro ao verificar email:', err)
     const existingUser = JSON.parse(localStorage.getItem('user') || '{}')
     const emailKnown =
       existingUser.email && existingUser.email.toLowerCase() === email.value.toLowerCase()
     localStorage.setItem('isLogin', emailKnown ? 'true' : 'false')
-    router.push(emailKnown ? '/auth/password' : '/auth/register')
+    if (emailKnown) {
+      isPasswordStep.value = true
+    } else {
+      router.push('/auth/register')
+    }
   }
+}
+
+async function login() {
+  if (!password.value) return
+
+  try {
+    const res = await authApi.login(email.value, password.value)
+    const token =
+      res.data?.access ??
+      res.data?.token ??
+      res.data?.access_token ??
+      res.data?.jwt ??
+      res.data?.authToken
+    if (token) {
+      try {
+        persistToken(token)
+      } catch {}
+    }
+    const userData = await authApi.fetchUserProfile()
+    const existingUser = JSON.parse(localStorage.getItem('user') || '{}')
+    const existingUserId =
+      existingUser?.id ?? existingUser?.user_id ?? userData?.id ?? userData?.user_id ?? ''
+
+    localStorage.setItem('user', JSON.stringify(userData))
+    localStorage.setItem('email', email.value)
+    localStorage.setItem('user_email', String(email.value || '').trim().toLowerCase())
+    localStorage.setItem('user_id', String(existingUserId))
+
+    try {
+      const storedToken = res.data?.token || res.data?.access || res.data?.access_token || getStoredToken()
+      const candidateId =
+        userData?.id ??
+        existingUser?.user_id ??
+        existingUser?.id ??
+        res.data?.user_id ??
+        res.data?.user?.id
+      if (storedToken) {
+        const serverUser = await authApi.fetchUserFromCandidates(storedToken, candidateId)
+        if (serverUser) {
+          const enriched = {
+            ...userData,
+            ...serverUser,
+            id: serverUser.id ?? userData.id ?? existingUserId,
+            email: email.value,
+            photo:
+              userData.photo ||
+              serverUser.profile_image ||
+              serverUser.photo ||
+              serverUser.avatar ||
+              serverUser.image,
+            date_of_birth:
+              userData.date_of_birth ||
+              serverUser.birth_date ||
+              serverUser.date_of_birth ||
+              serverUser.birthdate,
+          }
+
+          localStorage.setItem('user', JSON.stringify(enriched))
+          localStorage.setItem('user_id', String(enriched.id ?? existingUserId))
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao carregar dados adicionais do usuário:', err)
+    }
+
+    router.push('/')
+  } catch (err) {
+    alert('Erro ao autenticar: ' + (err.response?.data?.message || 'Tente novamente'))
+  }
+}
+
+function togglePassword() {
+  showPassword.value = !showPassword.value
 }
 </script>
 <template>
@@ -61,20 +163,68 @@ async function next() {
           </button>
 
           <h1 class="title">
-            Insira seu email para<br />
-            entrar ou se cadastrar:
+            <template v-if="!isPasswordStep">
+              Insira seu email para<br />
+              entrar ou se cadastrar:
+            </template>
+            <template v-else>Digite sua senha para entrar:</template>
           </h1>
 
-          <div class="input">
+          <p v-if="isPasswordStep" class="account-email">{{ email }}</p>
+
+          <div v-if="!isPasswordStep" class="input">
             <span class="icon">
               <font-awesome-icon :icon="faEnvelope" />
             </span>
 
-            <input v-model="email" type="email" placeholder="seu e-mail" />
+            <input
+              v-model="email"
+              type="email"
+              placeholder="seu e-mail"
+              autocomplete="email"
+              @keyup.enter="next"
+            />
           </div>
 
-          <button class="button" :class="{ active: isValid }" :disabled="!isValid" @click="next">
-            CONTINUE
+          <div v-else class="input">
+            <span class="icon">
+              <font-awesome-icon :icon="faLock" />
+            </span>
+
+            <input
+              v-model="password"
+              :type="showPassword ? 'text' : 'password'"
+              placeholder="sua senha"
+              autocomplete="current-password"
+              @keyup.enter="next"
+            />
+
+            <button
+              class="password-toggle"
+              type="button"
+              :aria-label="showPassword ? 'Ocultar senha' : 'Mostrar senha'"
+              @click="togglePassword"
+            >
+              {{ showPassword ? 'Ocultar' : 'Mostrar' }}
+            </button>
+          </div>
+
+          <button
+            class="button"
+            :class="{ active: isPasswordStep ? !!password : isValid }"
+            :disabled="isPasswordStep ? !password : !isValid"
+            @click="next"
+          >
+            {{ isPasswordStep ? 'ENTRAR' : 'CONTINUE' }}
+          </button>
+
+          <button
+            v-if="isPasswordStep"
+            class="forgot"
+            type="button"
+            @click="router.push('/auth/forgot-password')"
+          >
+            Esqueceu sua senha?
           </button>
         </div>
       </div>
@@ -113,6 +263,12 @@ async function next() {
   color: var(--text-color);
   margin-bottom: 40px;
 }
+.account-email {
+  margin: -24px 0 30px;
+  color: var(--text-muted);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
 .input {
   display: flex;
   align-items: center;
@@ -136,6 +292,14 @@ async function next() {
 .input input::placeholder {
   color: #bdbdbd;
 }
+.password-toggle {
+  border: 0;
+  padding: 4px 0 4px 8px;
+  background: transparent;
+  color: #777;
+  font-size: 12px;
+  cursor: pointer;
+}
 .button {
   width: 100%;
   height: 52px;
@@ -157,6 +321,16 @@ async function next() {
   background: var(--surface-bg);
   color: var(--text-color);
   border: 1px solid #000;
+}
+.forgot {
+  align-self: center;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
 }
 .choice-box {
   display: flex;
@@ -291,6 +465,166 @@ async function next() {
     padding: 40px;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  }
+}
+
+@media (max-width: 767px) {
+  .screen {
+    width: 100%;
+    min-height: calc(100dvh - 52px);
+    height: auto;
+    padding: 0;
+    background: #f5f2ee;
+  }
+
+  .desktop-layout {
+    display: flex;
+    min-height: calc(100dvh - 52px);
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0;
+  }
+
+  .branding {
+    min-height: 176px;
+    flex: 0 0 176px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin: 0;
+    padding: 22px 24px 6px;
+    position: relative;
+    z-index: 1;
+    background: linear-gradient(180deg, #fff 0%, #f5f2ee 100%);
+    color: #111;
+  }
+
+  .branding .reveste {
+    width: 106px;
+    max-width: 106px;
+    margin: 0;
+    padding: 6px;
+    border: 1px solid #eee9e3;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 5px 16px rgba(48, 39, 29, 0.07);
+  }
+
+  .branding p {
+    max-width: 112px;
+    margin: 0;
+    padding-left: 14px;
+    border-left: 1px solid #d8d1c9;
+    color: #514a43;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  .form-wrapper {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -22px;
+    padding: 42px 20px max(34px, env(safe-area-inset-bottom));
+    border-radius: 30px 30px 0 0;
+    background: #191816;
+    box-shadow: 0 -12px 32px rgba(47, 39, 31, 0.08);
+  }
+
+  .form-wrapper > .form-content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 420px;
+    margin: 0;
+    padding: 28px 22px 26px;
+    border: 0;
+    border-radius: 20px;
+    background: #fffdfa;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+  }
+
+  .form-content .back {
+    width: 34px;
+    height: 34px;
+    margin-bottom: 22px;
+    background: #f1eee9;
+    color: #111;
+    box-shadow: none;
+  }
+
+  .form-content .title {
+    margin: 0 0 22px;
+    color: #111;
+    font-size: clamp(22px, 6vw, 26px);
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .form-content .account-email {
+    margin: -12px 0 24px;
+    padding: 0;
+    background: transparent;
+    color: #666;
+    font-size: 14px;
+  }
+
+  .form-content .input {
+    min-height: 50px;
+    margin-bottom: 18px;
+    padding: 0 12px;
+    border: 1px solid #e8e3dd;
+    border-radius: 10px;
+    background: #f8f6f3;
+  }
+
+  .form-content .input:focus-within {
+    border-color: #76695c;
+  }
+
+  .form-content .input input {
+    width: 0;
+    min-width: 0;
+    flex: 1 1 0;
+    font-size: 14px;
+  }
+
+  .form-content .password-toggle {
+    flex: 0 0 auto;
+    padding-left: 4px;
+    white-space: nowrap;
+    font-size: 11px;
+  }
+
+  .form-content .icon,
+  .form-content .password-toggle {
+    color: #777;
+  }
+
+  .form-content .button {
+    height: 50px;
+    margin-top: 4px;
+    border-radius: 10px;
+    background: #191816;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .form-content .button:disabled {
+    background: #e9e5e0;
+    color: #929292;
+    opacity: 1;
+  }
+
+  .form-content .forgot {
+    margin-top: 18px;
+    color: #666;
   }
 }
 </style>

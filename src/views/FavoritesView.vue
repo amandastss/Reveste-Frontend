@@ -2,6 +2,7 @@
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFavoritesStore } from '@/stores/favorites'
+import { formatCurrencyBRL } from '@/utils/currency'
 
 const router = useRouter()
 
@@ -53,34 +54,18 @@ onMounted(() => {
     <!-- HEADER -->
 
     <header class="favorites-header">
-
       <button
-        class="back-btn"
+        class="back-button"
+        type="button"
+        aria-label="Voltar ao perfil"
         @click="goBack"
-        aria-label="Voltar"
       >
-        <span class="material-symbols-outlined">
-          arrow_back
-        </span>
+        <span class="material-symbols-outlined">arrow_back</span>
       </button>
-
-      <div class="header-content">
-
-        <span class="header-subtitle">
-          SUA COLEÇÃO
-        </span>
-
-        <h1>
-          Favoritos
-        </h1>
-
-        <p v-if="quantidadeFavoritos > 0">
-          {{ quantidadeFavoritos }}
-          {{ quantidadeFavoritos === 1 ? 'item salvo' : 'itens salvos' }}
-        </p>
-
+      <div>
+        <p class="eyebrow">Minha conta</p>
+        <h1>Meus favoritos</h1>
       </div>
-
     </header>
 
 
@@ -179,9 +164,7 @@ onMounted(() => {
               {{ produto.nome }}
             </h3>
 
-            <p class="price">
-              R$ {{ Number(produto.preco).toFixed(2).replace('.', ',') }}
-            </p>
+            <p class="price">{{ formatCurrencyBRL(produto.preco) }}</p>
 
           </div>
 
@@ -205,9 +188,7 @@ onMounted(() => {
   width: 100%;
   min-height: 100vh;
 
-  padding: 24px 18px 90px;
-
-  background: var(--surface-bg);
+  background: var(--surface-elevated);
 
   font-family: 'Montserrat', sans-serif;
 
@@ -220,70 +201,43 @@ onMounted(() => {
 ========================================= */
 
 .favorites-header {
-  position: relative;
-
   display: flex;
-  align-items: flex-start;
-
+  align-items: center;
+  gap: 12px;
+  padding: 18px 20px 14px;
+  background: var(--surface-bg);
+  border-bottom: 1px solid var(--border-color);
   margin-bottom: 30px;
 }
 
-.back-btn {
+.back-button {
   width: 42px;
   height: 42px;
-
-  border: none;
+  border: 0;
   border-radius: 50%;
-
-  background: var(--surface-elevated);
-
+  background: var(--app-bg);
   color: var(--text-color);
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
+  display: grid;
+  place-items: center;
   cursor: pointer;
-
-  transition: transform 0.2s ease;
 }
 
-.back-btn:active {
-  transform: scale(0.92);
-}
-
-.header-content {
-  margin-left: 16px;
-}
-
-.header-subtitle {
-  font-size: 10px;
-
-  font-weight: 600;
-
-  letter-spacing: 1.8px;
-
+.eyebrow {
+  margin: 0 0 2px;
   color: var(--text-muted);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
-.header-content h1 {
-  margin: 4px 0 4px;
-
-  font-family: 'Playfair Display', serif;
-
-  font-size: 30px;
-
-  font-weight: 500;
-
-  color: var(--text-color);
-}
-
-.header-content p {
+.favorites-header h1 {
   margin: 0;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+}
 
-  font-size: 12px;
-
-  color: var(--text-muted);
+.favorites-content,
+.empty-state {
+  padding-inline: 18px;
 }
 
 
@@ -519,7 +473,11 @@ onMounted(() => {
 @media (min-width: 768px) {
 
   .favorites-page {
-    padding: 35px 40px 60px;
+    padding: 0 0 60px;
+  }
+
+  .favorites-content {
+    padding-inline: 40px;
   }
 
   .favorites-grid {

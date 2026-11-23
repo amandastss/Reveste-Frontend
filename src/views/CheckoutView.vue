@@ -132,6 +132,7 @@ const enderecoEntrega = reactive<EnderecoEntrega>({
   cidade: '',
   estado: '',
 })
+
 const salvandoEndereco = ref(false)
 let statusPollingTimer: ReturnType<typeof setInterval> | null = null
 
@@ -211,12 +212,15 @@ function pararConsultaAutomatica(): void {
 
 function iniciarConsultaAutomatica(id: number, lifecycle: number): void {
   if (statusPollingTimer !== null) return
+
   statusPollingTimer = window.setInterval(() => {
     if (!isCurrentLifecycle(lifecycle) || estado.value === 'consultando') return
+
     if (!['pendente', 'desconhecido'].includes(estado.value)) {
       pararConsultaAutomatica()
       return
     }
+
     void marcarResultadoDoPedido(id, lifecycle)
   }, 5000)
 }
@@ -264,6 +268,7 @@ async function marcarResultadoDoPedido(
       estado.value = 'desconhecido'
       erro.value =
         'Não foi possível confirmar o resultado. Consulte o pedido novamente antes de tentar outra vez.'
+
       iniciarConsultaAutomatica(id, lifecycle)
       await desmontarBrick()
     }
@@ -479,6 +484,7 @@ async function enviarPagamento(
       error,
       'Não foi possível confirmar o resultado. Consulte o pedido antes de tentar novamente.',
     )
+
     iniciarConsultaAutomatica(idPedido, lifecycle)
 
     await atualizarCarrinhoSemApagarEmErro()
@@ -589,13 +595,16 @@ async function iniciarCheckout(lifecycle: number): Promise<void> {
   erro.value = ''
 
   await cartStore.loadCart()
+
   if (!isCurrentLifecycle(lifecycle)) return
+
   atualizarItensResumo(cartStore.items)
 
   if (cartStore.items.length === 0) {
     await router.replace('/carrinho')
     return
   }
+
   if (!publicKey) {
     throw new Error('O checkout não está configurado para este ambiente.')
   }
@@ -606,7 +615,9 @@ async function iniciarCheckout(lifecycle: number): Promise<void> {
   } catch {
     // Permite cadastrar o endereço mesmo se o perfil ainda não tiver um.
   }
+
   if (!isCurrentLifecycle(lifecycle)) return
+
   estado.value = 'endereco'
 }
 
@@ -614,21 +625,35 @@ async function continuarComEndereco(): Promise<void> {
   if (salvandoEndereco.value || estado.value !== 'endereco') return
 
   const obrigatorios: Array<keyof EnderecoEntrega> = [
-    'cep', 'rua', 'numero', 'bairro', 'cidade', 'estado',
+    'cep',
+    'rua',
+    'numero',
+    'bairro',
+    'cidade',
+    'estado',
   ]
+
   enderecoEntrega.cep = enderecoEntrega.cep.replace(/\D/g, '')
   enderecoEntrega.estado = enderecoEntrega.estado.trim().toUpperCase()
 
-  if (obrigatorios.some((campo) => !String(enderecoEntrega[campo] || '').trim())) {
-    erro.value = 'Preencha CEP, rua, número, bairro, cidade e estado para continuar.'
+  if (
+    obrigatorios.some(
+      (campo) => !String(enderecoEntrega[campo] || '').trim(),
+    )
+  ) {
+    erro.value =
+      'Preencha CEP, rua, número, bairro, cidade e estado para continuar.'
     return
   }
-  if (enderecoEntrega.cep.length !== 8 || enderecoEntrega.estado.length !== 2) {
+
+  if (
+    enderecoEntrega.cep.length !== 8 ||
+    enderecoEntrega.estado.length !== 2
+  ) {
     erro.value = 'Confira o CEP (8 números) e a UF (2 letras).'
     return
   }
 
-  // O endereço do boleto também usa o endereço de entrega já confirmado.
   Object.assign(boletoAddress, {
     street_name: enderecoEntrega.rua,
     street_number: enderecoEntrega.numero,
@@ -637,31 +662,45 @@ async function continuarComEndereco(): Promise<void> {
     federal_unit: enderecoEntrega.estado,
     zip_code: enderecoEntrega.cep,
   })
+
   cepValidado.value = true
 
   const lifecycle = lifecycleId
   salvandoEndereco.value = true
   erro.value = ''
   estado.value = 'carregando'
+
   const endereco = { ...enderecoEntrega }
+
   try {
     await salvarEnderecoEntrega(endereco)
   } catch (error: unknown) {
     if (!isCurrentLifecycle(lifecycle)) return
+
     estado.value = 'endereco'
-    erro.value = friendlyError(error, 'Não foi possível salvar o endereço. Confira os dados e tente novamente.')
+    erro.value = friendlyError(
+      error,
+      'Não foi possível salvar o endereço. Confira os dados e tente novamente.',
+    )
+
     salvandoEndereco.value = false
     return
   }
 
   if (!isCurrentLifecycle(lifecycle)) return
+
   salvandoEndereco.value = false
+
   try {
     await prepararCheckout(lifecycle, endereco)
   } catch (error: unknown) {
     if (!isCurrentLifecycle(lifecycle)) return
+
     estado.value = lastCheckout ? 'erro' : 'endereco'
-    erro.value = friendlyError(error, 'Não foi possível preparar seu checkout. Confira o carrinho e tente novamente.')
+    erro.value = friendlyError(
+      error,
+      'Não foi possível preparar seu checkout. Confira o carrinho e tente novamente.',
+    )
   }
 }
 
@@ -670,32 +709,44 @@ async function prepararCheckout(
   endereco: EnderecoEntrega,
 ): Promise<void> {
   const preparado = await finalizarCarrinho(endereco)
+
   if (!isCurrentLifecycle(lifecycle)) return
 
   const preparedId = Number(preparado.pedido_id)
   const statusPreparado = preparado.status.toUpperCase()
+
   if (!Number.isSafeInteger(preparedId) || preparedId <= 0) {
     throw new Error('O servidor retornou um pedido inválido.')
   }
+
   if (statusPreparado === 'PAGO') {
     pedidoId.value = preparedId
     await marcarResultadoDoPedido(preparedId, lifecycle)
     return
   }
+
   if (!['PENDENTE', 'AGUARDANDO_PAGAMENTO'].includes(statusPreparado)) {
     throw new Error('O pedido não está disponível para iniciar o pagamento.')
   }
 
   pedidoId.value = preparedId
+
   await cartStore.loadCart()
+
   if (!isCurrentLifecycle(lifecycle)) return
+
   atualizarItensResumo(cartStore.items)
 
   const checkout = await criarCheckout()
+
   if (!isCurrentLifecycle(lifecycle)) return
+
   if (Number(checkout.pedido_id) !== preparedId) {
-    throw new Error('Não foi possível confirmar que o pagamento corresponde ao pedido preparado.')
+    throw new Error(
+      'Não foi possível confirmar que o pagamento corresponde ao pedido preparado.',
+    )
   }
+
   if (checkout.payment_in_progress) {
     paymentInfo.value = {
       paymentMethodId: checkout.payment_method_id,
@@ -703,9 +754,16 @@ async function prepararCheckout(
       qrCodeBase64: checkout.qr_code_base64,
       ticketUrl: checkout.ticket_url,
     }
-    await marcarResultadoDoPedido(preparedId, lifecycle, checkout.payment_status)
+
+    await marcarResultadoDoPedido(
+      preparedId,
+      lifecycle,
+      checkout.payment_status,
+    )
+
     return
   }
+
   if (checkout.status?.toUpperCase() === 'PAGO') {
     await marcarResultadoDoPedido(preparedId, lifecycle)
     return
@@ -713,6 +771,7 @@ async function prepararCheckout(
 
   lastCheckout = checkout
   totalServidor.value = Number(checkout.amount)
+
   await montarBrick(checkout, lifecycle)
 }
 
@@ -1032,7 +1091,6 @@ onBeforeUnmount(() => {
             </p>
             <p>Peça única · quantidade 1</p>
           </div>
-
         </div>
 
         <div v-if="totalServidor !== null" class="checkout-total">
@@ -1048,40 +1106,92 @@ onBeforeUnmount(() => {
 
       <section v-if="estado === 'endereco'" class="shipping-address">
         <h2>Endereço de entrega</h2>
-        <p>Confirme o endereço cadastrado no seu perfil. Ele ficará salvo no pedido e será usado para a entrega.</p>
+
+        <p>
+          Confirme o endereço cadastrado no seu perfil. Ele ficará salvo
+          no pedido e será usado para a entrega.
+        </p>
 
         <label>
           CEP
-          <input v-model.trim="enderecoEntrega.cep" inputmode="numeric" maxlength="8" autocomplete="postal-code" placeholder="00000000" />
-        </label>
-        <label>
-          Rua
-          <input v-model.trim="enderecoEntrega.rua" autocomplete="address-line1" placeholder="Nome da rua" />
-        </label>
-        <label>
-          Número
-          <input v-model.trim="enderecoEntrega.numero" autocomplete="address-line2" placeholder="Número" />
-        </label>
-        <label>
-          Complemento (opcional)
-          <input v-model.trim="enderecoEntrega.complemento" placeholder="Apartamento, bloco..." />
-        </label>
-        <label>
-          Bairro
-          <input v-model.trim="enderecoEntrega.bairro" autocomplete="address-level3" placeholder="Bairro" />
-        </label>
-        <label>
-          Cidade
-          <input v-model.trim="enderecoEntrega.cidade" autocomplete="address-level2" placeholder="Cidade" />
-        </label>
-        <label>
-          Estado (UF)
-          <input v-model.trim="enderecoEntrega.estado" maxlength="2" autocomplete="address-level1" placeholder="SC" />
+          <input
+            v-model.trim="enderecoEntrega.cep"
+            inputmode="numeric"
+            maxlength="8"
+            autocomplete="postal-code"
+            placeholder="00000000"
+          />
         </label>
 
-        <p v-if="erro" class="checkout-error" role="alert">{{ erro }}</p>
-        <button type="button" class="continue-payment" :disabled="salvandoEndereco" @click="continuarComEndereco">
-          {{ salvandoEndereco ? 'Salvando endereço...' : 'CONFIRMAR ENDEREÇO E CONTINUAR' }}
+        <label>
+          Rua
+          <input
+            v-model.trim="enderecoEntrega.rua"
+            autocomplete="address-line1"
+            placeholder="Nome da rua"
+          />
+        </label>
+
+        <label>
+          Número
+          <input
+            v-model.trim="enderecoEntrega.numero"
+            autocomplete="address-line2"
+            placeholder="Número"
+          />
+        </label>
+
+        <label>
+          Complemento (opcional)
+          <input
+            v-model.trim="enderecoEntrega.complemento"
+            placeholder="Apartamento, bloco..."
+          />
+        </label>
+
+        <label>
+          Bairro
+          <input
+            v-model.trim="enderecoEntrega.bairro"
+            autocomplete="address-level3"
+            placeholder="Bairro"
+          />
+        </label>
+
+        <label>
+          Cidade
+          <input
+            v-model.trim="enderecoEntrega.cidade"
+            autocomplete="address-level2"
+            placeholder="Cidade"
+          />
+        </label>
+
+        <label>
+          Estado (UF)
+          <input
+            v-model.trim="enderecoEntrega.estado"
+            maxlength="2"
+            autocomplete="address-level1"
+            placeholder="SC"
+          />
+        </label>
+
+        <p v-if="erro" class="checkout-error" role="alert">
+          {{ erro }}
+        </p>
+
+        <button
+          type="button"
+          class="continue-payment"
+          :disabled="salvandoEndereco"
+          @click="continuarComEndereco"
+        >
+          {{
+            salvandoEndereco
+              ? 'Salvando endereço...'
+              : 'CONFIRMAR ENDEREÇO E CONTINUAR'
+          }}
         </button>
       </section>
 
@@ -1214,7 +1324,11 @@ onBeforeUnmount(() => {
         </template>
 
         <div
-          v-if="paymentInfo?.qrCode || paymentInfo?.qrCodeBase64 || paymentInfo?.ticketUrl"
+          v-if="
+            paymentInfo?.qrCode ||
+            paymentInfo?.qrCodeBase64 ||
+            paymentInfo?.ticketUrl
+          "
           class="payment-instructions"
         >
           <h3>Instruções de pagamento</h3>
@@ -1248,25 +1362,15 @@ onBeforeUnmount(() => {
           </a>
         </div>
 
-        <p
-          v-if="estado === 'inicializando'"
-          class="loading"
-        >
+        <p v-if="estado === 'inicializando'" class="loading">
           Carregando formulário de pagamento...
         </p>
 
-        <p
-          v-else-if="estado === 'enviando'"
-          class="loading"
-        >
+        <p v-else-if="estado === 'enviando'" class="loading">
           Enviando pagamento com segurança...
         </p>
 
-        <div
-          v-if="erro"
-          class="checkout-error"
-          role="alert"
-        >
+        <div v-if="erro" class="checkout-error" role="alert">
           {{ erro }}
         </div>
 
@@ -1613,7 +1717,9 @@ button:disabled {
 }
 
 @media (max-width: 800px) {
-  .shipping-address { grid-column: 1 / -1; }
+  .shipping-address {
+    grid-column: 1 / -1;
+  }
 
   .checkout-content {
     grid-template-columns: 1fr;
