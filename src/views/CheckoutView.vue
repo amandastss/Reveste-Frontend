@@ -1023,7 +1023,46 @@ onBeforeUnmount(() => {
         </p>
       </div>
 
-      <div class="payment-section">
+      <section v-if="estado === 'endereco'" class="shipping-address">
+        <h2>Endereço de entrega</h2>
+        <p>Confirme o endereço cadastrado no seu perfil. Ele ficará salvo no pedido e será usado para a entrega.</p>
+
+        <label>
+          CEP
+          <input v-model.trim="enderecoEntrega.cep" inputmode="numeric" maxlength="8" autocomplete="postal-code" placeholder="00000000" />
+        </label>
+        <label>
+          Rua
+          <input v-model.trim="enderecoEntrega.rua" autocomplete="address-line1" placeholder="Nome da rua" />
+        </label>
+        <label>
+          Número
+          <input v-model.trim="enderecoEntrega.numero" autocomplete="address-line2" placeholder="Número" />
+        </label>
+        <label>
+          Complemento (opcional)
+          <input v-model.trim="enderecoEntrega.complemento" placeholder="Apartamento, bloco..." />
+        </label>
+        <label>
+          Bairro
+          <input v-model.trim="enderecoEntrega.bairro" autocomplete="address-level3" placeholder="Bairro" />
+        </label>
+        <label>
+          Cidade
+          <input v-model.trim="enderecoEntrega.cidade" autocomplete="address-level2" placeholder="Cidade" />
+        </label>
+        <label>
+          Estado (UF)
+          <input v-model.trim="enderecoEntrega.estado" maxlength="2" autocomplete="address-level1" placeholder="SC" />
+        </label>
+
+        <p v-if="erro" class="checkout-error" role="alert">{{ erro }}</p>
+        <button type="button" class="continue-payment" :disabled="salvandoEndereco" @click="continuarComEndereco">
+          {{ salvandoEndereco ? 'Salvando endereço...' : 'CONFIRMAR ENDEREÇO E CONTINUAR' }}
+        </button>
+      </section>
+
+      <div v-else class="payment-section">
         <h2>Pagamento seguro</h2>
 
         <p class="payment-intro">
@@ -1318,6 +1357,60 @@ onBeforeUnmount(() => {
   text-align: center;
 }
 
+.shipping-address {
+  min-width: 0;
+  padding: 24px;
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.shipping-address h2,
+.shipping-address p {
+  margin: 0;
+}
+
+.shipping-address p {
+  color: #555;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.shipping-address label {
+  display: grid;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.shipping-address input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #cfcfcf;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.continue-payment {
+  padding: 13px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: #1d1d1d;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.continue-payment:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
 .payment-choice {
   display: flex;
   flex-wrap: wrap;
@@ -1497,6 +1590,8 @@ button:disabled {
 }
 
 @media (max-width: 800px) {
+  .shipping-address { grid-column: 1 / -1; }
+
   .checkout-content {
     grid-template-columns: 1fr;
   }
