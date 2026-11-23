@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import CategoriaSuporteView from '@/views/CategoriaSuporteView.vue'
-import FavoritesView from '@/views/FavoritesView.vue'
 import CheckoutView from '../views/CheckoutView.vue'
 import HomeView from '../views/HomeView.vue'
 import SearchView from '@/views/SearchView.vue'
@@ -162,6 +161,7 @@ const router = createRouter({
       name: 'suporte-categoria',
       component: CategoriaSuporteView,
     },
+
     // AUTH
     {
       path: '/auth/email',
@@ -199,10 +199,11 @@ const router = createRouter({
       name: 'auth-verify-code',
       component: VerifyCodeView,
     },
+
     {
       path: '/favoritos',
       name: 'favoritos',
-      component: FavoritesView,
+      component: FavoritosView,
     },
   ],
 })

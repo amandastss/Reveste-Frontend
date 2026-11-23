@@ -188,10 +188,7 @@ onBeforeUnmount(() => {
 
     <HeaderDesktop />
 
-    <MenuComponent
-      :isOpen="isMenuOpen"
-      @close-menu="closeMenu"
-    />
+    <MenuComponent :isOpen="isMenuOpen" @close-menu="closeMenu" />
 
     <div
       v-if="activeNotification"
@@ -238,6 +235,10 @@ onBeforeUnmount(() => {
   :deep(.header-desktop) {
     display: none;
   }
+
+  .content {
+    padding-bottom: 64px;
+  }
 }
 
 /* esconder footer mobile no desktop */
@@ -257,6 +258,7 @@ onBeforeUnmount(() => {
 
 .content {
   flex: 1;
+  min-width: 0;
   background: var(--app-bg);
 }
 

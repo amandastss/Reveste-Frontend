@@ -26,7 +26,7 @@ interface BackendCartItem {
 }
 
 interface BackendCartResponse {
-  pedido_id: number
+  pedido_id: number | null
   status: string
   itens: BackendCartItem[]
   total: string | number
@@ -40,17 +40,11 @@ export const useCartStore = defineStore('cart', {
 
   getters: {
     totalItems: (state) => {
-      return state.items.reduce(
-        (total, item) => total + item.quantity,
-        0
-      )
+      return state.items.reduce((total, item) => total + item.quantity, 0)
     },
 
     totalPrice: (state) => {
-      return state.items.reduce(
-        (total, item) => total + item.price * item.quantity,
-        0
-      )
+      return state.items.reduce((total, item) => total + item.price * item.quantity, 0)
     },
   },
 
@@ -59,93 +53,20 @@ export const useCartStore = defineStore('cart', {
       this.loading = true
 
       try {
-        const response = await api.get<BackendCartResponse>(
-          '/carrinho/'
-        )
-
-        console.log(
-          'CARRINHO VINDO DO BACKEND:',
-          response.data
-        )
+        const response = await api.get<BackendCartResponse>('/carrinho/')
 
         const cartItems = response.data.itens ?? []
 
-        const itemsWithProductData = await Promise.all(
-          cartItems.map(async (item) => {
-            try {
-              const productResponse = await api.get(
-                `/produtos/${item.produto}/`
-              )
-
-              const produto = productResponse.data
-
-              return {
-                id: item.produto,
-                itemPedidoId: item.id,
-
-                name:
-                  item.nome ??
-                  produto.nome ??
-                  produto.titulo ??
-                  'Produto',
-
-                color:
-                  item.cor ??
-                  produto.cor ??
-                  '',
-
-                size:
-                  item.tamanho ??
-                  produto.tamanho ??
-                  '',
-
-                price: Number(item.preco),
-
-                quantity: item.quantidade,
-
-                image:
-                  item.imagem_url ??
-                  produto.imagem_url ??
-                  produto.imagem ??
-                  produto.foto ??
-                  '',
-              }
-            } catch (error) {
-              console.error(
-                `Erro ao carregar produto ${item.produto}:`,
-                error
-              )
-
-              return {
-                id: item.produto,
-                itemPedidoId: item.id,
-
-                name: item.nome ?? 'Produto',
-
-                color: item.cor ?? '',
-
-                size: item.tamanho ?? '',
-
-                price: Number(item.preco),
-
-                quantity: item.quantidade,
-
-                image: item.imagem_url ?? '',
-              }
-            }
-          })
-        )
-
-        this.items = itemsWithProductData
-      } catch (error) {
-        console.error(
-          'Erro ao carregar carrinho:',
-          error
-        )
-
-        this.items = []
-
-        throw error
+        this.items = cartItems.map((item) => ({
+          id: item.produto,
+          itemPedidoId: item.id,
+          name: item.nome ?? 'Produto',
+          color: item.cor ?? '',
+          size: item.tamanho ?? '',
+          price: Number(item.preco),
+          quantity: 1,
+          image: item.imagem_url ?? '',
+        }))
       } finally {
         this.loading = false
       }
@@ -204,6 +125,7 @@ export const useCartStore = defineStore('cart', {
 
       console.error('Erro ao remover item do carrinho:', lastError)
       throw lastError ?? new Error('Não foi possível remover o item do carrinho.')
+
     },
 
     clearCart() {

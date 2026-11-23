@@ -154,9 +154,11 @@ const closeAddToCartConfirm = () => {
 }
 const loadFavoriteState = () => {
   isFavorite.value = isFavoriteProduct(productId)
+
 }
 const toggleFavorite = () => {
   if (!productData.value) return
+
   const favoritePayload: FavoriteProduct = {
     id: productData.value.id,
     nome: productData.value.nome,
@@ -164,10 +166,19 @@ const toggleFavorite = () => {
     imagem_url: productData.value.imagem_url,
     categoria: productData.value.categoria,
   }
+
   isFavorite.value = toggleFavoriteProduct(favoritePayload)
+
+  isAnimating.value = true
+  setTimeout(() => {
+    isAnimating.value = false
+  }, 600)
+
   if (isFavorite.value) {
     favoriteSuccess.value = true
-    setTimeout(() => (favoriteSuccess.value = false), 3000)
+    setTimeout(() => {
+      favoriteSuccess.value = false
+    }, 3000)
   } else {
     favoriteSuccess.value = false
   }
