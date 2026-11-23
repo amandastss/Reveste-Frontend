@@ -179,7 +179,9 @@ export function salvarEnderecoEntrega(endereco: EnderecoEntrega): Promise<void> 
 
 export function finalizarCarrinho(endereco?: EnderecoEntrega): Promise<PedidoPreparadoResponse> {
   return request<PedidoPreparadoResponse>(() =>
-    api.post('/carrinho/finalizar/', endereco ? { endereco_entrega: endereco } : {}).then((response) => response.data),
+    (endereco
+      ? api.post('/carrinho/finalizar/', { endereco_entrega: endereco })
+      : api.post('/carrinho/finalizar/')).then((response) => response.data),
   ).then((data) => {
     requireObject(data, 'Não foi possível preparar o pedido.')
     if (!Number.isFinite(Number(data.pedido_id)) || typeof data.status !== 'string') {
