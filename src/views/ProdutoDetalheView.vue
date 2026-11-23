@@ -54,6 +54,7 @@ const productData = ref<Produto | null>(null),
   addToCartError = ref(''),
   addToCartSuccess = ref(false),
   isFavorite = ref(false),
+  favoriteSuccess = ref(false),
   isAnimating = ref(false),
   showEditProduct = ref(false),
   isSavingProduct = ref(false),
@@ -164,8 +165,12 @@ const toggleFavorite = () => {
     categoria: productData.value.categoria,
   }
   isFavorite.value = toggleFavoriteProduct(favoritePayload)
-  isAnimating.value = true
-  setTimeout(() => (isAnimating.value = false), 600)
+  if (isFavorite.value) {
+    favoriteSuccess.value = true
+    setTimeout(() => (favoriteSuccess.value = false), 3000)
+  } else {
+    favoriteSuccess.value = false
+  }
 }
 const handleAddToCartSuccess = () => {
   addToCartSuccess.value = true
@@ -419,6 +424,11 @@ onMounted(() => {
     <Transition name="fade">
       <div v-if="addToCartSuccess" class="success-message">
         ✓ Adicionado ao carrinho!
+      </div>
+    </Transition>
+    <Transition name="fade">
+      <div v-if="favoriteSuccess" class="success-message favorite-success-message">
+        ♥ Adicionado aos favoritos!
       </div>
     </Transition>
     <main class="scrollable-content">
