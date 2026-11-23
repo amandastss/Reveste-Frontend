@@ -628,6 +628,17 @@ async function continuarComEndereco(): Promise<void> {
     return
   }
 
+  // O endereço do boleto também usa o endereço de entrega já confirmado.
+  Object.assign(boletoAddress, {
+    street_name: enderecoEntrega.rua,
+    street_number: enderecoEntrega.numero,
+    neighborhood: enderecoEntrega.bairro,
+    city: enderecoEntrega.cidade,
+    federal_unit: enderecoEntrega.estado,
+    zip_code: enderecoEntrega.cep,
+  })
+  cepValidado.value = true
+
   const lifecycle = lifecycleId
   salvandoEndereco.value = true
   erro.value = ''
