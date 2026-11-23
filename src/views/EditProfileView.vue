@@ -153,10 +153,27 @@ const fields = [
   { key: 'bio', label: 'Bio', type: 'textarea', placeholder: 'Fale sobre você...' },
 ] as const
 
-onMounted(() => {
+onMounted(async () => {
   const currentUser = getStoredUser()
   user.value = currentUser
   setFormFromUser(currentUser)
+  try {
+    const response = await api.get('/usuarios/me/')
+    const endereco = response.data?.endereco_entrega
+    if (endereco && typeof endereco === 'object') {
+      enderecoEntrega.value = {
+        cep: endereco.cep || '',
+        rua: endereco.rua || '',
+        numero: endereco.numero || '',
+        complemento: endereco.complemento || '',
+        bairro: endereco.bairro || '',
+        cidade: endereco.cidade || '',
+        estado: endereco.estado || '',
+      }
+    }
+  } catch (error) {
+    console.error('Não foi possível carregar o endereço cadastrado:', error)
+  }
 })
 </script>
 
