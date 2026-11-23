@@ -125,6 +125,7 @@ onMounted(() => {
 
 .favorites-header h1 {
   margin: 0;
+  font-family: 'Montserrat', sans-serif;
   font-size: clamp(1.5rem, 4vw, 2rem);
   font-weight: 700;
 }

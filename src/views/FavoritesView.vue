@@ -268,7 +268,7 @@ onMounted(() => {
 .header-content h1 {
   margin: 4px 0 4px;
 
-  font-family: 'Playfair Display', serif;
+  font-family: 'Montserrat', sans-serif;
 
   font-size: 30px;
 
