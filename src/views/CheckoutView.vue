@@ -476,6 +476,7 @@ async function enviarPagamento(
       error,
       'Não foi possível confirmar o resultado. Consulte o pedido antes de tentar novamente.',
     )
+    iniciarConsultaAutomatica(pedidoId.value, lifecycle)
 
     await atualizarCarrinhoSemApagarEmErro()
     await desmontarBrick()
