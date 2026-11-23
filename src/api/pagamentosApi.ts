@@ -75,9 +75,21 @@ export interface PaymentResponse {
 
 }
 
+export interface EnderecoEntrega {
+  cep: string
+  rua: string
+  numero: string
+  complemento?: string
+  bairro: string
+  cidade: string
+  estado: string
+}
+
 export interface PedidoStatusResponse {
   id: number
   status: string
+  status_entrega?: string
+  endereco_entrega?: EnderecoEntrega
   total?: string | number
   itens?: PedidoItemBackend[]
 }
@@ -151,9 +163,23 @@ export function getCarrinho(): Promise<CarrinhoBackend> {
   ).then((data) => requireObject(data, 'Não foi possível carregar o carrinho.'))
 }
 
-export function finalizarCarrinho(): Promise<PedidoPreparadoResponse> {
+export function obterEnderecoEntrega(): Promise<EnderecoEntrega> {
+  return request<{ endereco_entrega?: EnderecoEntrega }>(() =>
+    api.get('/usuarios/me/').then((response) => response.data),
+  ).then((data) => data.endereco_entrega || {
+    cep: '', rua: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '',
+  })
+}
+
+export function salvarEnderecoEntrega(endereco: EnderecoEntrega): Promise<void> {
+  return request<void>(() =>
+    api.patch('/usuarios/me/', { endereco_entrega: endereco }).then((response) => response.data),
+  )
+}
+
+export function finalizarCarrinho(endereco?: EnderecoEntrega): Promise<PedidoPreparadoResponse> {
   return request<PedidoPreparadoResponse>(() =>
-    api.post('/carrinho/finalizar/').then((response) => response.data),
+    api.post('/carrinho/finalizar/', endereco ? { endereco_entrega: endereco } : {}).then((response) => response.data),
   ).then((data) => {
     requireObject(data, 'Não foi possível preparar o pedido.')
     if (!Number.isFinite(Number(data.pedido_id)) || typeof data.status !== 'string') {
