@@ -112,16 +112,20 @@ function statusClass(status: string) {
 <template>
   <div class="pedidos-page">
 
-    <div class="header">
-      <span
-        class="material-symbols-outlined back"
-        @click="$router.back()"
+    <header class="header">
+      <button
+        class="back-button"
+        type="button"
+        aria-label="Voltar ao perfil"
+        @click="$router.push('/profile')"
       >
-        arrow_back
-      </span>
-
-      <h2>MEUS PEDIDOS</h2>
-    </div>
+        <span class="material-symbols-outlined">arrow_back</span>
+      </button>
+      <div>
+        <p class="eyebrow">Minha conta</p>
+        <h1>Meus pedidos</h1>
+      </div>
+    </header>
 
     <div v-if="pedidos.length === 0" class="empty">
       Nenhum pedido encontrado.
@@ -164,15 +168,37 @@ function statusClass(status: string) {
 }
 
 .header {
-  background: var(--surface-bg);
-  padding: 20px;
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 12px;
+  padding: 18px 20px 14px;
+  background: var(--surface-bg);
+  border-bottom: 1px solid var(--border-color);
 }
 
-.back {
+.back-button {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--app-bg);
+  color: var(--text-color);
+  display: grid;
+  place-items: center;
   cursor: pointer;
+}
+
+.eyebrow {
+  margin: 0 0 2px;
+  color: var(--text-muted);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 4vw, 2rem);
 }
 
 .empty {

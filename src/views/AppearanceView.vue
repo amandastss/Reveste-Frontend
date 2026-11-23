@@ -30,18 +30,22 @@ onMounted(() => {
 
 <template>
   <div class="appearance-page">
-    <div class="appearance-card">
-      <button class="back-button" type="button" @click="router.back()">
+    <header class="page-header">
+      <button
+        class="back-button"
+        type="button"
+        aria-label="Voltar ao perfil"
+        @click="router.push('/profile')"
+      >
         <span class="material-symbols-outlined">arrow_back</span>
-        <span>Voltar</span>
       </button>
-
-      <div class="appearance-header">
-        <p class="eyebrow">Aparência</p>
-        <h1>Escolha o tema do app</h1>
-        <p>Altere a cor de fundo e o contraste para uma experiência mais confortável.</p>
+      <div>
+        <p class="eyebrow">Minha conta</p>
+        <h1>Aparência</h1>
       </div>
+    </header>
 
+    <div class="appearance-card">
       <div class="theme-options">
         <button class="theme-card" :class="{ active: theme === 'light' }" type="button" @click="setTheme('light')">
           <span class="chip chip-light">Claro</span>
@@ -84,10 +88,46 @@ onMounted(() => {
 
 <style scoped>
 .appearance-page {
-  padding: 24px 16px 80px;
+  padding: 0 16px 80px;
   min-height: calc(100vh - 80px);
   background: var(--app-bg);
   color: var(--text-color);
+  font-family: 'Montserrat', sans-serif;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 -16px 20px;
+  padding: 18px 20px 14px;
+  background: var(--surface-bg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.back-button {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--app-bg);
+  color: var(--text-color);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.page-header .eyebrow {
+  margin: 0 0 2px;
+  color: var(--text-muted);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 4vw, 2rem);
 }
 
 .appearance-card {
@@ -96,19 +136,6 @@ onMounted(() => {
   border-radius: 24px;
   padding: 24px;
   box-shadow: 0 16px 36px var(--shadow-color);
-}
-
-.back-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: none;
-  background: transparent;
-  color: var(--text-color);
-  cursor: pointer;
-  padding: 0;
-  margin-bottom: 16px;
-  font-size: 14px;
 }
 
 .appearance-header h1 {
