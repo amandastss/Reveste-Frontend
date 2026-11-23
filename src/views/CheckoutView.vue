@@ -426,6 +426,9 @@ async function enviarPagamento(
     return
   }
 
+  const idPedido = pedidoId.value
+  if (idPedido === null) return
+
   erro.value = ''
 
   const dadosPagamento = prepararDadosPagamento(formData)
@@ -440,7 +443,7 @@ async function enviarPagamento(
 
   try {
     const resposta = await processarPagamento(
-      pedidoId.value,
+      idPedido,
       dadosPagamento,
     )
 
@@ -454,7 +457,7 @@ async function enviarPagamento(
       ticketUrl: resposta.ticket_url,
     }
 
-    if (Number(resposta.pedido_id) !== pedidoId.value) {
+    if (Number(resposta.pedido_id) !== idPedido) {
       estado.value = 'desconhecido'
       erro.value =
         'O servidor retornou um pedido diferente. Consulte seus pedidos para confirmar o resultado.'
@@ -464,7 +467,7 @@ async function enviarPagamento(
     }
 
     await marcarResultadoDoPedido(
-      pedidoId.value,
+      idPedido,
       lifecycle,
       resposta.status,
     )
@@ -476,7 +479,7 @@ async function enviarPagamento(
       error,
       'Não foi possível confirmar o resultado. Consulte o pedido antes de tentar novamente.',
     )
-    iniciarConsultaAutomatica(pedidoId.value, lifecycle)
+    iniciarConsultaAutomatica(idPedido, lifecycle)
 
     await atualizarCarrinhoSemApagarEmErro()
     await desmontarBrick()
