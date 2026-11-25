@@ -3,11 +3,17 @@ import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'v
 import { useRouter } from 'vue-router'
 import { loadMercadoPago } from '@mercadopago/sdk-js'
 import api from '@/api/config'
-import { criarCheckout, processarPagamento, type CheckoutPreparado, type DadosPagamento } from '@/api/pagamentosApi'
+import {
+  criarCheckout,
+  processarPagamento,
+  type CheckoutPreparado,
+  type DadosPagamento,
+} from '@/api/pagamentosApi'
 import { useCartStore } from '@/stores/cart'
 import { hasCartAuthToken, getCartAuthRedirectPath } from '@/utils/cartAuth'
 import type { CheckoutResult } from '@/utils/checkoutPayment'
 import { formatCurrencyBRL } from '@/utils/currency'
+import { normalizeCep, validateDeliveryAddress } from '@/utils/addressValidation'
 
 interface BrickFormData {
   token?: unknown
@@ -46,7 +52,11 @@ const mensagemErro = ref('')
 const checkoutPreparado = ref<CheckoutPreparado | null>(null)
 const resultadoPagamento = ref<CheckoutResult | null>(null)
 const showLoginRequiredModal = ref(false)
-const paymentInstructions = ref<{ qr_code?: string; qr_code_base64?: string; ticket_url?: string } | null>(null)
+const paymentInstructions = ref<{
+  qr_code?: string
+  qr_code_base64?: string
+  ticket_url?: string
+} | null>(null)
 const boletoAddress = reactive({
   street_name: '',
   street_number: '',
@@ -78,18 +88,20 @@ async function copiarCodigoPix() {
   try {
     await navigator.clipboard.writeText(paymentInstructions.value.qr_code)
   } catch {
-    mensagemErro.value = 'Não foi possível copiar automaticamente. Selecione e copie o código Pix manualmente.'
+    mensagemErro.value =
+      'Não foi possível copiar automaticamente. Selecione e copie o código Pix manualmente.'
   }
 }
 
 const buscandoCep = ref(false)
 const cpfPagador = ref('')
+const nomeDestinatario = ref('')
 const metodoEscolhido = ref<'cartao' | 'pix' | 'boleto'>('cartao')
 const cepValidado = ref(false)
 let cepRequestId = 0
 
-async function consultarCep(_event?: Event) {
-  const cep = boletoAddress.zip_code.replace(/\D/g, '').slice(0, 8)
+async function consultarCep() {
+  const cep = normalizeCep(boletoAddress.zip_code)
   if (boletoAddress.zip_code !== cep) boletoAddress.zip_code = cep
   cepValidado.value = false
   if (cep.length !== 8) return
@@ -113,7 +125,8 @@ async function consultarCep(_event?: Event) {
     cepValidado.value = true
   } catch {
     if (requestId === cepRequestId) {
-      mensagemErro.value = 'Não foi possível consultar o CEP agora. Confira sua conexão e tente novamente.'
+      mensagemErro.value =
+        'Não foi possível consultar o CEP agora. Confira sua conexão e tente novamente.'
     }
   } finally {
     if (requestId === cepRequestId) buscandoCep.value = false
@@ -147,7 +160,9 @@ async function carregarRetornoPagamento() {
       throw new Error('Não foi possível identificar o pedido para confirmar o pagamento.')
     }
     // Nunca confiamos no status da URL: a confirmação vem do backend autenticado.
-    const response = await api.get<{ status: string; mercado_pago_status?: string }>(`/pedidos/${pedidoId}/`)
+    const response = await api.get<{ status: string; mercado_pago_status?: string }>(
+      `/pedidos/${pedidoId}/`,
+    )
     const statusPedido = String(response.data.status || '').toUpperCase()
     const statusGateway = String(response.data.mercado_pago_status || '').toLowerCase()
 
@@ -178,9 +193,10 @@ async function carregarRetornoPagamento() {
       state: 'failure',
       pedidoId,
       status: null,
-      message: error instanceof Error
-        ? error.message
-        : 'Não foi possível confirmar o pagamento. Confira o pedido em Meus pedidos.',
+      message:
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível confirmar o pagamento. Confira o pedido em Meus pedidos.',
     }
   } finally {
     carregando.value = false
@@ -190,14 +206,35 @@ async function carregarRetornoPagamento() {
 
 function cpfValido(valor: string): boolean {
   const cpf = valor.replace(/\D/g, '')
-  if (cpf.length !== 11 || /^([0-9])\\1{10}$/.test(cpf)) return false
+  if (cpf.length !== 11 || /^([0-9])\1{10}$/.test(cpf)) return false
   const calcularDigito = (base: string, pesoInicial: number) => {
-    const soma = [...base].reduce((total, digito, index) => total + Number(digito) * (pesoInicial - index), 0)
+    const soma = [...base].reduce(
+      (total, digito, index) => total + Number(digito) * (pesoInicial - index),
+      0,
+    )
     const resto = (soma * 10) % 11
     return resto === 10 ? 0 : resto
   }
-  return calcularDigito(cpf.slice(0, 9), 10) === Number(cpf[9])
-    && calcularDigito(cpf.slice(0, 10), 11) === Number(cpf[10])
+  return (
+    calcularDigito(cpf.slice(0, 9), 10) === Number(cpf[9]) &&
+    calcularDigito(cpf.slice(0, 10), 11) === Number(cpf[10])
+  )
+}
+
+function validarEnderecoEntrega(): boolean {
+  if (!cepValidado.value) {
+    mensagemErro.value =
+      'Informe um CEP válido e aguarde a localização automática antes de continuar.'
+    return false
+  }
+  const erro = validateDeliveryAddress(boletoAddress)
+  if (erro) {
+    mensagemErro.value = erro
+    return false
+  }
+  boletoAddress.zip_code = normalizeCep(boletoAddress.zip_code)
+  boletoAddress.federal_unit = boletoAddress.federal_unit.trim().toUpperCase()
+  return true
 }
 
 async function processarEnvioBrick(payload: BrickFormData): Promise<void> {
@@ -212,22 +249,22 @@ async function processarEnvioBrick(payload: BrickFormData): Promise<void> {
     const paymentMethod = payload.payment_method_id.trim()
     const isCard = !['pix', 'bolbradesco'].includes(paymentMethod)
     if (isCard && (typeof payload.token !== 'string' || !payload.token.trim())) {
-      throw new Error('O Mercado Pago não gerou o token do cartão. Confira os dados e tente novamente.')
+      throw new Error(
+        'O Mercado Pago não gerou o token do cartão. Confira os dados e tente novamente.',
+      )
     }
 
-    const payer = payload.payer && typeof payload.payer === 'object'
-      ? { ...(payload.payer as NonNullable<DadosPagamento['payer']>) }
-      : {}
+    const payer =
+      payload.payer && typeof payload.payer === 'object'
+        ? { ...(payload.payer as NonNullable<DadosPagamento['payer']>) }
+        : {}
     if (paymentMethod === 'bolbradesco') {
       if (!cpfValido(cpfPagador.value)) {
         throw new Error('Informe um CPF válido de 11 números para gerar o boleto.')
       }
       payer.identification = { type: 'CPF', number: cpfPagador.value.replace(/\D/g, '') }
-      if (Object.values(boletoAddress).some((value) => !value.trim())) {
-        throw new Error('Preencha todos os campos de endereço para gerar o boleto.')
-      }
-      if (!cepValidado.value) {
-        throw new Error('Informe um CEP válido e aguarde a validação automática antes de gerar o boleto.')
+      if (!validarEnderecoEntrega()) {
+        throw new Error(mensagemErro.value)
       }
       payer.address = { ...boletoAddress }
     }
@@ -235,7 +272,9 @@ async function processarEnvioBrick(payload: BrickFormData): Promise<void> {
     const dadosPagamento: DadosPagamento = {
       pedido_id: checkoutPreparado.value.pedido_id,
       payment_method_id: paymentMethod,
-      ...(typeof payload.token === 'string' && payload.token.trim() ? { token: payload.token } : {}),
+      ...(typeof payload.token === 'string' && payload.token.trim()
+        ? { token: payload.token }
+        : {}),
       ...(payload.installments != null ? { installments: Number(payload.installments) } : {}),
       ...(payload.issuer_id ? { issuer_id: String(payload.issuer_id) } : {}),
       ...(Object.keys(payer).length ? { payer } : {}),
@@ -244,7 +283,10 @@ async function processarEnvioBrick(payload: BrickFormData): Promise<void> {
     const resposta = await processarPagamento(dadosPagamento)
     const statusPagamento = String(resposta.status || '').toLowerCase()
     const pedidoId = String(resposta.pedido_id ?? checkoutPreparado.value.pedido_id)
-    if (statusPagamento === 'pending' && (resposta.qr_code || resposta.qr_code_base64 || resposta.ticket_url)) {
+    if (
+      statusPagamento === 'pending' &&
+      (resposta.qr_code || resposta.qr_code_base64 || resposta.ticket_url)
+    ) {
       paymentInstructions.value = {
         qr_code: resposta.qr_code,
         qr_code_base64: resposta.qr_code_base64,
@@ -313,12 +355,15 @@ async function montarPaymentBrick(checkout: CheckoutPreparado) {
     },
     locale: 'pt-BR',
     callbacks: {
-      onReady: () => { carregando.value = false },
+      onReady: () => {
+        carregando.value = false
+      },
       onSubmit: async ({ formData }: { formData: BrickFormData }) => processarEnvioBrick(formData),
       onError: (error: unknown) => {
         console.error('Erro no formulário do Mercado Pago:', error)
         if (!submetendo.value) {
-          mensagemErro.value = 'O formulário de pagamento encontrou um problema. Recarregue o checkout e tente novamente.'
+          mensagemErro.value =
+            'O formulário de pagamento encontrou um problema. Recarregue o checkout e tente novamente.'
         }
       },
     },
@@ -338,9 +383,10 @@ async function selecionarMetodo(metodo: 'cartao' | 'pix' | 'boleto') {
     try {
       await montarPaymentBrick(checkoutPreparado.value)
     } catch (error: unknown) {
-      mensagemErro.value = error instanceof Error
-        ? error.message
-        : 'Não foi possível carregar este método de pagamento.'
+      mensagemErro.value =
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível carregar este método de pagamento.'
       carregando.value = false
     }
   }
@@ -361,8 +407,14 @@ async function iniciarPagamento() {
       await router.push('/carrinho')
       return
     }
+    if (!validarEnderecoEntrega()) {
+      carregando.value = false
+      return
+    }
     if (!API_PUBLIC_KEY) {
-      throw new Error('O pagamento ainda não está configurado neste ambiente. Tente novamente mais tarde.')
+      throw new Error(
+        'O pagamento ainda não está configurado neste ambiente. Tente novamente mais tarde.',
+      )
     }
 
     const checkout = await criarCheckout()
@@ -458,14 +510,35 @@ onBeforeUnmount(async () => {
       <p v-if="resultadoPagamento.pedidoId">Pedido #{{ resultadoPagamento.pedidoId }}</p>
       <div v-if="paymentInstructions" class="payment-instructions">
         <h3>Conclua seu pagamento</h3>
-        <img v-if="paymentInstructions.qr_code_base64" :src="`data:image/png;base64,${paymentInstructions.qr_code_base64}`" alt="QR Code Pix" />
-        <label v-if="paymentInstructions.qr_code">Pix Copia e Cola<input readonly :value="paymentInstructions.qr_code" /></label>
-        <button v-if="paymentInstructions.qr_code" type="button" @click="copiarCodigoPix">Copiar código Pix</button>
-        <a v-if="paymentInstructions.ticket_url" :href="paymentInstructions.ticket_url" target="_blank" rel="noopener noreferrer">Abrir boleto / instruções de pagamento</a>
-        <p>Após pagar, a confirmação pode levar algum tempo. Consulte Meus pedidos para acompanhar o status.</p>
+        <img
+          v-if="paymentInstructions.qr_code_base64"
+          :src="`data:image/png;base64,${paymentInstructions.qr_code_base64}`"
+          alt="QR Code Pix"
+        />
+        <label v-if="paymentInstructions.qr_code"
+          >Pix Copia e Cola<input readonly :value="paymentInstructions.qr_code"
+        /></label>
+        <button v-if="paymentInstructions.qr_code" type="button" @click="copiarCodigoPix">
+          Copiar código Pix
+        </button>
+        <a
+          v-if="paymentInstructions.ticket_url"
+          :href="paymentInstructions.ticket_url"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Abrir boleto / instruções de pagamento</a
+        >
+        <p>
+          Após pagar, a confirmação pode levar algum tempo. Consulte Meus pedidos para acompanhar o
+          status.
+        </p>
       </div>
       <button @click="router.push('/pedidos')">Ver meus pedidos</button>
-      <button v-if="resultadoPagamento.state === 'failure'" class="secondary-btn" @click="router.push('/carrinho')">
+      <button
+        v-if="resultadoPagamento.state === 'failure'"
+        class="secondary-btn"
+        @click="router.push('/carrinho')"
+      >
         Voltar ao carrinho
       </button>
     </section>
@@ -484,41 +557,120 @@ onBeforeUnmount(async () => {
         </div>
         <div class="checkout-total">
           <span>Total</span>
-          <strong>{{ formatarValor(checkoutPreparado ? Number(checkoutPreparado.amount) : cartStore.totalPrice) }}</strong>
+          <strong>{{
+            formatarValor(
+              checkoutPreparado ? Number(checkoutPreparado.amount) : cartStore.totalPrice,
+            )
+          }}</strong>
         </div>
-        <p v-if="checkoutPreparado" class="secure-note">Valor confirmado pelo servidor. A reserva da peça fica ativa durante o checkout.</p>
+        <p v-if="checkoutPreparado" class="secure-note">
+          Valor confirmado pelo servidor. A reserva da peça fica ativa durante o checkout.
+        </p>
       </div>
 
       <div class="payment-section">
         <h2>Pagamento seguro</h2>
-        <p class="payment-intro">Escolha entre cartão, Pix ou boleto. Os dados do cartão são processados pelo Mercado Pago; a Reveste não armazena os dados do cartão.</p>
+        <p class="payment-intro">
+          Escolha entre cartão, Pix ou boleto. Os dados do cartão são processados pelo Mercado Pago;
+          a Reveste não armazena os dados do cartão.
+        </p>
         <div class="payment-choice" role="group" aria-label="Escolha o método de pagamento">
-          <button type="button" :class="{ selected: metodoEscolhido === 'cartao' }" :disabled="submetendo" @click="selecionarMetodo('cartao')">Cartão</button>
-          <button type="button" :class="{ selected: metodoEscolhido === 'pix' }" :disabled="submetendo" @click="selecionarMetodo('pix')">Pix</button>
-          <button type="button" :class="{ selected: metodoEscolhido === 'boleto' }" :disabled="submetendo" @click="selecionarMetodo('boleto')">Boleto</button>
+          <button
+            type="button"
+            :class="{ selected: metodoEscolhido === 'cartao' }"
+            :disabled="submetendo"
+            @click="selecionarMetodo('cartao')"
+          >
+            Cartão
+          </button>
+          <button
+            type="button"
+            :class="{ selected: metodoEscolhido === 'pix' }"
+            :disabled="submetendo"
+            @click="selecionarMetodo('pix')"
+          >
+            Pix
+          </button>
+          <button
+            type="button"
+            :class="{ selected: metodoEscolhido === 'boleto' }"
+            :disabled="submetendo"
+            @click="selecionarMetodo('boleto')"
+          >
+            Boleto
+          </button>
         </div>
-        <p v-if="metodoEscolhido === 'pix'" class="address-hint">Ao selecionar Pix, o Mercado Pago exibirá o QR Code e o código Copia e Cola após a solicitação de pagamento.</p>
+        <p v-if="metodoEscolhido === 'pix'" class="address-hint">
+          Ao selecionar Pix, o Mercado Pago exibirá o QR Code e o código Copia e Cola após a
+          solicitação de pagamento.
+        </p>
         <template v-if="metodoEscolhido === 'boleto'">
-          <label class="payer-cpf">CPF do pagador
-            <input v-model.trim="cpfPagador" autocomplete="off" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" />
+          <label class="payer-cpf"
+            >CPF do pagador
+            <input
+              v-model.trim="cpfPagador"
+              autocomplete="off"
+              inputmode="numeric"
+              maxlength="14"
+              placeholder="000.000.000-00"
+            />
           </label>
         </template>
-        <fieldset v-if="metodoEscolhido === 'boleto'" class="boleto-address">
-          <legend>Endereço para boleto bancário</legend>
-          <p class="address-hint">Preencha estes dados somente se escolher boleto. São exigidos pelo Mercado Pago para emitir a cobrança.</p>
-          <label>CEP<input v-model.trim="boletoAddress.zip_code" autocomplete="postal-code" inputmode="numeric" maxlength="9" @input="consultarCep($event)" /> <small v-if="buscandoCep">Consultando CEP...</small><small v-else-if="cepValidado">CEP localizado</small></label>
-          <label>Rua<input v-model.trim="boletoAddress.street_name" autocomplete="address-line1" /></label>
-          <label>Número<input v-model.trim="boletoAddress.street_number" autocomplete="address-line2" /></label>
-          <label>Bairro<input v-model.trim="boletoAddress.neighborhood" autocomplete="address-level3" /></label>
-          <label>Cidade<input v-model.trim="boletoAddress.city" autocomplete="address-level2" /></label>
-          <label>UF<input v-model.trim="boletoAddress.federal_unit" maxlength="2" autocomplete="address-level1" /></label>
+        <fieldset class="delivery-address">
+          <legend>Endereço de entrega</legend>
+          <p class="address-hint">
+            Informe o endereço completo antes de continuar para o pagamento.
+          </p>
+          <label
+            >CEP<input
+              v-model.trim="boletoAddress.zip_code"
+              autocomplete="postal-code"
+              inputmode="numeric"
+              maxlength="9"
+              @input="consultarCep()"
+            />
+            <small v-if="buscandoCep">Consultando CEP...</small
+            ><small v-else-if="cepValidado">CEP localizado</small></label
+          >
+          <label
+            >Rua<input v-model.trim="boletoAddress.street_name" autocomplete="address-line1"
+          /></label>
+          <label
+            >Número<input v-model.trim="boletoAddress.street_number" autocomplete="address-line2"
+          /></label>
+          <label
+            >Bairro<input v-model.trim="boletoAddress.neighborhood" autocomplete="address-level3"
+          /></label>
+          <label
+            >Cidade<input v-model.trim="boletoAddress.city" autocomplete="address-level2"
+          /></label>
+          <label
+            >UF<input
+              v-model.trim="boletoAddress.federal_unit"
+              maxlength="2"
+              autocomplete="address-level1"
+          /></label>
         </fieldset>
         <div v-if="paymentInstructions" class="payment-instructions">
           <h3>Conclua seu pagamento</h3>
-          <img v-if="paymentInstructions.qr_code_base64" :src="`data:image/png;base64,${paymentInstructions.qr_code_base64}`" alt="QR Code Pix" />
-          <label v-if="paymentInstructions.qr_code">Pix Copia e Cola<input readonly :value="paymentInstructions.qr_code" /></label>
-          <button v-if="paymentInstructions.qr_code" type="button" @click="copiarCodigoPix">Copiar código Pix</button>
-          <a v-if="paymentInstructions.ticket_url" :href="paymentInstructions.ticket_url" target="_blank" rel="noopener noreferrer">Abrir boleto / instruções de pagamento</a>
+          <img
+            v-if="paymentInstructions.qr_code_base64"
+            :src="`data:image/png;base64,${paymentInstructions.qr_code_base64}`"
+            alt="QR Code Pix"
+          />
+          <label v-if="paymentInstructions.qr_code"
+            >Pix Copia e Cola<input readonly :value="paymentInstructions.qr_code"
+          /></label>
+          <button v-if="paymentInstructions.qr_code" type="button" @click="copiarCodigoPix">
+            Copiar código Pix
+          </button>
+          <a
+            v-if="paymentInstructions.ticket_url"
+            :href="paymentInstructions.ticket_url"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Abrir boleto / instruções de pagamento</a
+          >
         </div>
         <div v-if="mensagemErro" class="checkout-error" role="alert">{{ mensagemErro }}</div>
         <div v-if="submetendo" class="loading">Enviando pagamento com segurança...</div>
@@ -537,8 +689,12 @@ onBeforeUnmount(async () => {
         <h2>Faça login para continuar</h2>
         <p>Para finalizar a compra, entre na sua conta ou crie uma nova.</p>
         <div class="auth-actions">
-          <button class="btn-secondary auth-btn" @click="redirectToAuth('login')">Fazer login</button>
-          <button class="btn-primary auth-btn" @click="redirectToAuth('register')">Criar conta</button>
+          <button class="btn-secondary auth-btn" @click="redirectToAuth('login')">
+            Fazer login
+          </button>
+          <button class="btn-primary auth-btn" @click="redirectToAuth('register')">
+            Criar conta
+          </button>
         </div>
       </div>
     </div>
@@ -553,8 +709,12 @@ onBeforeUnmount(async () => {
   padding: 40px 20px 80px;
   font-family: 'Montserrat', sans-serif;
 }
-.checkout-header { margin-bottom: 32px; }
-.checkout-header h1 { margin-top: 20px; }
+.checkout-header {
+  margin-bottom: 32px;
+}
+.checkout-header h1 {
+  margin-top: 20px;
+}
 .back-button {
   border: 0;
   background: transparent;
@@ -568,7 +728,8 @@ onBeforeUnmount(async () => {
   gap: 32px;
   align-items: start;
 }
-.checkout-summary, .payment-section {
+.checkout-summary,
+.payment-section {
   min-width: 0;
   background: white;
   border: 1px solid #e5e5e5;
@@ -589,8 +750,14 @@ onBeforeUnmount(async () => {
   object-fit: cover;
   border-radius: 8px;
 }
-.item-info h3 { margin: 0 0 8px; font-size: 16px; }
-.item-info p { margin: 4px 0; font-size: 14px; }
+.item-info h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+.item-info p {
+  margin: 4px 0;
+  font-size: 14px;
+}
 .checkout-total {
   display: flex;
   justify-content: space-between;
@@ -598,26 +765,131 @@ onBeforeUnmount(async () => {
   margin-top: 24px;
   font-size: 20px;
 }
-.payment-intro, .secure-note { color: #555; line-height: 1.5; font-size: 14px; }
-.loading { padding: 24px 0; text-align: center; }
-.payment-choice { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0; }
-.payment-choice button { flex: 1; min-width: 90px; padding: 12px; border: 1px solid #ccc; border-radius: 8px; background: #fff; cursor: pointer; }
-.payment-choice button.selected { border-color: #1d1d1d; background: #1d1d1d; color: #fff; }
-.payment-choice button:disabled { opacity: .6; cursor: wait; }
-.payer-cpf { display: grid; gap: 7px; margin-top: 18px; font-size: 14px; font-weight: 600; }
-.payer-cpf input { box-sizing: border-box; width: 100%; max-width: 360px; padding: 12px; border: 1px solid #cfcfcf; border-radius: 8px; font: inherit; font-weight: 400; }
-.boleto-address { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; margin: 18px 0; padding: 18px; border: 1px solid #dedede; border-radius: 10px; min-width: 0; }
-.boleto-address legend { padding: 0 8px; font-weight: 600; }
-.boleto-address label, .payment-instructions label { display: grid; align-content: start; gap: 7px; min-width: 0; font-size: 13px; font-weight: 600; }
-.boleto-address input, .payment-instructions input { box-sizing: border-box; width: 100%; min-width: 0; padding: 11px 12px; border: 1px solid #cfcfcf; border-radius: 8px; background: #fff; color: #222; font: inherit; font-weight: 400; }
-.boleto-address input:focus, .payer-cpf input:focus { outline: 2px solid #333; outline-offset: 1px; border-color: #333; }
-.boleto-address small { color: #555; font-weight: 400; }
-.address-hint { grid-column: 1 / -1; margin: 0; color: #555; font-size: 13px; line-height: 1.5; }
-.payment-instructions { display: grid; gap: 12px; margin: 20px 0; padding: 16px; border: 1px solid #ddd; border-radius: 8px; overflow-wrap: anywhere; }
-.payment-instructions img { width: min(100%, 260px); margin: 0 auto; }
-.payment-instructions a { color: #222; text-decoration: underline; }
-.payment-instructions button { padding: 10px; border: 0; border-radius: 6px; cursor: pointer; }
-@media (max-width: 520px) { .boleto-address { grid-template-columns: 1fr; } }
+.payment-intro,
+.secure-note {
+  color: #555;
+  line-height: 1.5;
+  font-size: 14px;
+}
+.loading {
+  padding: 24px 0;
+  text-align: center;
+}
+.payment-choice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0;
+}
+.payment-choice button {
+  flex: 1;
+  min-width: 90px;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+.payment-choice button.selected {
+  border-color: #1d1d1d;
+  background: #1d1d1d;
+  color: #fff;
+}
+.payment-choice button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.payer-cpf {
+  display: grid;
+  gap: 7px;
+  margin-top: 18px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.payer-cpf input {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 360px;
+  padding: 12px;
+  border: 1px solid #cfcfcf;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 400;
+}
+.delivery-address {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px solid #dedede;
+  border-radius: 10px;
+  min-width: 0;
+}
+.delivery-address legend {
+  padding: 0 8px;
+  font-weight: 600;
+}
+.delivery-address label,
+.payment-instructions label {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.delivery-address input,
+.payment-instructions input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #cfcfcf;
+  border-radius: 8px;
+  background: #fff;
+  color: #222;
+  font: inherit;
+  font-weight: 400;
+}
+.delivery-address input:focus,
+.payer-cpf input:focus {
+  outline: 2px solid #333;
+  outline-offset: 1px;
+  border-color: #333;
+}
+.delivery-address small {
+  color: #555;
+  font-weight: 400;
+}
+.payment-instructions {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0;
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+.payment-instructions img {
+  width: min(100%, 260px);
+  margin: 0 auto;
+}
+.payment-instructions a {
+  color: #222;
+  text-decoration: underline;
+}
+.payment-instructions button {
+  padding: 10px;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+@media (max-width: 520px) {
+  .delivery-address {
+    grid-template-columns: 1fr;
+  }
+}
 .checkout-error {
   margin: 16px 0;
   padding: 14px;
@@ -632,10 +904,17 @@ onBeforeUnmount(async () => {
   text-align: center;
   border-radius: 16px;
 }
-.success { background: #f2fff5; }
-.pending { background: #fff9e8; }
-.failure { background: #fff0f0; }
-.payment-result button, .finalize-btn {
+.success {
+  background: #f2fff5;
+}
+.pending {
+  background: #fff9e8;
+}
+.failure {
+  background: #fff0f0;
+}
+.payment-result button,
+.finalize-btn {
   margin: 12px 8px 0 0;
   padding: 12px 20px;
   border: 0;
@@ -644,8 +923,13 @@ onBeforeUnmount(async () => {
   background: #1d1d1d;
   color: white;
 }
-.secondary-btn { background: #555 !important; }
-.finalize-btn:disabled { opacity: .7; cursor: wait; }
+.secondary-btn {
+  background: #555 !important;
+}
+.finalize-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
 .auth-overlay {
   position: fixed;
   inset: 0;
@@ -662,7 +946,12 @@ onBeforeUnmount(async () => {
   background: white;
   box-shadow: 0 16px 48px rgb(0 0 0 / 18%);
 }
-.auth-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
 .auth-btn {
   flex: 1;
   padding: 12px 16px;
@@ -670,10 +959,20 @@ onBeforeUnmount(async () => {
   border-radius: 8px;
   cursor: pointer;
 }
-.btn-primary { background: #1d1d1d; color: white; }
-.btn-secondary { background: #eee; color: #222; }
+.btn-primary {
+  background: #1d1d1d;
+  color: white;
+}
+.btn-secondary {
+  background: #eee;
+  color: #222;
+}
 @media (max-width: 800px) {
-  .checkout-content { grid-template-columns: 1fr; }
-  .checkout-page { padding: 24px 16px 50px; }
+  .checkout-content {
+    grid-template-columns: 1fr;
+  }
+  .checkout-page {
+    padding: 24px 16px 50px;
+  }
 }
 </style>
