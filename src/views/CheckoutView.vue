@@ -96,6 +96,7 @@ async function copiarCodigoPix() {
 const buscandoCep = ref(false)
 const cpfPagador = ref('')
 const nomeDestinatario = ref('')
+const enderecoConfirmado = ref(false)
 const metodoEscolhido = ref<'cartao' | 'pix' | 'boleto'>('cartao')
 const cepValidado = ref(false)
 let cepRequestId = 0
@@ -222,6 +223,14 @@ function cpfValido(valor: string): boolean {
 }
 
 function validarEnderecoEntrega(): boolean {
+  if (!nomeDestinatario.value.trim()) {
+    mensagemErro.value = 'Informe o nome completo do destinatário.'
+    return false
+  }
+  if (!cpfValido(cpfPagador.value)) {
+    mensagemErro.value = 'Informe um CPF válido com 11 números.'
+    return false
+  }
   if (!cepValidado.value) {
     mensagemErro.value =
       'Informe um CEP válido e aguarde a localização automática antes de continuar.'
@@ -234,7 +243,18 @@ function validarEnderecoEntrega(): boolean {
   }
   boletoAddress.zip_code = normalizeCep(boletoAddress.zip_code)
   boletoAddress.federal_unit = boletoAddress.federal_unit.trim().toUpperCase()
+  enderecoConfirmado.value = true
+  mensagemErro.value = ''
   return true
+}
+
+function confirmarEnderecoEntrega() {
+  if (!validarEnderecoEntrega()) return
+  nextTick(() =>
+    document
+      .querySelector('.payment-section')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+  )
 }
 
 async function processarEnvioBrick(payload: BrickFormData): Promise<void> {
@@ -568,8 +588,72 @@ onBeforeUnmount(async () => {
         </p>
       </div>
 
-      <div class="payment-section">
-        <h2>Pagamento seguro</h2>
+      <div class="address-section">
+        <h2>1. Dados para entrega</h2>
+        <p class="payment-intro">Preencha as informações da pessoa que receberá o pedido.</p>
+        <fieldset class="delivery-address">
+          <legend>Dados do destinatário e endereço</legend>
+          <label
+            >Nome completo<input
+              v-model.trim="nomeDestinatario"
+              autocomplete="name"
+              placeholder="Nome da pessoa que receberá"
+          /></label>
+          <label
+            >CPF<input
+              v-model.trim="cpfPagador"
+              autocomplete="off"
+              inputmode="numeric"
+              maxlength="14"
+              placeholder="000.000.000-00"
+          /></label>
+          <label
+            >CEP<input
+              v-model.trim="boletoAddress.zip_code"
+              autocomplete="postal-code"
+              inputmode="numeric"
+              maxlength="9"
+              @input="consultarCep()"
+            /><small v-if="buscandoCep">Consultando CEP...</small
+            ><small v-else-if="cepValidado">CEP localizado</small></label
+          >
+          <label
+            >Rua<input v-model.trim="boletoAddress.street_name" autocomplete="address-line1"
+          /></label>
+          <label
+            >Número<input v-model.trim="boletoAddress.street_number" autocomplete="address-line2"
+          /></label>
+          <label
+            >Bairro<input v-model.trim="boletoAddress.neighborhood" autocomplete="address-level3"
+          /></label>
+          <label
+            >Cidade<input v-model.trim="boletoAddress.city" autocomplete="address-level2"
+          /></label>
+          <label
+            >UF<input
+              v-model.trim="boletoAddress.federal_unit"
+              maxlength="2"
+              autocomplete="address-level1"
+          /></label>
+        </fieldset>
+        <div v-if="mensagemErro && !enderecoConfirmado" class="checkout-error" role="alert">
+          {{ mensagemErro }}
+        </div>
+        <button
+          v-if="!enderecoConfirmado"
+          class="finalize-btn"
+          type="button"
+          @click="confirmarEnderecoEntrega"
+        >
+          Confirmar endereço
+        </button>
+        <button v-else class="address-edit-btn" type="button" @click="enderecoConfirmado = false">
+          Alterar endereço
+        </button>
+      </div>
+
+      <div v-if="enderecoConfirmado" class="payment-section">
+        <h2>2. Pagamento seguro</h2>
         <p class="payment-intro">
           Escolha entre cartão, Pix ou boleto. Os dados do cartão são processados pelo Mercado Pago;
           a Reveste não armazena os dados do cartão.
@@ -604,53 +688,6 @@ onBeforeUnmount(async () => {
           Ao selecionar Pix, o Mercado Pago exibirá o QR Code e o código Copia e Cola após a
           solicitação de pagamento.
         </p>
-        <template v-if="metodoEscolhido === 'boleto'">
-          <label class="payer-cpf"
-            >CPF do pagador
-            <input
-              v-model.trim="cpfPagador"
-              autocomplete="off"
-              inputmode="numeric"
-              maxlength="14"
-              placeholder="000.000.000-00"
-            />
-          </label>
-        </template>
-        <fieldset class="delivery-address">
-          <legend>Endereço de entrega</legend>
-          <p class="address-hint">
-            Informe o endereço completo antes de continuar para o pagamento.
-          </p>
-          <label
-            >CEP<input
-              v-model.trim="boletoAddress.zip_code"
-              autocomplete="postal-code"
-              inputmode="numeric"
-              maxlength="9"
-              @input="consultarCep()"
-            />
-            <small v-if="buscandoCep">Consultando CEP...</small
-            ><small v-else-if="cepValidado">CEP localizado</small></label
-          >
-          <label
-            >Rua<input v-model.trim="boletoAddress.street_name" autocomplete="address-line1"
-          /></label>
-          <label
-            >Número<input v-model.trim="boletoAddress.street_number" autocomplete="address-line2"
-          /></label>
-          <label
-            >Bairro<input v-model.trim="boletoAddress.neighborhood" autocomplete="address-level3"
-          /></label>
-          <label
-            >Cidade<input v-model.trim="boletoAddress.city" autocomplete="address-level2"
-          /></label>
-          <label
-            >UF<input
-              v-model.trim="boletoAddress.federal_unit"
-              maxlength="2"
-              autocomplete="address-level1"
-          /></label>
-        </fieldset>
         <div v-if="paymentInstructions" class="payment-instructions">
           <h3>Conclua seu pagamento</h3>
           <img
@@ -729,6 +766,7 @@ onBeforeUnmount(async () => {
   align-items: start;
 }
 .checkout-summary,
+.address-section,
 .payment-section {
   min-width: 0;
   background: white;
@@ -971,8 +1009,40 @@ onBeforeUnmount(async () => {
   .checkout-content {
     grid-template-columns: 1fr;
   }
+  .checkout-summary,
+  .address-section,
+  .payment-section {
+    grid-column: 1;
+  }
+  .checkout-summary {
+    grid-row: 1;
+  }
+  .address-section {
+    grid-row: 2;
+  }
+  .payment-section {
+    grid-row: 3;
+  }
   .checkout-page {
     padding: 24px 16px 50px;
   }
+}
+.address-edit-btn {
+  margin-top: 12px;
+  padding: 12px 20px;
+  border: 1px solid #1d1d1d;
+  border-radius: 8px;
+  background: #fff;
+  color: #1d1d1d;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.address-edit-btn:hover {
+  background: #f3f3f3;
+}
+.address-edit-btn:focus-visible {
+  outline: 2px solid #1d1d1d;
+  outline-offset: 3px;
 }
 </style>
